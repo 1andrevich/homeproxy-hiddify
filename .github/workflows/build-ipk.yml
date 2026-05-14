@@ -150,14 +150,6 @@ jobs:
           draft: true
           body: ""
 
-      - name: Publishing signing public key to GitHub Releases
-        uses: svenstaro/upload-release-action@v2
-        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && env.APK_SIGN_KEY != ''
-        with:
-          repo_token: ${{ github.token }}
-          file: .github/homeproxy-hiddify.pub
-          tag: ${{ steps.tag.outputs.release_tag }}
-
       - name: Publishing to GitHub Releases
         uses: svenstaro/upload-release-action@v2
         if: github.event_name == 'release'
