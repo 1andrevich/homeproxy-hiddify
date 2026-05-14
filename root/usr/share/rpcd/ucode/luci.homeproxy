@@ -215,17 +215,17 @@ const methods = {
 
 			const fd = popen('/usr/bin/hiddify-core version');
 			if (fd) {
-				for (let line = fd.read('line'); length(line); line = fd.read('line')) {
-					if (match(trim(line), /^hiddify-core version v?(\S+)/))
-						features.version = match(trim(line), /^hiddify-core version v?(\S+)/)[1];
-
-					let tags = match(trim(line), /^Tags: (.*)/);
-					if (tags)
-						for (let i in split(tags[1], ','))
-							features[i] = true;
-				}
-
+				const out = fd.read('all');
 				fd.close();
+
+				const verMatch = match(out, /hiddify-core version v?(\S+)/);
+				if (verMatch)
+					features.version = verMatch[1];
+
+				const tagsMatch = match(out, /\nTags: ([^\n]+)/);
+				if (tagsMatch)
+					for (let tag in split(tagsMatch[1], ','))
+						features[trim(tag)] = true;
 			}
 
 			features.hp_has_ip_full = access('/usr/libexec/ip-full');

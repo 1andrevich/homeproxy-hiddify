@@ -49,12 +49,13 @@ function getServiceStatus() {
 }
 
 function renderStatus(isRunning, version) {
-	let spanTemp = '<em><span style="color:%s"><strong>%s (hiddify-core v%s) %s</strong></span></em>';
+	let verStr = version ? 'v' + version : _('unknown');
+	let spanTemp = '<em><span style="color:%s"><strong>%s (hiddify-core %s) %s</strong></span></em>';
 	let renderHTML;
 	if (isRunning)
-		renderHTML = spanTemp.format('green', _('HomeProxy-hiddify'), version, _('RUNNING'));
+		renderHTML = spanTemp.format('green', _('HomeProxy-hiddify'), verStr, _('RUNNING'));
 	else
-		renderHTML = spanTemp.format('red', _('HomeProxy-hiddify'), version, _('NOT RUNNING'));
+		renderHTML = spanTemp.format('red', _('HomeProxy-hiddify'), verStr, _('NOT RUNNING'));
 
 	return renderHTML;
 }
