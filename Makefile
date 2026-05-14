@@ -8,7 +8,6 @@ LUCI_TITLE:=The modern ImmortalWrt proxy platform for ARM64/AMD64
 LUCI_PKGARCH:=all
 LUCI_DEPENDS:= \
 	+firewall4 \
-	+kmod-nft-tproxy \
 	+ucode-mod-digest
 
 PKG_NAME:=luci-app-homeproxy-hiddify

@@ -97,7 +97,7 @@ default_prerm' > "$TEMP_DIR/pre-deinstall"
 	apk mkpkg \
 		--info "name:$PKG_NAME" \
 		--info "version:$PKG_VERSION" \
-		--info "description:The modern ImmortalWrt hiddify-core based proxy platform for ARM64/AMD64" \
+		--info "description:The modern ImmortalWrt hiddify-core based proxy platform" \
 		--info "arch:all" \
 		--info "origin:https://github.com/1andrevich/homeproxy-hiddify" \
 		--info "url:" \
@@ -106,7 +106,8 @@ default_prerm' > "$TEMP_DIR/pre-deinstall"
 		--script "post-install:$TEMP_DIR/post-install" \
 		--script "post-upgrade:$TEMP_DIR/post-upgrade" \
 		--script "pre-deinstall:$TEMP_DIR/pre-deinstall" \
-		--info "depends:libc firewall4 kmod-nft-tproxy ucode-mod-digest" \
+		--info "depends:libc firewall4 ucode-mod-digest" \
+		${APK_SIGN_KEY:+--sign-key "$APK_SIGN_KEY"} \
 		--files "$TEMP_PKG_DIR" \
 		--output "$TEMP_DIR/${PKG_NAME}_${PKG_VERSION}.apk"
 
@@ -125,7 +126,7 @@ else
 		Maintainer: 1andrevich <1andrevich.recede274@passmail.net>
 		Architecture: all
 		Installed-Size: TO-BE-FILLED-BY-IPKG-BUILD
-		Description:  The modern ImmortalWrt hiddify-core based proxy platform for ARM64/AMD64
+		Description:  The modern ImmortalWrt hiddify-core based proxy platform
 	EOF
 	chmod 0644 "$TEMP_PKG_DIR/CONTROL/control"
 

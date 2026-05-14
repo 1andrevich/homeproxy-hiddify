@@ -33,6 +33,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    env:
+      APK_SIGN_KEY: ''
 
     steps:
       - name: Checkout source tree
@@ -90,6 +92,18 @@ jobs:
         id: tag
         run: echo "release_tag=$(date -u +%Y.%m.%d-%H%M%S)" >> $GITHUB_OUTPUT
 
+      - name: Setup APK signing key
+        run: |
+          if [ -n "${{ secrets.APK_SIGNING_KEY }}" ]; then
+            echo "${{ secrets.APK_SIGNING_KEY }}" > /tmp/apk-signing.key
+            chmod 600 /tmp/apk-signing.key
+            openssl rsa -in /tmp/apk-signing.key -pubout -out .github/homeproxy-hiddify.pub 2>/dev/null || \
+            openssl ec  -in /tmp/apk-signing.key -pubout -out .github/homeproxy-hiddify.pub 2>/dev/null || true
+            echo "APK_SIGN_KEY=/tmp/apk-signing.key" >> $GITHUB_ENV
+          else
+            echo "No APK_SIGNING_KEY secret set — building unsigned package"
+          fi
+
       - name: Build ipk file
         run: |
           pushd .github
@@ -115,6 +129,14 @@ jobs:
           path: .github/${{ env.IPK_ASSET_NAME }}
           archive: false
 
+      - name: Publishing signing public key to GitHub Artifacts
+        uses: actions/upload-artifact@v7
+        if: github.event_name != 'release' && env.APK_SIGN_KEY != ''
+        with:
+          name: homeproxy-hiddify.pub
+          path: .github/homeproxy-hiddify.pub
+          archive: false
+
       - name: Publishing draft pre-release to GitHub Releases
         uses: svenstaro/upload-release-action@v2
         if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
@@ -127,6 +149,14 @@ jobs:
           prerelease: true
           draft: true
           body: ""
+
+      - name: Publishing signing public key to GitHub Releases
+        uses: svenstaro/upload-release-action@v2
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && env.APK_SIGN_KEY != ''
+        with:
+          repo_token: ${{ github.token }}
+          file: .github/homeproxy-hiddify.pub
+          tag: ${{ steps.tag.outputs.release_tag }}
 
       - name: Publishing to GitHub Releases
         uses: svenstaro/upload-release-action@v2
