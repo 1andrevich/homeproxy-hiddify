@@ -28,6 +28,8 @@ log() {
 }
 
 start_service() {
+	[ -x "$PROG" ] || { log "Error: $PROG not found or not executable. Install hiddify-core first."; return 1; }
+
 	config_load "$CONF"
 
 	local routing_mode proxy_mode
