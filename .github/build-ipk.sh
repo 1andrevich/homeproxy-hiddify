@@ -94,42 +94,23 @@ export root="${IPKG_INSTROOT}"
 export pkgname="'"$PKG_NAME"'"
 default_prerm' > "$TEMP_DIR/pre-deinstall"
 
-	# Build APK in v2 format (concatenated gzip streams) compatible with OpenWRT's apk
-	PKG_SIZE=$(du -sb "$TEMP_PKG_DIR" | awk '{print $1}')
+	apk mkpkg \
+		--info "name:$PKG_NAME" \
+		--info "version:$PKG_VERSION" \
+		--info "description:The modern ImmortalWrt hiddify-core based proxy platform" \
+		--info "arch:noarch" \
+		--info "origin:$PKG_NAME" \
+		--info "url:https://github.com/1andrevich/homeproxy-hiddify" \
+		--info "maintainer:1andrevich <1andrevich.recede274@passmail.net>" \
+		--script "post-install:$TEMP_DIR/post-install" \
+		--script "post-upgrade:$TEMP_DIR/post-upgrade" \
+		--script "pre-deinstall:$TEMP_DIR/pre-deinstall" \
+		--info "depends:libc firewall4 ucode-mod-digest" \
+		${APK_SIGN_KEY:+--sign-key "$APK_SIGN_KEY"} \
+		--files "$TEMP_PKG_DIR" \
+		--output "$TEMP_DIR/${PKG_NAME}_${PKG_VERSION}.apk"
 
-	cat > "$TEMP_DIR/.PKGINFO" <<-EOF
-		pkgname = $PKG_NAME
-		pkgver = $PKG_VERSION
-		arch = all
-		size = $PKG_SIZE
-		pkgdesc = The modern ImmortalWrt hiddify-core based proxy platform
-		url = https://github.com/1andrevich/homeproxy-hiddify
-		builddate = $PKG_SOURCE_DATE_EPOCH
-		packager = 1andrevich <1andrevich.recede274@passmail.net>
-		origin = $PKG_NAME
-		depend = firewall4
-		depend = ucode-mod-digest
-	EOF
-
-	cp "$TEMP_DIR/post-install"  "$TEMP_DIR/.post-install"
-	cp "$TEMP_DIR/post-upgrade"  "$TEMP_DIR/.post-upgrade"
-	cp "$TEMP_DIR/pre-deinstall" "$TEMP_DIR/.pre-deinstall"
-
-	# Control stream: .PKGINFO + install scripts
-	tar -czf "$TEMP_DIR/pkg-control.tar.gz" \
-		--owner=0 --group=0 --numeric-owner \
-		-C "$TEMP_DIR" \
-		.PKGINFO .post-install .post-upgrade .pre-deinstall
-
-	# Data stream: package files
-	tar -czf "$TEMP_DIR/pkg-data.tar.gz" \
-		--owner=0 --group=0 --numeric-owner \
-		-C "$TEMP_PKG_DIR" \
-		.
-
-	# APK v2 unsigned = control.tar.gz + data.tar.gz concatenated
-	cat "$TEMP_DIR/pkg-control.tar.gz" "$TEMP_DIR/pkg-data.tar.gz" > \
-		"$BASE_DIR/${PKG_NAME}_${PKG_VERSION}_all.apk"
+	mv "$TEMP_DIR/${PKG_NAME}_${PKG_VERSION}.apk" "$BASE_DIR/${PKG_NAME}_${PKG_VERSION}_all.apk"
 else
 	mkdir -p "$TEMP_PKG_DIR/CONTROL/"
 
