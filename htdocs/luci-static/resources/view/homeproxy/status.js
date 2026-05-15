@@ -124,9 +124,6 @@ function getRuntimeLog(o, name, _option_index, section_id, _in_table) {
 	case 'hiddify-c':
 		section = 'config';
 		break;
-	case 'sing-box-s':
-		section = 'server';
-		break;
 	}
 
 	if (section) {
@@ -289,9 +286,6 @@ return view.extend({
 
 		o = s.option(form.DummyValue, '_hiddify-c_logview');
 		o.render = L.bind(getRuntimeLog, this, o, _('hiddify-core client'));
-
-		o = s.option(form.DummyValue, '_sing-box-s_logview');
-		o.render = L.bind(getRuntimeLog, this, o, _('sing-box server'));
 
 		return m.render();
 	},
