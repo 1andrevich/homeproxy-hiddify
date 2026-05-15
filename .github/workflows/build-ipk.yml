@@ -155,7 +155,7 @@ jobs:
         if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         with:
           repo_token: ${{ github.token }}
-          file: .github/luci-*_*.*
+          file: .github/*.{apk,ipk,pub}
           file_glob: true
           tag: ${{ steps.tag.outputs.release_tag }}
           release_name: ${{ steps.tag.outputs.release_tag }}
@@ -163,29 +163,12 @@ jobs:
           draft: true
           body: ""
 
-      - name: Publishing signing public key to GitHub Releases
-        uses: svenstaro/upload-release-action@v2
-        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && env.APK_SIGN_KEY != ''
-        with:
-          repo_token: ${{ github.token }}
-          file: .github/homeproxy-hiddify.pub
-          tag: ${{ steps.tag.outputs.release_tag }}
-          prerelease: true
-          draft: true
-
       - name: Publishing to GitHub Releases
         uses: svenstaro/upload-release-action@v2
         if: github.event_name == 'release'
         with:
           repo_token: ${{ github.token }}
-          file: .github/luci-*_*.*
+          file: .github/*.{apk,ipk,pub}
           file_glob: true
           tag: ${{ github.ref }}
 
-      - name: Publishing signing public key to GitHub Releases
-        uses: svenstaro/upload-release-action@v2
-        if: github.event_name == 'release' && env.APK_SIGN_KEY != ''
-        with:
-          repo_token: ${{ github.token }}
-          file: .github/homeproxy-hiddify.pub
-          tag: ${{ github.ref }}
