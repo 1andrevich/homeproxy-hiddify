@@ -1,3 +1,5 @@
+[**Русский 🇷🇺**](README_ru.md) / [**English**](README.md)
+
 <a href="https://t.me/one_andrevich"><img src="https://img.shields.io/badge/Telegram-Join-blue?style=flat-square&logo=telegram" alt="Telegram"></a>
 # HomeProxy-hiddify
 
