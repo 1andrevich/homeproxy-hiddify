@@ -1,3 +1,4 @@
+<a href="https://t.me/one_andrevich"><img src="https://img.shields.io/badge/Telegram-Join-blue?style=flat-square&logo=telegram" alt="Telegram"></a>
 # HomeProxy-hiddify
 
 A modern ImmortalWrt proxy platform powered by [hiddify-core](https://github.com/hiddify/hiddify-core).
