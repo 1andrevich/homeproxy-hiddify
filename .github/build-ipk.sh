@@ -158,3 +158,56 @@ default_prerm $0 $@' > "$TEMP_PKG_DIR/CONTROL/prerm"
 fi
 
 rm -rf "$TEMP_DIR"
+
+# Build i18n package for Russian
+I18N_PKG_NAME="luci-i18n-homeproxy-ru"
+I18N_TEMP_DIR="$(mktemp -d -p $BASE_DIR)"
+I18N_TEMP_PKG_DIR="$I18N_TEMP_DIR/$I18N_PKG_NAME"
+mkdir -p "$I18N_TEMP_PKG_DIR/usr/lib/lua/luci/i18n/"
+if [ "$PKG_MGR" == "apk" ]; then
+	mkdir -p "$I18N_TEMP_PKG_DIR/lib/apk/packages/"
+else
+	mkdir -p "$I18N_TEMP_PKG_DIR/CONTROL/"
+fi
+
+po2lmo "$PKG_DIR/po/ru/homeproxy.po" "$I18N_TEMP_PKG_DIR/usr/lib/lua/luci/i18n/homeproxy.ru.lmo"
+
+if [ "$PKG_MGR" == "apk" ]; then
+	find "$I18N_TEMP_PKG_DIR" -type f,l -printf '/%P\n' | sort > "$I18N_TEMP_PKG_DIR/lib/apk/packages/$I18N_PKG_NAME.list"
+
+	apk mkpkg \
+		--info "name:$I18N_PKG_NAME" \
+		--info "version:$PKG_VERSION" \
+		--info "description:Russian translation for luci-app-homeproxy-hiddify" \
+		--info "arch:noarch" \
+		--info "origin:$I18N_PKG_NAME" \
+		--info "url:https://github.com/1andrevich/homeproxy-hiddify" \
+		--info "maintainer:1andrevich <1andrevich.recede274@passmail.net>" \
+		--info "depends:$PKG_NAME" \
+		${APK_SIGN_KEY:+--sign-key "$APK_SIGN_KEY"} \
+		--files "$I18N_TEMP_PKG_DIR" \
+		--output "$I18N_TEMP_DIR/${I18N_PKG_NAME}_${PKG_VERSION}.apk"
+
+	mv "$I18N_TEMP_DIR/${I18N_PKG_NAME}_${PKG_VERSION}.apk" "$BASE_DIR/${I18N_PKG_NAME}_${PKG_VERSION}_all.apk"
+else
+	cat > "$I18N_TEMP_PKG_DIR/CONTROL/control" <<-EOF
+		Package: $I18N_PKG_NAME
+		Version: $PKG_VERSION
+		Depends: $PKG_NAME
+		Source: https://github.com/1andrevich/homeproxy-hiddify
+		SourceName: $I18N_PKG_NAME
+		Section: luci
+		SourceDateEpoch: $PKG_SOURCE_DATE_EPOCH
+		Maintainer: 1andrevich <1andrevich.recede274@passmail.net>
+		Architecture: all
+		Installed-Size: TO-BE-FILLED-BY-IPKG-BUILD
+		Description:  Russian translation for luci-app-homeproxy-hiddify
+	EOF
+	chmod 0644 "$I18N_TEMP_PKG_DIR/CONTROL/control"
+
+	ipkg-build -m "" "$I18N_TEMP_PKG_DIR" "$I18N_TEMP_DIR"
+
+	mv "$I18N_TEMP_DIR/${I18N_PKG_NAME}_${PKG_VERSION}_all.ipk" "$BASE_DIR/${I18N_PKG_NAME}_${PKG_VERSION}_all.ipk"
+fi
+
+rm -rf "$I18N_TEMP_DIR"

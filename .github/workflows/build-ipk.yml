@@ -27,7 +27,7 @@ on:
       - '!.github/ISSUE_TEMPLATE/**'
 
   workflow_dispatch:
-  
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -109,8 +109,10 @@ jobs:
           pushd .github
           fakeroot bash build-ipk.sh apk "${{ github.event_name }}"
           fakeroot bash build-ipk.sh ipk "${{ github.event_name }}"
-          echo "APK_ASSET_NAME=$(ls *.apk)" >> $GITHUB_ENV
-          echo "IPK_ASSET_NAME=$(ls *.ipk)" >> $GITHUB_ENV
+          echo "APK_ASSET_NAME=$(ls luci-app-homeproxy-hiddify_*.apk)" >> $GITHUB_ENV
+          echo "IPK_ASSET_NAME=$(ls luci-app-homeproxy-hiddify_*.ipk)" >> $GITHUB_ENV
+          echo "I18N_APK_ASSET_NAME=$(ls luci-i18n-homeproxy-ru_*.apk)" >> $GITHUB_ENV
+          echo "I18N_IPK_ASSET_NAME=$(ls luci-i18n-homeproxy-ru_*.ipk)" >> $GITHUB_ENV
           popd
 
       - name: Publishing APK files to GitHub Artifacts
@@ -119,7 +121,6 @@ jobs:
         with:
           name: ${{ env.APK_ASSET_NAME }}
           path: .github/${{ env.APK_ASSET_NAME }}
-          archive: false
 
       - name: Publishing IPK files to GitHub Artifacts
         uses: actions/upload-artifact@v7
@@ -127,7 +128,20 @@ jobs:
         with:
           name: ${{ env.IPK_ASSET_NAME }}
           path: .github/${{ env.IPK_ASSET_NAME }}
-          archive: false
+
+      - name: Publishing i18n APK to GitHub Artifacts
+        uses: actions/upload-artifact@v7
+        if: github.event_name != 'release'
+        with:
+          name: ${{ env.I18N_APK_ASSET_NAME }}
+          path: .github/${{ env.I18N_APK_ASSET_NAME }}
+
+      - name: Publishing i18n IPK to GitHub Artifacts
+        uses: actions/upload-artifact@v7
+        if: github.event_name != 'release'
+        with:
+          name: ${{ env.I18N_IPK_ASSET_NAME }}
+          path: .github/${{ env.I18N_IPK_ASSET_NAME }}
 
       - name: Publishing signing public key to GitHub Artifacts
         uses: actions/upload-artifact@v7
@@ -135,14 +149,13 @@ jobs:
         with:
           name: homeproxy-hiddify.pub
           path: .github/homeproxy-hiddify.pub
-          archive: false
 
       - name: Publishing draft pre-release to GitHub Releases
         uses: svenstaro/upload-release-action@v2
         if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         with:
           repo_token: ${{ github.token }}
-          file: .github/luci-app-homeproxy-hiddify_*.*
+          file: .github/luci-*_*.*
           file_glob: true
           tag: ${{ steps.tag.outputs.release_tag }}
           release_name: ${{ steps.tag.outputs.release_tag }}
@@ -150,11 +163,29 @@ jobs:
           draft: true
           body: ""
 
+      - name: Publishing signing public key to GitHub Releases
+        uses: svenstaro/upload-release-action@v2
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && env.APK_SIGN_KEY != ''
+        with:
+          repo_token: ${{ github.token }}
+          file: .github/homeproxy-hiddify.pub
+          tag: ${{ steps.tag.outputs.release_tag }}
+          prerelease: true
+          draft: true
+
       - name: Publishing to GitHub Releases
         uses: svenstaro/upload-release-action@v2
         if: github.event_name == 'release'
         with:
           repo_token: ${{ github.token }}
-          file: .github/luci-app-homeproxy-hiddify_*.*
+          file: .github/luci-*_*.*
           file_glob: true
+          tag: ${{ github.ref }}
+
+      - name: Publishing signing public key to GitHub Releases
+        uses: svenstaro/upload-release-action@v2
+        if: github.event_name == 'release' && env.APK_SIGN_KEY != ''
+        with:
+          repo_token: ${{ github.token }}
+          file: .github/homeproxy-hiddify.pub
           tag: ${{ github.ref }}

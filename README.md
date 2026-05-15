@@ -23,11 +23,47 @@ This project is currently in an **early stage of development**. The web UI confi
 
 ## Prerequisites
 
-- OpenWRT router/system - 24.10 or higher
+- OpenWRT / ImmortalWrt 24.10 or higher (opkg)
+- OpenWRT / ImmortalWrt 25.12 or higher (apk)
 
 ## Installation
 
-### 1. Install the package
+### OpenWRT 25.12+ (APK)
+
+#### 1. Install the package
+
+Download the latest `.apk` from [Releases](https://github.com/1andrevich/homeproxy-hiddify/releases).
+
+**Option A — without key setup (quickest):**
+
+```sh
+apk add --allow-untrusted /tmp/luci-app-homeproxy-hiddify_*_all.apk
+```
+
+**Option B — add the signing key first (no `--allow-untrusted` needed on future installs):**
+
+Download the `homeproxy-hiddify.pub` artifact from the same [GitHub Actions run](https://github.com/1andrevich/homeproxy-hiddify/actions) that produced the `.apk`, copy it to your router, then:
+
+```sh
+cp /tmp/homeproxy-hiddify.pub /etc/apk/keys/
+apk add /tmp/luci-app-homeproxy-hiddify_*_all.apk
+```
+
+Once the key is in `/etc/apk/keys/` it is trusted permanently — no flag needed for future updates.
+
+#### 2. Install hiddify-core binary
+
+See [Install hiddify-core binary](#2-install-hiddify-core-binary) below.
+
+#### 3. Add your proxy config and start
+
+See steps [3](#3-add-your-proxy-config) and [4](#4-start-the-service) below — they are identical for all OpenWRT versions.
+
+---
+
+### OpenWRT 24.10 (opkg)
+
+#### 1. Install the package
 
 Download the latest `.ipk` from [Releases](https://github.com/1andrevich/homeproxy-hiddify/releases) and install it on your router:
 
@@ -58,7 +94,7 @@ chmod +x /usr/bin/hiddify-core
 rm /tmp/hiddify-core.tar.gz
 ```
 
-Check your architecture with `uname -m`and `opkg print-architecture` .
+Check your architecture with `uname -m` (OpenWRT 24.10: also `opkg print-architecture`).
 
 ### 3. Add your proxy config
 
