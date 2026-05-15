@@ -87,9 +87,9 @@ wget -O /tmp/luci-i18n-homeproxy-ru.ipk "$(wget -qO- 'https://api.github.com/rep
 opkg install /tmp/luci-i18n-homeproxy-ru.ipk
 ```
 
-### Дополнительно. Режим «Custom JSON»
+### Дополнительно. Режим «Пользовательский JSON»
 
-При включённом режиме маршрутизации «Custom JSON» разместите конфигурационный файл в формате sing-box по пути `/etc/homeproxy/hiddify-c.json`.
+При включённом режиме маршрутизации «Пользовательский JSON» разместите конфигурационный файл в формате sing-box по пути `/etc/homeproxy/hiddify-c.json`.
 
 > **Обязательно:** добавьте `"default_mark": 100` внутри раздела `"route": {}`, чтобы предотвратить петли маршрутизации tproxy:
 >
