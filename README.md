@@ -30,73 +30,47 @@ This project is currently in an **early stage of development**. The web UI confi
 
 ### OpenWRT 25.12+ (APK)
 
-#### 1. Install the package
-
-Download the latest `.apk` from [Releases](https://github.com/1andrevich/homeproxy-hiddify/releases).
-
-**Option A — without key setup (quickest):**
+#### 1. Install hiddify-core package
 
 ```sh
-apk add --allow-untrusted /tmp/luci-app-homeproxy-hiddify_*_all.apk
+wget -O /tmp/homeproxy-hiddify.pub https://github.com/1andrevich/homeproxy-hiddify/releases/latest/download/homeproxy-hiddify.pub
+cp /tmp/homeproxy-hiddify.pub /etc/apk/keys/
+wget -O /tmp/hiddify-core.apk "https://github.com/1andrevich/hiddify-core/releases/latest/download/hiddify-core_$(. /etc/os-release; echo "$OPENWRT_ARCH").apk"
+apk update
+apk add /tmp/hiddify-core.apk
 ```
 
-**Option B — add the signing key first (no `--allow-untrusted` needed on future installs):**
-
-Download the `homeproxy-hiddify.pub` artifact from the same [GitHub Actions run](https://github.com/1andrevich/homeproxy-hiddify/actions) that produced the `.apk`, copy it to your router, then:
+#### 2. Install the package
 
 ```sh
+wget -O /tmp/homeproxy-hiddify.pub https://github.com/1andrevich/homeproxy-hiddify/releases/latest/download/homeproxy-hiddify.pub
 cp /tmp/homeproxy-hiddify.pub /etc/apk/keys/
-apk add /tmp/luci-app-homeproxy-hiddify_*_all.apk
+wget -O /tmp/luci-app-homeproxy-hiddify.apk "$(wget -qO- 'https://api.github.com/repos/1andrevich/homeproxy-hiddify/releases' | grep -o 'https://github\.com/[^"]*luci-app-homeproxy-hiddify[^"]*\.apk' | head -1)"
+apk add /tmp/luci-app-homeproxy-hiddify.apk
 ```
 
 Once the key is in `/etc/apk/keys/` it is trusted permanently — no flag needed for future updates.
-
-#### 2. Install hiddify-core binary
-
-See [Install hiddify-core binary](#2-install-hiddify-core-binary) below.
-
-#### 3. Add your proxy config and start
-
-See steps [3](#3-add-your-proxy-config) and [4](#4-start-the-service) below — they are identical for all OpenWRT versions.
 
 ---
 
 ### OpenWRT 24.10 (opkg)
 
-#### 1. Install the package
-
-Download the latest `.ipk` from [Releases](https://github.com/1andrevich/homeproxy-hiddify/releases) and install it on your router:
+#### 1. Install hiddify-core package
 
 ```sh
-opkg install luci-app-homeproxy-hiddify_*.ipk
+wget -O /tmp/hiddify-core.ipk "https://github.com/1andrevich/hiddify-core/releases/latest/download/hiddify-core_$(. /etc/os-release; echo "$OPENWRT_ARCH").ipk"
+opkg update
+opkg install /tmp/hiddify-core.ipk
 ```
 
-Or install directly:
+#### 2. Install the package
 
 ```sh
-curl -Lo /tmp/homeproxy.ipk \
-  https://github.com/1andrevich/homeproxy-hiddify/releases/latest/download/luci-app-homeproxy-hiddify_latest_all.ipk
-opkg install /tmp/homeproxy.ipk
+wget -O /tmp/luci-app-homeproxy-hiddify.ipk "$(wget -qO- 'https://api.github.com/repos/1andrevich/homeproxy-hiddify/releases' | grep -o 'https://github\.com/[^"]*luci-app-homeproxy-hiddify[^"]*\.ipk' | head -1)"
+opkg install /tmp/luci-app-homeproxy-hiddify.ipk
 ```
 
-### 2. Install hiddify-core binary
-
-Download the appropriate binary for your router architecture from [hiddify-core releases](https://github.com/hiddify/hiddify-core/releases): \
-`For OpenWRT - musl only`
-
-```sh
-# Example for aarch64 (ARM64 routers)
-curl -Lo /tmp/hiddify-core.tar.gz \
-  https://github.com/hiddify/hiddify-core/releases/download/v4.1.0/hiddify-core-linux-arm64-musl.tar.gz
-tar -zxvf /tmp/hiddify-core.tar.gz -C /tmp
-mv /tmp/hiddify-core /usr/bin/hiddify-core
-chmod +x /usr/bin/hiddify-core
-rm /tmp/hiddify-core.tar.gz
-```
-
-Check your architecture with `uname -m` (OpenWRT 24.10: also `opkg print-architecture`).
-
-### 3. Add your proxy config
+### Optional. If using "Custom JSON" - Add your proxy config 
 
 With Routing Mode "Custom JSON" enabled,
 Place your sing-box compatible JSON config at `/etc/homeproxy/hiddify-c.json`.
@@ -168,4 +142,4 @@ Also add (or merge) the following sections into your config:
 /etc/init.d/homeproxy start
 ```
 
-The service will auto-start on boot. Monitor logs at **Services → HomeProxy → Status**.
+The service will auto-start on boot. Monitor logs at **Services → HomeProxy-Hiddify → Status**.
