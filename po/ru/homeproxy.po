@@ -514,7 +514,7 @@ msgstr "Имя сервера по умолчанию"
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1382
 #: htdocs/luci-static/resources/view/homeproxy/node.js:428
 msgid "Direct"
-msgstr "Прямое"
+msgstr "Напрямую"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1514
 msgid "Direct Domain List"
@@ -1713,27 +1713,27 @@ msgstr "outbound узел"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:696
 msgid "Override address"
-msgstr "Переопределить адрес"
+msgstr "Переопределять адрес"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:352
 msgid "Override destination"
-msgstr "Переопределить назначение"
+msgstr "Переопределять назначение"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:703
 msgid "Override port"
-msgstr "Переопределить порт"
+msgstr "Переопределять порт"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:353
 msgid "Override the connection destination address with the sniffed domain."
-msgstr "Заменить адрес назначения соединения на обнаруженный домен."
+msgstr "Перезаписать адрес назначения соединения sniffed доменом."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:697
 msgid "Override the connection destination address."
-msgstr "Переопределить адрес назначения соединения."
+msgstr "Переопределять адрес назначения соединения."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:704
 msgid "Override the connection destination port."
-msgstr "Переопределить порт назначения соединения."
+msgstr "Переопределять порт назначения соединения."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:843
 msgid "PUT"
@@ -1885,21 +1885,21 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1482
 msgid "Proxy Domain List"
-msgstr "Список доменов прокси"
+msgstr "Список доменов для проксирования"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1437
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1466
 msgid "Proxy IPv4 IP-s"
-msgstr "IPv4-адреса прокси"
+msgstr "IPv4-адреса в прокси"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1440
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1469
 msgid "Proxy IPv6 IP-s"
-msgstr "IPv6-адреса прокси"
+msgstr "IPv6-адреса в прокси"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1443
 msgid "Proxy MAC-s"
-msgstr "MAC-адреса прокси"
+msgstr "MAC-адреса в прокси"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1424
 msgid "Proxy all except listed"
