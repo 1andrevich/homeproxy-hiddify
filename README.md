@@ -33,7 +33,7 @@ This project is currently in an **early stage of development**. The web UI confi
 
 ### OpenWRT 25.12+ (APK)
 
-#### 1. Install hiddify-core package
+#### 1. Install *hiddify-core* package
 
 ```sh
 wget -O /tmp/homeproxy-hiddify.pub https://github.com/1andrevich/homeproxy-hiddify/releases/latest/download/homeproxy-hiddify.pub
@@ -43,7 +43,7 @@ apk update
 apk add /tmp/hiddify-core.apk
 ```
 
-#### 2. Install the package
+#### 2. Install *luci-app-homeproxy-hiddify* package
 
 ```sh
 wget -O /tmp/homeproxy-hiddify.pub https://github.com/1andrevich/homeproxy-hiddify/releases/latest/download/homeproxy-hiddify.pub
