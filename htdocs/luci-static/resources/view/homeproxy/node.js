@@ -1444,9 +1444,20 @@ return view.extend({
 				method: 'subscription_update',
 				expect: { '': {} }
 			});
+
+			ui.showModal(_('Updating subscriptions'), [
+				E('p', { 'class': 'spinning' }, _('Fetching nodes, please wait...'))
+			]);
+
 			return callSubUpdate().then((res) => {
-				return location.reload();
+				ui.hideModal();
+				if (res.status === 0)
+					return location.reload();
+				else
+					ui.addNotification(null, E('p', _('Subscription update failed (exit code %d).').format(res.status || -1)));
+				return this.map.reset();
 			}).catch((err) => {
+				ui.hideModal();
 				ui.addNotification(null, E('p', _('An error occurred during updating subscriptions: %s').format(err)));
 				return this.map.reset();
 			});
