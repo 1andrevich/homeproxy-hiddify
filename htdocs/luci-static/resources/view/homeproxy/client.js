@@ -1492,9 +1492,9 @@ return view.extend({
 		so.datatype = 'hostname';
 		so.depends({'homeproxy.config.routing_mode': 'custom', '!reverse': true});
 		so.load = function(/* ... */) {
-			return L.resolveDefault(callReadDomainList('proxy_list')).then((res) => {
-				return res.content;
-			}, {});
+			return L.resolveDefault(callReadDomainList('proxy_list'), {}).then((res) => {
+				return res.content ?? null;
+			});
 		}
 		so.write = function(_section_id, value) {
 			return callWriteDomainList('proxy_list', value);
@@ -1524,9 +1524,9 @@ return view.extend({
 		so.datatype = 'hostname';
 		so.depends({'homeproxy.config.routing_mode': 'custom', '!reverse': true});
 		so.load = function(/* ... */) {
-			return L.resolveDefault(callReadDomainList('direct_list')).then((res) => {
-				return res.content;
-			}, {});
+			return L.resolveDefault(callReadDomainList('direct_list'), {}).then((res) => {
+				return res.content ?? null;
+			});
 		}
 		so.write = function(_section_id, value) {
 			return callWriteDomainList('direct_list', value);
