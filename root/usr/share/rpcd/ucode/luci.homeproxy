@@ -239,7 +239,7 @@ const methods = {
 
 	subscription_update: {
 		call: function() {
-			const status_file = `${RUN_DIR}/subscription_update.status`;
+			const status_file = '/tmp/hp_subscription_update.status';
 			system(`rm -f ${status_file}`);
 			system(`(ucode ${HP_DIR}/scripts/update_subscriptions.uc; echo $? > ${status_file}) &`);
 			return { status: 0 };
@@ -248,7 +248,7 @@ const methods = {
 
 	subscription_update_status: {
 		call: function() {
-			const status_file = `${RUN_DIR}/subscription_update.status`;
+			const status_file = '/tmp/hp_subscription_update.status';
 			const content = trim(readfile(status_file) || '');
 			if (content === '')
 				return { running: true };
