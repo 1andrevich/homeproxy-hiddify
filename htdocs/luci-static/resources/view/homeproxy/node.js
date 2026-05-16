@@ -7,7 +7,6 @@
 'use strict';
 'require form';
 'require fs';
-'require rpc';
 'require uci';
 'require ui';
 'require view';
@@ -1439,45 +1438,16 @@ return view.extend({
 			}
 		}
 		o.onclick = function() {
-			const callSubUpdate = rpc.declare({
-				object: 'luci.homeproxy',
-				method: 'subscription_update',
-				expect: { '': {} }
-			});
-			const callSubUpdateStatus = rpc.declare({
-				object: 'luci.homeproxy',
-				method: 'subscription_update_status',
-				expect: { '': {} }
-			});
-
 			ui.showModal(_('Updating subscriptions'), [
 				E('p', { 'class': 'spinning' }, _('Fetching nodes, please wait...'))
 			]);
 
-			const self = this;
-			let pollCount = 0;
-
-			function pollStatus() {
-				pollCount++;
-				if (pollCount > 15) {
-					ui.hideModal();
-					return location.reload();
-				}
-				return L.resolveDefault(callSubUpdateStatus(), {}).then((res) => {
-					if (res.running !== false)
-						return new Promise((resolve) => setTimeout(() => resolve(pollStatus()), 2000));
-					ui.hideModal();
-					if (res.exit_code === 0)
-						return location.reload();
-					ui.addNotification(null, E('p', _('Subscription update failed (exit code %d).').format(res.exit_code)));
-					return self.map.reset();
-				});
-			}
-
-			return L.resolveDefault(callSubUpdate(), {}).then(() => pollStatus()).catch((err) => {
+			return fs.exec_direct('/etc/homeproxy/scripts/update_subscriptions.uc').then(() => {
+				return location.reload();
+			}).catch((err) => {
 				ui.hideModal();
 				ui.addNotification(null, E('p', _('An error occurred during updating subscriptions: %s').format(err)));
-				return self.map.reset();
+				return this.map.reset();
 			});
 		}
 
