@@ -183,6 +183,10 @@ msgid "Subscription update failed (exit code %d)."
 msgstr "Ошибка обновления подписки (код выхода %d)."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Subscription update timed out."
+msgstr "Превышено время ожидания обновления подписки."
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
 msgid "Updating subscriptions"
 msgstr "Обновление подписок"
 

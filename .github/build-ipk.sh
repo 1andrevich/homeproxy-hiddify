@@ -8,6 +8,7 @@ set -o pipefail
 
 PKG_MGR="${1:-apk}"
 RELEASE_TYPE="${2:-snapshot}"
+LEGACY="${3:-}"
 
 export PKG_SOURCE_DATE_EPOCH="$(date "+%s")"
 export SOURCE_DATE_EPOCH="$PKG_SOURCE_DATE_EPOCH"
@@ -114,10 +115,45 @@ default_prerm' > "$TEMP_DIR/pre-deinstall"
 else
 	mkdir -p "$TEMP_PKG_DIR/CONTROL/"
 
+	if [ "$LEGACY" == "legacy" ]; then
+		SUBSC_UC="$TEMP_PKG_DIR/etc/homeproxy/scripts/update_subscriptions.uc"
+		cat > /tmp/hp_legacy_patch.py << 'PYEOF'
+import sys
+path = sys.argv[1]
+with open(path) as f:
+    c = f.read()
+c = c.replace("import { md5 } from 'digest';\n", "")
+c = c.replace("import { open } from 'fs';", "import { open, popen } from 'fs';")
+md5_fn = """
+function md5(s) {
+\tconst tmp = '/tmp/.hp_md5tmp';
+\tconst f = open(tmp, 'w');
+\tif (!f) return '';
+\tf.write(s);
+\tf.close();
+\tconst fd = popen('md5sum < /tmp/.hp_md5tmp');
+\tif (!fd) return '';
+\tconst out = trim(fd.read('line'));
+\tfd.close();
+\treturn split(out, ' ')[0] || '';
+}
+
+"""
+c = c.replace("/* UCI config start */", md5_fn + "/* UCI config start */")
+with open(path, 'w') as f:
+    f.write(c)
+PYEOF
+		python3 /tmp/hp_legacy_patch.py "$SUBSC_UC"
+		rm -f /tmp/hp_legacy_patch.py
+		IPK_DEPS="libc, firewall4, kmod-nft-tproxy"
+	else
+		IPK_DEPS="libc, firewall4, kmod-nft-tproxy, ucode-mod-digest"
+	fi
+
 	cat > "$TEMP_PKG_DIR/CONTROL/control" <<-EOF
 		Package: $PKG_NAME
 		Version: $PKG_VERSION
-		Depends: libc, firewall4, kmod-nft-tproxy, ucode-mod-digest
+		Depends: $IPK_DEPS
 		Source: https://github.com/1andrevich/homeproxy-hiddify
 		SourceName: $PKG_NAME
 		Section: luci
@@ -154,7 +190,11 @@ default_prerm $0 $@' > "$TEMP_PKG_DIR/CONTROL/prerm"
 
 	ipkg-build -m "" "$TEMP_PKG_DIR" "$TEMP_DIR"
 
-	mv "$TEMP_DIR/${PKG_NAME}_${PKG_VERSION}_all.ipk" "$BASE_DIR/${PKG_NAME}_${PKG_VERSION}_all.ipk"
+	if [ "$LEGACY" == "legacy" ]; then
+		mv "$TEMP_DIR/${PKG_NAME}_${PKG_VERSION}_all.ipk" "$BASE_DIR/${PKG_NAME}_${PKG_VERSION}_all-legacy.ipk"
+	else
+		mv "$TEMP_DIR/${PKG_NAME}_${PKG_VERSION}_all.ipk" "$BASE_DIR/${PKG_NAME}_${PKG_VERSION}_all.ipk"
+	fi
 fi
 
 rm -rf "$TEMP_DIR"
@@ -207,7 +247,11 @@ else
 
 	ipkg-build -m "" "$I18N_TEMP_PKG_DIR" "$I18N_TEMP_DIR"
 
-	mv "$I18N_TEMP_DIR/${I18N_PKG_NAME}_${PKG_VERSION}_all.ipk" "$BASE_DIR/${I18N_PKG_NAME}_${PKG_VERSION}_all.ipk"
+	if [ "$LEGACY" == "legacy" ]; then
+		mv "$I18N_TEMP_DIR/${I18N_PKG_NAME}_${PKG_VERSION}_all.ipk" "$BASE_DIR/${I18N_PKG_NAME}_${PKG_VERSION}_all-legacy.ipk"
+	else
+		mv "$I18N_TEMP_DIR/${I18N_PKG_NAME}_${PKG_VERSION}_all.ipk" "$BASE_DIR/${I18N_PKG_NAME}_${PKG_VERSION}_all.ipk"
+	fi
 fi
 
 rm -rf "$I18N_TEMP_DIR"

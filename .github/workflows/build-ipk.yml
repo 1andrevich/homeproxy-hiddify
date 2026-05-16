@@ -109,10 +109,19 @@ jobs:
           pushd .github
           fakeroot bash build-ipk.sh apk "${{ github.event_name }}"
           fakeroot bash build-ipk.sh ipk "${{ github.event_name }}"
-          echo "APK_ASSET_NAME=$(ls luci-app-homeproxy-hiddify_*.apk)" >> $GITHUB_ENV
-          echo "IPK_ASSET_NAME=$(ls luci-app-homeproxy-hiddify_*.ipk)" >> $GITHUB_ENV
-          echo "I18N_APK_ASSET_NAME=$(ls luci-i18n-homeproxy-ru_*.apk)" >> $GITHUB_ENV
-          echo "I18N_IPK_ASSET_NAME=$(ls luci-i18n-homeproxy-ru_*.ipk)" >> $GITHUB_ENV
+          echo "APK_ASSET_NAME=$(ls luci-app-homeproxy-hiddify_*_all.apk)" >> $GITHUB_ENV
+          echo "IPK_ASSET_NAME=$(ls luci-app-homeproxy-hiddify_*_all.ipk)" >> $GITHUB_ENV
+          echo "I18N_APK_ASSET_NAME=$(ls luci-i18n-homeproxy-ru_*_all.apk)" >> $GITHUB_ENV
+          echo "I18N_IPK_ASSET_NAME=$(ls luci-i18n-homeproxy-ru_*_all.ipk)" >> $GITHUB_ENV
+          popd
+
+      - name: Build legacy IPK (OpenWRT 23.05)
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        run: |
+          pushd .github
+          fakeroot bash build-ipk.sh ipk "${{ github.event_name }}" legacy
+          echo "LEGACY_IPK_ASSET_NAME=$(ls luci-app-homeproxy-hiddify_*-legacy.ipk)" >> $GITHUB_ENV
+          echo "LEGACY_I18N_IPK_ASSET_NAME=$(ls luci-i18n-homeproxy-ru_*-legacy.ipk)" >> $GITHUB_ENV
           popd
 
       - name: Publishing APK files to GitHub Artifacts
@@ -155,10 +164,55 @@ jobs:
         if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         with:
           repo_token: ${{ github.token }}
-          file: .github/*.{apk,ipk,pub}
+          file: .github/*.{apk,pub}
           file_glob: true
           tag: ${{ steps.tag.outputs.release_tag }}
           release_name: ${{ steps.tag.outputs.release_tag }}
+          prerelease: true
+          draft: true
+          body: ""
+
+      - name: Publishing non-legacy IPK to draft pre-release
+        uses: svenstaro/upload-release-action@v2
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        with:
+          repo_token: ${{ github.token }}
+          file: .github/${{ env.IPK_ASSET_NAME }}
+          tag: ${{ steps.tag.outputs.release_tag }}
+          prerelease: true
+          draft: true
+          body: ""
+
+      - name: Publishing non-legacy i18n IPK to draft pre-release
+        uses: svenstaro/upload-release-action@v2
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        with:
+          repo_token: ${{ github.token }}
+          file: .github/${{ env.I18N_IPK_ASSET_NAME }}
+          tag: ${{ steps.tag.outputs.release_tag }}
+          prerelease: true
+          draft: true
+          body: ""
+
+      - name: Publishing legacy draft release to GitHub Releases
+        uses: svenstaro/upload-release-action@v2
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        with:
+          repo_token: ${{ github.token }}
+          file: .github/${{ env.LEGACY_IPK_ASSET_NAME }}
+          tag: ${{ steps.tag.outputs.release_tag }}-legacy
+          release_name: ${{ steps.tag.outputs.release_tag }}-legacy (OpenWRT 23.05)
+          prerelease: true
+          draft: true
+          body: "Legacy build for OpenWRT 23.05 — no ucode-mod-digest dependency."
+
+      - name: Publishing legacy i18n IPK to legacy draft release
+        uses: svenstaro/upload-release-action@v2
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        with:
+          repo_token: ${{ github.token }}
+          file: .github/${{ env.LEGACY_I18N_IPK_ASSET_NAME }}
+          tag: ${{ steps.tag.outputs.release_tag }}-legacy
           prerelease: true
           draft: true
           body: ""
