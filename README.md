@@ -75,7 +75,11 @@ wget -O /tmp/luci-app-homeproxy-hiddify.ipk "$(wget -qO- 'https://api.github.com
 opkg install /tmp/luci-app-homeproxy-hiddify.ipk
 ```
 
-### Optional. If using "Custom JSON" - Add your proxy config 
+### Optional 
+
+Installation of [Russian Language Pack](https://github.com/1andrevich/homeproxy-hiddify/blob/master/README_ru.md#3-%D1%83%D1%81%D1%82%D0%B0%D0%BD%D0%BE%D0%B2%D0%BA%D0%B0-%D1%8F%D0%B7%D1%8B%D0%BA%D0%BE%D0%B2%D0%BE%D0%B3%D0%BE-%D0%BF%D0%B0%D0%BA%D0%B5%D1%82%D0%B0-ru-1)
+
+If using "Custom JSON" - Add your proxy config 
 
 With Routing Mode "Custom JSON" enabled,
 Place your sing-box compatible JSON config at `/etc/homeproxy/hiddify-c.json`.
