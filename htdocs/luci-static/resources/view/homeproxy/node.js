@@ -1444,19 +1444,37 @@ return view.extend({
 				method: 'subscription_update',
 				expect: { '': {} }
 			});
+			const callSubUpdateStatus = rpc.declare({
+				object: 'luci.homeproxy',
+				method: 'subscription_update_status',
+				expect: { '': {} }
+			});
 
 			ui.showModal(_('Updating subscriptions'), [
 				E('p', { 'class': 'spinning' }, _('Fetching nodes, please wait...'))
 			]);
 
 			const self = this;
-			return L.resolveDefault(callSubUpdate(), {}).then((res) => {
-				ui.hideModal();
-				if (res.status === 0 || res.status == null)
+			let pollCount = 0;
+
+			function pollStatus() {
+				pollCount++;
+				if (pollCount > 15) {
+					ui.hideModal();
 					return location.reload();
-				ui.addNotification(null, E('p', _('Subscription update failed (exit code %d).').format(res.status)));
-				return self.map.reset();
-			}).catch((err) => {
+				}
+				return L.resolveDefault(callSubUpdateStatus(), {}).then((res) => {
+					if (res.running !== false)
+						return new Promise((resolve) => setTimeout(() => resolve(pollStatus()), 2000));
+					ui.hideModal();
+					if (res.exit_code === 0)
+						return location.reload();
+					ui.addNotification(null, E('p', _('Subscription update failed (exit code %d).').format(res.exit_code)));
+					return self.map.reset();
+				});
+			}
+
+			return L.resolveDefault(callSubUpdate(), {}).then(() => pollStatus()).catch((err) => {
 				ui.hideModal();
 				ui.addNotification(null, E('p', _('An error occurred during updating subscriptions: %s').format(err)));
 				return self.map.reset();
