@@ -60,7 +60,7 @@ Once the key is in `/etc/apk/keys/` it is trusted permanently — no flag needed
 
 ### OpenWRT 24.10 (opkg)
 
-#### 1. Install hiddify-core package
+#### 1. Install *hiddify-core* package
 
 ```sh
 wget -O /tmp/hiddify-core.ipk "https://github.com/1andrevich/hiddify-core/releases/latest/download/hiddify-core_$(. /etc/os-release; echo "$OPENWRT_ARCH").ipk"
@@ -68,7 +68,7 @@ opkg update
 opkg install /tmp/hiddify-core.ipk
 ```
 
-#### 2. Install the package
+#### 2. Install *luci-app-homeproxy-hiddify* package
 
 ```sh
 wget -O /tmp/luci-app-homeproxy-hiddify.ipk "$(wget -qO- 'https://api.github.com/repos/1andrevich/homeproxy-hiddify/releases' | grep -o 'https://github\.com/[^"]*luci-app-homeproxy-hiddify[^"]*\.ipk' | head -1)"
