@@ -31,6 +31,8 @@ This project is currently in an **early stage of development**. The web UI confi
 
 ## Installation
 
+*80 MB of free space is necessary*
+
 ### OpenWRT 25.12+ (APK)
 
 #### 1. Install *hiddify-core* package
