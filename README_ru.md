@@ -91,68 +91,7 @@ opkg install /tmp/luci-i18n-homeproxy-ru.ipk
 
 ### Дополнительно. Режим «Пользовательский JSON»
 
-При включённом режиме маршрутизации «Пользовательский JSON» разместите конфигурационный файл в формате sing-box по пути `/etc/homeproxy/hiddify-c.json`.
-
-> **Обязательно:** добавьте `"default_mark": 100` внутри раздела `"route": {}`, чтобы предотвратить петли маршрутизации tproxy:
->
-> ```json
-> "route": {
->     "default_mark": 100,
->     ...
-> }
-> ```
-
-Также добавьте (или объедините) в вашу конфигурацию следующие разделы:
-
-**Лог:**
-```json
-"log": {
-    "disabled": false,
-    "level": "warn",
-    "output": "/var/run/homeproxy/hiddify-c.log",
-    "timestamp": true
-}
-```
-
-**Входящие соединения (inbounds):**
-```json
-"inbounds": [
-    {
-        "type": "direct",
-        "tag": "dns-in",
-        "listen": "::",
-        "listen_port": 5333
-    },
-    {
-        "type": "mixed",
-        "tag": "mixed-in",
-        "listen": "::",
-        "listen_port": 5330,
-        "udp_timeout": "300s",
-        "sniff": true,
-        "sniff_override_destination": true,
-        "set_system_proxy": false
-    },
-    {
-        "type": "redirect",
-        "tag": "redirect-in",
-        "listen": "::",
-        "listen_port": 5331,
-        "sniff": true,
-        "sniff_override_destination": true
-    },
-    {
-        "type": "tproxy",
-        "tag": "tproxy-in",
-        "listen": "::",
-        "listen_port": 5332,
-        "network": "udp",
-        "udp_timeout": "300s",
-        "sniff": true,
-        "sniff_override_destination": true
-    }
-]
-```
+Подробная документация доступна на странице вики **[Пользовательский JSON конфиг](../../wiki/Custom-JSON-Config-ru)**.
 
 ### 4. Запуск службы
 

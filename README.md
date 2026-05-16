@@ -79,71 +79,7 @@ opkg install /tmp/luci-app-homeproxy-hiddify.ipk
 
 Installation of [Russian Language Pack](https://github.com/1andrevich/homeproxy-hiddify/blob/master/README_ru.md#3-%D1%83%D1%81%D1%82%D0%B0%D0%BD%D0%BE%D0%B2%D0%BA%D0%B0-%D1%8F%D0%B7%D1%8B%D0%BA%D0%BE%D0%B2%D0%BE%D0%B3%D0%BE-%D0%BF%D0%B0%D0%BA%D0%B5%D1%82%D0%B0-ru-1)
 
-If using "Custom JSON" - Add your proxy config 
-
-With Routing Mode "Custom JSON" enabled,
-Place your sing-box compatible JSON config at `/etc/homeproxy/hiddify-c.json`.
-
-> **Required:** add `"default_mark": 100` inside the `"route": {}` section to prevent tproxy routing loops:
->
-> ```json
-> "route": {
->     "default_mark": 100,
->     ...
-> }
-> ```
-
-Also add (or merge) the following sections into your config:
-
-**Log:**
-```json
-"log": {
-    "disabled": false,
-    "level": "warn",
-    "output": "/var/run/homeproxy/hiddify-c.log",
-    "timestamp": true
-}
-```
-
-**Inbounds:**
-```json
-"inbounds": [
-    {
-        "type": "direct",
-        "tag": "dns-in",
-        "listen": "::",
-        "listen_port": 5333
-    },
-    {
-        "type": "mixed",
-        "tag": "mixed-in",
-        "listen": "::",
-        "listen_port": 5330,
-        "udp_timeout": "300s",
-        "sniff": true,
-        "sniff_override_destination": true,
-        "set_system_proxy": false
-    },
-    {
-        "type": "redirect",
-        "tag": "redirect-in",
-        "listen": "::",
-        "listen_port": 5331,
-        "sniff": true,
-        "sniff_override_destination": true
-    },
-    {
-        "type": "tproxy",
-        "tag": "tproxy-in",
-        "listen": "::",
-        "listen_port": 5332,
-        "network": "udp",
-        "udp_timeout": "300s",
-        "sniff": true,
-        "sniff_override_destination": true
-    }
-]
-```
+If using "Custom JSON" — see the **[Custom JSON Config](../../wiki/Custom-JSON-Config-en)** wiki page for full details.
 
 ### 4. Start the service
 
