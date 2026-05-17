@@ -11,7 +11,23 @@ HomeProxy-hiddify uses [hiddify-core](https://github.com/hiddify/hiddify-core) a
 These capabilities are present in hiddify-core but not in upstream sing-box:
 
 ### TLS Fragmentation (`tls_fragment`)
-Splits the TLS ClientHello handshake across multiple TCP packets. Many DPI (Deep Packet Inspection) systems inspect only the first packet to identify traffic — fragmentation defeats this by ensuring no single packet reveals enough to trigger a block. Can be enabled on protocols that use TLS (VLESS, VMess, Trojan, etc.).
+Splits the TLS ClientHello handshake across multiple TCP packets so that the SNI (Server Name Indication) field — which reveals the destination domain — arrives in separate fragments. DPI systems that inspect only whole packets to identify and block domains cannot reassemble the SNI in time, so the connection passes through undetected.
+
+**Fragment modes:**
+- **SNI/Domain** — splits packets into two pieces; simple and effective in most cases
+- **Random** — divides into many very small pieces for maximum obfuscation; use when SNI mode alone is insufficient
+
+**Key parameters:**
+- **Fragment size** — recommended 100–200 bytes; ideally one byte less than the domain name length
+- **Fragment interval** — timing between fragments; tune per ISP if needed
+- **Mixed SNI case** — randomises capitalisation of the SNI (e.g. `wWw.ExAmPlE.cOm`) to defeat case-sensitive matching
+- **Padding** — appends random data to the domain field
+
+> **Note:** Do not enable fragment and padding at the same time — they cancel each other out. Effectiveness varies by ISP and may require parameter tuning.
+
+Can be applied to any protocol that uses TLS (VLESS, VMess, Trojan, etc.).
+
+*Source: [How the TLS Trick works and its usage — hiddify.com](https://hiddify.com/manager/basic-concepts-and-troubleshooting/How-the-TLS-Trick-works-and-its-usage/#tls-fragment)*
 
 ### XHTTP Transport
 A modern HTTP-based transport for VLESS designed for CDN compatibility and multiplexing. Not available in upstream sing-box. See the VLESS section below.
