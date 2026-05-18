@@ -1056,6 +1056,7 @@ if (!isEmpty(main_node)) {
 			return null;
 
 		push(config.route.rules, {
+			inbound: cfg.inbound,
 			ip_version: strToInt(cfg.ip_version),
 			protocol: cfg.protocol,
 			network: cfg.network,

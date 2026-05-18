@@ -644,6 +644,27 @@ return view.extend({
 		so.value('udp', _('UDP'));
 		so.value('', _('Both'));
 
+		so = ss.taboption('field_other', hp.CBIStaticList, 'inbound', _('Inbound'),
+			_('Match inbound tag.'));
+		so.load = function(section_id) {
+			delete this.keylist;
+			delete this.vallist;
+
+			this.value('dns-in', _('DNS inbound'));
+			this.value('mixed-in', _('Mixed (SOCKS/HTTP) inbound'));
+			this.value('redirect-in', _('Redirect inbound'));
+			this.value('tproxy-in', _('TProxy inbound'));
+			this.value('tun-in', _('TUN inbound'));
+
+			uci.sections(data[0], 'server', (res) => {
+				if (res.enabled === '1')
+					this.value('cfg-' + res['.name'] + '-in', res.label || res['.name']);
+			});
+
+			return this.super('load', section_id);
+		}
+		so.modalonly = true;
+
 		so = ss.taboption('field_other', form.DynamicList, 'user', _('User'),
 			_('Match user name.'));
 		so.modalonly = true;
