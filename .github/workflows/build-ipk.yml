@@ -90,7 +90,7 @@ jobs:
 
       - name: Generate release tag
         id: tag
-        run: echo "release_tag=$(date -u +%Y.%m.%d-%H%M%S)" >> $GITHUB_OUTPUT
+        run: echo "release_tag=$(date -u +%Y.%m.%d)-r$(git rev-list --count HEAD)" >> $GITHUB_OUTPUT
 
       - name: Setup APK signing key
         run: |

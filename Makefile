@@ -1,16 +1,22 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 # Copyright (C) 2022-2023 ImmortalWrt.org
+# Copyright (C) 2024-2026 1andrevich <1andrevich.recede274@passmail.net>
 
 include $(TOPDIR)/rules.mk
 
-LUCI_TITLE:=The modern ImmortalWrt proxy platform for ARM64/AMD64
+LUCI_TITLE:=LuCI support for homeproxy (hiddify-core edition)
 LUCI_PKGARCH:=all
 LUCI_DEPENDS:= \
 	+firewall4 \
 	+ucode-mod-digest
 
 PKG_NAME:=luci-app-homeproxy-hiddify
+PKG_VERSION:=1
+PKG_RELEASE:=1
+PKG_MAINTAINER:=1andrevich <1andrevich.recede274@passmail.net>
+PKG_LICENSE:=GPL-2.0-only
+PKG_LICENSE_FILES:=LICENSE
 
 define Package/luci-app-homeproxy-hiddify/conffiles
 /etc/config/homeproxy

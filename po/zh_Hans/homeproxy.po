@@ -1821,6 +1821,38 @@ msgstr "私钥"
 msgid "Private key passphrase"
 msgstr "私钥指纹"
 
+#: htdocs/luci-static/resources/view/homeproxy/node.js:948
+msgid "TCP and UDP"
+msgstr "TCP 和 UDP"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js:954
+msgid "Port range for the Mieru connection, e.g. %s."
+msgstr "Mieru 连接的端口范围，例如 %s。"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js:959
+msgid "Multiplexing"
+msgstr "多路复用"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js:961
+msgid "Off"
+msgstr "关闭"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js:962
+msgid "Low"
+msgstr "低"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js:963
+msgid "Middle"
+msgstr "中"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js:964
+msgid "High"
+msgstr "高"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js:968
+msgid "Handshake mode"
+msgstr "握手模式"
+
 #: htdocs/luci-static/resources/view/homeproxy/client.js:583
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1063
 msgid "Process fields"

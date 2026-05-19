@@ -109,10 +109,64 @@ function parseShareLink(uri, features) {
 				hysteria_obfs_password: params.get('obfs-password'),
 				tls: '1',
 				tls_sni: params.get('sni'),
-				tls_insecure: params.get('insecure') ? '1' : '0'
+				tls_insecure: (params.get('insecure') === '1' || params.get('allow_insecure') === '1') ? '1' : '0'
 			};
 
 			break;
+		case 'mieru':
+			/* https://github.com/enfein/mieru */
+			url = new URL('http://' + uri[1]);
+			params = url.searchParams;
+
+			config = {
+				label: url.hash ? decodeURIComponent(url.hash.slice(1)) : null,
+				type: 'mieru',
+				address: url.hostname,
+				port: '0',
+				username: url.username ? decodeURIComponent(url.username) : null,
+				password: url.password ? decodeURIComponent(url.password) : null,
+				mieru_protocol: params.get('protocol') || null,
+				mieru_port_range: params.get('port') || null,
+				mieru_multiplexing: params.get('multiplexing') || null,
+				mieru_handshake_mode: params.get('handshake-mode') || null
+			};
+
+			break;
+		case 'naive':
+		case 'naive+http':
+		case 'naive+https': {
+			if (!features.with_naive_outbound)
+				return null;
+
+			url = new URL('http://' + uri[1]);
+			params = url.searchParams;
+
+			let naiveExtraHeaders = null;
+			if (params.get('header')) {
+				const hdrParts = params.get('header').split(':');
+				if (hdrParts.length >= 2) {
+					let hdrs = {};
+					hdrs[hdrParts[0].trim()] = hdrParts.slice(1).join(':').trim();
+					naiveExtraHeaders = JSON.stringify(hdrs);
+				}
+			}
+
+			config = {
+				label: url.hash ? decodeURIComponent(url.hash.slice(1)) : null,
+				type: 'naive',
+				address: url.hostname,
+				port: url.port || '443',
+				username: url.username ? decodeURIComponent(url.username) : null,
+				password: url.password ? decodeURIComponent(url.password) : null,
+				tls: (uri[0] === 'naive+https' || params.get('security') === 'tls') ? '1' : '0',
+				tls_sni: params.get('sni') || url.hostname,
+				naive_udp_over_tcp: (params.get('uot') === '1') ? '1' : null,
+				naive_quic: (params.get('quic') === '1') ? '1' : null,
+				naive_extra_headers: naiveExtraHeaders
+			};
+
+			break;
+		}
 		case 'socks':
 		case 'socks4':
 		case 'socks4a':
@@ -195,6 +249,63 @@ function parseShareLink(uri, features) {
 			}
 
 			break;
+		case 'ssh': {
+			/* Manual parse to avoid URL corruption on long base64 query values */
+			let sshStr = uri[1];
+			let sshLabel = null;
+
+			const sshHashIdx = sshStr.indexOf('#');
+			if (sshHashIdx >= 0) {
+				sshLabel = decodeURIComponent(sshStr.slice(sshHashIdx + 1));
+				sshStr = sshStr.slice(0, sshHashIdx);
+			}
+
+			let sshParams = {};
+			const sshQ = sshStr.indexOf('?');
+			if (sshQ >= 0) {
+				sshParams = Object.fromEntries(new URLSearchParams(sshStr.slice(sshQ + 1)));
+				sshStr = sshStr.slice(0, sshQ);
+			}
+			sshStr = sshStr.replace(/\/+$/, '');
+
+			const sshAt = sshStr.indexOf('@');
+			let sshUser = null, sshPass = null, sshHost = null, sshPort = null;
+			if (sshAt >= 0) {
+				const sshUserinfo = sshStr.slice(0, sshAt);
+				const sshHostport = sshStr.slice(sshAt + 1);
+				const sshColon = sshUserinfo.indexOf(':');
+				if (sshColon >= 0) {
+					sshUser = decodeURIComponent(sshUserinfo.slice(0, sshColon));
+					sshPass = decodeURIComponent(sshUserinfo.slice(sshColon + 1));
+				} else {
+					sshUser = decodeURIComponent(sshUserinfo);
+				}
+				const sshHp = sshHostport.split(':');
+				sshPort = sshHp.pop();
+				sshHost = sshHp.join(':') || null;
+			}
+
+			let sshHostKey = null;
+			const rawHk = sshParams['hk'] || sshParams['host_key'] || sshParams['hostKey'];
+			if (rawHk) {
+				const hkLines = rawHk.split(',').filter(l => l.trim().length > 0);
+				sshHostKey = hkLines.length ? hkLines : null;
+			}
+
+			config = {
+				label: sshLabel,
+				type: 'ssh',
+				address: sshHost,
+				port: sshPort,
+				username: sshUser,
+				password: sshPass || null,
+				ssh_priv_key: sshParams['pk'] || sshParams['private_key'] || sshParams['privateKey'] || null,
+				ssh_priv_key_pp: sshParams['passphrase'] || null,
+				ssh_host_key: sshHostKey
+			};
+
+			break;
+		}
 		case 'trojan':
 			/* https://p4gefau1t.github.io/trojan-go/developer/url/ */
 			url = new URL('http://' + uri[1]);
@@ -227,6 +338,25 @@ function parseShareLink(uri, features) {
 					config.ws_path = config.ws_path.split('?ed=')[0];
 				}
 				break;
+			case 'xhttp':
+				config.http_path = params.get('path') ? decodeURIComponent(params.get('path')) : null;
+				config.http_host = params.get('host') ? decodeURIComponent(params.get('host')) : null;
+				config.xhttp_mode = params.get('mode') || null;
+				break;
+			}
+
+			if (params.get('hiddify') === '1') {
+				if (params.get('fragment')) {
+					const fparts = params.get('fragment').split(',');
+					if (fparts.length >= 2) {
+						config.tls_fragment = '1';
+						config.tls_fragment_size = fparts[0];
+						config.tls_fragment_sleep = fparts[1];
+						config.tls_fragment_type = fparts[2] || null;
+					}
+				}
+				if (params.get('allowInsecure') === 'true' || params.get('insecure') === 'true')
+					config.tls_insecure = '1';
 			}
 
 			break;
@@ -234,6 +364,9 @@ function parseShareLink(uri, features) {
 			/* https://github.com/daeuniverse/dae/discussions/182 */
 			url = new URL('http://' + uri[1]);
 			params = url.searchParams;
+
+			if (!features.with_quic)
+				return null;
 
 			/* Check if uuid exists */
 			if (!url.username)
@@ -248,9 +381,12 @@ function parseShareLink(uri, features) {
 				password: url.password ? decodeURIComponent(url.password) : null,
 				tuic_congestion_control: params.get('congestion_control'),
 				tuic_udp_relay_mode: params.get('udp_relay_mode'),
+				tuic_enable_zero_rtt: params.get('zero_rtt_handshake') || null,
+				tuic_heartbeat: params.get('heartbeat') || null,
 				tls: '1',
 				tls_sni: params.get('sni'),
-				tls_alpn: params.get('alpn') ? decodeURIComponent(params.get('alpn')).split(',') : null
+				tls_alpn: params.get('alpn') ? decodeURIComponent(params.get('alpn')).split(',') : null,
+				tls_insecure: (params.get('allow_insecure') === '1' || params.get('insecure') === '1') ? '1' : '0'
 			};
 
 			break;
@@ -308,6 +444,52 @@ function parseShareLink(uri, features) {
 					config.ws_path = config.ws_path.split('?ed=')[0];
 				}
 				break;
+			case 'xhttp':
+				config.http_path = params.get('path') ? decodeURIComponent(params.get('path')) : null;
+				config.http_host = params.get('host') ? decodeURIComponent(params.get('host')) : null;
+				config.xhttp_mode = params.get('mode') || null;
+				break;
+			}
+
+			if (params.get('hiddify') === '1') {
+				if (params.get('fragment')) {
+					const fparts = params.get('fragment').split(',');
+					if (fparts.length >= 2) {
+						config.tls_fragment = '1';
+						config.tls_fragment_size = fparts[0];
+						config.tls_fragment_sleep = fparts[1];
+						config.tls_fragment_type = fparts[2] || null;
+					}
+				}
+				if (params.get('allowInsecure') === 'true' || params.get('insecure') === 'true')
+					config.tls_insecure = '1';
+				if (params.get('extra')) {
+					try {
+						const extra = JSON.parse(params.get('extra'));
+						if (extra.headers && Object.keys(extra.headers).length > 0)
+							config.xhttp_headers = JSON.stringify(extra.headers);
+						if (extra.downloadSettings) {
+							const dl = extra.downloadSettings;
+							config.xhttp_download_server = dl.address || null;
+							config.xhttp_download_port = dl.port ? String(dl.port) : null;
+							if (dl.xhttpSettings) {
+								config.xhttp_download_path = dl.xhttpSettings.path || null;
+								config.xhttp_download_host = dl.xhttpSettings.host || null;
+								config.xhttp_download_mode = dl.xhttpSettings.mode || null;
+							}
+							config.xhttp_download_security = dl.security || null;
+							if (dl.security === 'reality' && dl.realitySettings) {
+								config.xhttp_download_sni = dl.realitySettings.serverName || null;
+								config.xhttp_download_fp = dl.realitySettings.fingerprint || null;
+								config.xhttp_download_pbk = dl.realitySettings.publicKey || null;
+								config.xhttp_download_sid = dl.realitySettings.shortId || null;
+							} else if (dl.security === 'tls' && dl.tlsSettings) {
+								config.xhttp_download_sni = dl.tlsSettings.serverName || null;
+								config.xhttp_download_alpn = dl.tlsSettings.alpn || null;
+							}
+						}
+					} catch(e) { }
+				}
 			}
 
 			break;
@@ -373,6 +555,59 @@ function parseShareLink(uri, features) {
 			}
 
 			break;
+		case 'wg':
+		case 'wireguard': {
+			if (!features.with_wireguard || !features.with_gvisor)
+				return null;
+
+			/* Manual parse: private key in userinfo may contain chars that confuse URL parsing */
+			let wgStr = uri[1];
+			let wgLabel = null;
+
+			const wgHash = wgStr.indexOf('#');
+			if (wgHash >= 0) {
+				wgLabel = decodeURIComponent(wgStr.slice(wgHash + 1));
+				wgStr = wgStr.slice(0, wgHash);
+			}
+
+			let wgParams = {};
+			const wgQ = wgStr.indexOf('?');
+			if (wgQ >= 0) {
+				wgParams = Object.fromEntries(new URLSearchParams(wgStr.slice(wgQ + 1)));
+				wgStr = wgStr.slice(0, wgQ);
+			}
+			wgStr = wgStr.replace(/\/+$/, '');
+
+			const wgAt = wgStr.indexOf('@');
+			let wgPrivKey = null, wgHost = null, wgPort = null;
+			if (wgAt >= 0) {
+				wgPrivKey = decodeURIComponent(wgStr.slice(0, wgAt));
+				const wgHp = wgStr.slice(wgAt + 1).split(':');
+				wgPort = wgHp.pop();
+				wgHost = wgHp.join(':') || null;
+			} else {
+				const wgHp = wgStr.split(':');
+				wgPort = wgHp.pop();
+				wgHost = wgHp.join(':') || null;
+				wgPrivKey = wgParams['privateKey'] || wgParams['privatekey'] || null;
+			}
+
+			const wgLocalAddr = wgParams['address'] || wgParams['ip'] || null;
+			config = {
+				label: wgLabel,
+				type: 'wireguard',
+				address: wgHost,
+				port: wgPort,
+				wireguard_private_key: wgPrivKey,
+				wireguard_peer_public_key: wgParams['publicKey'] || wgParams['publickey'] || null,
+				wireguard_pre_shared_key: wgParams['presharedKey'] || wgParams['presharedkey'] || null,
+				wireguard_local_address: wgLocalAddr ? wgLocalAddr.split(',') : null,
+				wireguard_mtu: wgParams['mtu'] || null,
+				wireguard_reserved: wgParams['reserved'] ? wgParams['reserved'].split(',') : null
+			};
+
+			break;
+		}
 		}
 	}
 
@@ -431,6 +666,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	if (features.with_quic) {
 		o.value('hysteria', _('Hysteria'));
 		o.value('hysteria2', _('Hysteria2'));
+		o.value('mieru', _('Mieru'));
 	}
 	o.value('shadowsocks', _('Shadowsocks'));
 	o.value('shadowtls', _('ShadowTLS'));
@@ -454,11 +690,25 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 
 	o = s.option(form.Value, 'port', _('Port'));
 	o.datatype = 'port';
-	o.depends({'type': 'direct', '!reverse': true});
+	o.depends('type', 'anytls');
+	o.depends('type', 'http');
+	o.depends('type', 'hysteria');
+	o.depends('type', 'hysteria2');
+	o.depends('type', 'naive');
+	o.depends('type', 'shadowsocks');
+	o.depends('type', 'shadowtls');
+	o.depends('type', 'socks');
+	o.depends('type', 'ssh');
+	o.depends('type', 'trojan');
+	o.depends('type', 'tuic');
+	o.depends('type', 'vless');
+	o.depends('type', 'vmess');
+	o.depends('type', 'wireguard');
 	o.rmempty = false;
 
 	o = s.option(form.Value, 'username', _('Username'));
 	o.depends('type', 'http');
+	o.depends('type', 'mieru');
 	o.depends('type', 'naive');
 	o.depends('type', 'socks');
 	o.depends('type', 'ssh');
@@ -469,6 +719,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	o.depends('type', 'anytls');
 	o.depends('type', 'http');
 	o.depends('type', 'hysteria2');
+	o.depends('type', 'mieru');
 	o.depends('type', 'naive');
 	o.depends('type', 'shadowsocks');
 	o.depends('type', 'ssh');
@@ -689,6 +940,35 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	o.depends('type', 'ssh');
 	o.modalonly = true;
 	/* SSH config end */
+
+	/* Mieru config start */
+	o = s.option(form.ListValue, 'mieru_protocol', _('Protocol'));
+	o.value('TCP', _('TCP'));
+	o.value('UDP', _('UDP'));
+	o.value('TCP_AND_UDP', _('TCP and UDP'));
+	o.depends('type', 'mieru');
+	o.rmempty = false;
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'mieru_port_range', _('Port range'),
+		_('Port range for the Mieru connection, e.g. %s.').format('<code>8080-8180</code>'));
+	o.depends('type', 'mieru');
+	o.rmempty = false;
+	o.modalonly = true;
+
+	o = s.option(form.ListValue, 'mieru_multiplexing', _('Multiplexing'));
+	o.value('', _('Default'));
+	o.value('MULTIPLEXING_OFF', _('Off'));
+	o.value('MULTIPLEXING_LOW', _('Low'));
+	o.value('MULTIPLEXING_MIDDLE', _('Middle'));
+	o.value('MULTIPLEXING_HIGH', _('High'));
+	o.depends('type', 'mieru');
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'mieru_handshake_mode', _('Handshake mode'));
+	o.depends('type', 'mieru');
+	o.modalonly = true;
+	/* Mieru config end */
 
 	/* TUIC config start */
 	o = s.option(form.Value, 'uuid', _('UUID'));
@@ -1255,7 +1535,7 @@ return view.extend({
 		ss.handleLinkImport = function() {
 			let textarea = new ui.Textarea();
 			ui.showModal(_('Import share links'), [
-				E('p', _('Support Hysteria, Shadowsocks, Trojan, v2rayN (VMess), and XTLS (VLESS) online configuration delivery standard.')),
+				E('p', _('Support Hysteria, Mieru, NaïveProxy, Shadowsocks, SSH, Trojan, v2rayN (VMess), WireGuard, and XTLS (VLESS) online configuration delivery standard.')),
 				textarea.render(),
 				E('div', { class: 'right' }, [
 					E('button', {

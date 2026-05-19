@@ -1856,6 +1856,38 @@ msgstr "Приватный ключ"
 msgid "Private key passphrase"
 msgstr "Парольная фраза приватного ключа"
 
+#: htdocs/luci-static/resources/view/homeproxy/node.js:948
+msgid "TCP and UDP"
+msgstr "TCP и UDP"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js:954
+msgid "Port range for the Mieru connection, e.g. %s."
+msgstr "Диапазон портов Mieru, например %s."
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js:959
+msgid "Multiplexing"
+msgstr "Мультиплексирование"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js:961
+msgid "Off"
+msgstr "Выключено"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js:962
+msgid "Low"
+msgstr "Низкое"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js:963
+msgid "Middle"
+msgstr "Среднее"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js:964
+msgid "High"
+msgstr "Высокое"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js:968
+msgid "Handshake mode"
+msgstr "Режим рукопожатия"
+
 #: htdocs/luci-static/resources/view/homeproxy/client.js:583
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1063
 msgid "Process fields"
