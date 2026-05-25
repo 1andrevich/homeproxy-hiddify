@@ -352,7 +352,8 @@ function generate_outbound(node) {
 		} : null),
 		tcp_fast_open: strToBool(node.tcp_fast_open),
 		tcp_multi_path: strToBool(node.tcp_multi_path),
-		udp_fragment: strToBool(node.udp_fragment)
+		udp_fragment: strToBool(node.udp_fragment),
+		bind_interface: node.bind_interface || null
 	};
 
 	return outbound;
@@ -1117,14 +1118,17 @@ if (!isEmpty(main_node)) {
 /* Routing rules end */
 
 /* Experimental start */
+config.experimental = {
+	clash_api: {
+		external_controller: '127.0.0.1:9090'
+	}
+};
 if (routing_mode in ['bypass_mainland_china', 'custom']) {
-	config.experimental = {
-		cache_file: {
-			enabled: true,
-			path: RUN_DIR + '/cache.db',
-			store_rdrc: strToBool(cache_file_store_rdrc),
-			rdrc_timeout: strToTime(cache_file_rdrc_timeout),
-		}
+	config.experimental.cache_file = {
+		enabled: true,
+		path: RUN_DIR + '/cache.db',
+		store_rdrc: strToBool(cache_file_store_rdrc),
+		rdrc_timeout: strToTime(cache_file_rdrc_timeout),
 	};
 }
 /* Experimental end */

@@ -31,6 +31,58 @@ const css = '				\
 
 const hp_dir = '/var/run/homeproxy';
 
+function getIPInfo(o, type) {
+	const callIPInfo = rpc.declare({
+		object: 'luci.homeproxy',
+		method: 'clash_ip_info',
+		expect: { '': {} }
+	});
+
+	const resultEl = E('strong', { 'style': 'color:gray' }, _('unchecked'));
+
+	const formatIPInfo = (entry, nodeTag) => {
+		if (!entry)
+			return E('strong', { 'style': 'color:red' }, _('No data'));
+
+		const delayStr = (entry.delay && entry.delay !== 65535) ? ` — ${entry.delay} ms` : '';
+		const resolveTag = (tag) => {
+			const m = tag && tag.match(/^cfg-(.+)-out$/);
+			if (m) {
+				const label = uci.get('homeproxy', m[1], 'label');
+				if (label) return label;
+			}
+			return tag;
+		};
+
+		const lines = [];
+		if (nodeTag)
+			lines.push(E('span', {}, [ _('Node') + ': ', E('strong', {}, resolveTag(nodeTag)) ]));
+		if (entry.ip)
+			lines.push(E('span', {}, [ 'IP: ', E('strong', { 'style': 'color:green' }, entry.ip + delayStr) ]));
+
+		return E('span', {}, lines.map((l) => E('div', {}, [ l ])));
+	};
+
+	o.default = E('div', { 'style': 'cbi-value-field' }, [
+		E('button', {
+			'class': 'btn cbi-button cbi-button-action',
+			'click': ui.createHandlerFn(this, () => {
+				return L.resolveDefault(callIPInfo(), {}).then((ret) => {
+					const el = o.default.firstElementChild.nextElementSibling;
+					if (ret.error) {
+						dom.content(el, E('span', { 'style': 'color:red' }, ret.error));
+						return;
+					}
+					const entry = ret[type];
+					dom.content(el, formatIPInfo(entry, type === 'proxy' ? entry?.node : null));
+				});
+			})
+		}, [ _('Check') ]),
+		' ',
+		resultEl
+	]);
+}
+
 function getConnStat(o, site) {
 	const callConnStat = rpc.declare({
 		object: 'luci.homeproxy',
@@ -235,11 +287,20 @@ return view.extend({
 		o = s.option(form.DummyValue, '_check_google', _('Google'));
 		o.cfgvalue = L.bind(getConnStat, this, o, 'google');
 
+		o = s.option(form.DummyValue, '_check_youtube', _('YouTube'));
+		o.cfgvalue = L.bind(getConnStat, this, o, 'youtube');
+
 		o = s.option(form.DummyValue, '_check_yandex', _('Yandex'));
 		o.cfgvalue = L.bind(getConnStat, this, o, 'yandex');
 
 		o = s.option(form.DummyValue, '_check_speedtest', _('Speedtest'));
 		o.cfgvalue = L.bind(getConnStat, this, o, 'speedtest');
+
+		o = s.option(form.DummyValue, '_check_direct_ip', _('Direct IP'));
+		o.cfgvalue = L.bind(getIPInfo, this, o, 'direct');
+
+		o = s.option(form.DummyValue, '_check_proxy_ip', _('Proxy IP'));
+		o.cfgvalue = L.bind(getIPInfo, this, o, 'proxy');
 
 		s = m.section(form.NamedSection, 'config', 'homeproxy', _('Resources management'));
 		s.anonymous = true;

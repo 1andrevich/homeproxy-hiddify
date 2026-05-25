@@ -255,3 +255,60 @@ else
 fi
 
 rm -rf "$I18N_TEMP_DIR"
+
+# Build i18n package for Chinese Simplified
+I18N_ZH_PKG_NAME="luci-i18n-homeproxy-zh-cn"
+I18N_ZH_TEMP_DIR="$(mktemp -d -p $BASE_DIR)"
+I18N_ZH_TEMP_PKG_DIR="$I18N_ZH_TEMP_DIR/$I18N_ZH_PKG_NAME"
+mkdir -p "$I18N_ZH_TEMP_PKG_DIR/usr/lib/lua/luci/i18n/"
+if [ "$PKG_MGR" == "apk" ]; then
+	mkdir -p "$I18N_ZH_TEMP_PKG_DIR/lib/apk/packages/"
+else
+	mkdir -p "$I18N_ZH_TEMP_PKG_DIR/CONTROL/"
+fi
+
+po2lmo "$PKG_DIR/po/zh_Hans/homeproxy.po" "$I18N_ZH_TEMP_PKG_DIR/usr/lib/lua/luci/i18n/homeproxy.zh-cn.lmo"
+
+if [ "$PKG_MGR" == "apk" ]; then
+	find "$I18N_ZH_TEMP_PKG_DIR" -type f,l -printf '/%P\n' | sort > "$I18N_ZH_TEMP_PKG_DIR/lib/apk/packages/$I18N_ZH_PKG_NAME.list"
+
+	apk mkpkg \
+		--info "name:$I18N_ZH_PKG_NAME" \
+		--info "version:$PKG_VERSION" \
+		--info "description:Chinese Simplified translation for luci-app-homeproxy-hiddify" \
+		--info "arch:noarch" \
+		--info "origin:$I18N_ZH_PKG_NAME" \
+		--info "url:https://github.com/1andrevich/homeproxy-hiddify" \
+		--info "maintainer:1andrevich <1andrevich.recede274@passmail.net>" \
+		--info "depends:$PKG_NAME" \
+		${APK_SIGN_KEY:+--sign-key "$APK_SIGN_KEY"} \
+		--files "$I18N_ZH_TEMP_PKG_DIR" \
+		--output "$I18N_ZH_TEMP_DIR/${I18N_ZH_PKG_NAME}_${PKG_VERSION}.apk"
+
+	mv "$I18N_ZH_TEMP_DIR/${I18N_ZH_PKG_NAME}_${PKG_VERSION}.apk" "$BASE_DIR/${I18N_ZH_PKG_NAME}_${PKG_VERSION}_all.apk"
+else
+	cat > "$I18N_ZH_TEMP_PKG_DIR/CONTROL/control" <<-EOF
+		Package: $I18N_ZH_PKG_NAME
+		Version: $PKG_VERSION
+		Depends: $PKG_NAME
+		Source: https://github.com/1andrevich/homeproxy-hiddify
+		SourceName: $I18N_ZH_PKG_NAME
+		Section: luci
+		SourceDateEpoch: $PKG_SOURCE_DATE_EPOCH
+		Maintainer: 1andrevich <1andrevich.recede274@passmail.net>
+		Architecture: all
+		Installed-Size: TO-BE-FILLED-BY-IPKG-BUILD
+		Description:  Chinese Simplified translation for luci-app-homeproxy-hiddify
+	EOF
+	chmod 0644 "$I18N_ZH_TEMP_PKG_DIR/CONTROL/control"
+
+	ipkg-build -m "" "$I18N_ZH_TEMP_PKG_DIR" "$I18N_ZH_TEMP_DIR"
+
+	if [ "$LEGACY" == "legacy" ]; then
+		mv "$I18N_ZH_TEMP_DIR/${I18N_ZH_PKG_NAME}_${PKG_VERSION}_all.ipk" "$BASE_DIR/${I18N_ZH_PKG_NAME}_${PKG_VERSION}_all-legacy.ipk"
+	else
+		mv "$I18N_ZH_TEMP_DIR/${I18N_ZH_PKG_NAME}_${PKG_VERSION}_all.ipk" "$BASE_DIR/${I18N_ZH_PKG_NAME}_${PKG_VERSION}_all.ipk"
+	fi
+fi
+
+rm -rf "$I18N_ZH_TEMP_DIR"

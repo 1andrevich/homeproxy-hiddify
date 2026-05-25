@@ -1473,6 +1473,12 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 		_('Enable UDP fragmentation.'));
 	o.modalonly = true;
 
+	o = s.option(widgets.DeviceSelect, 'bind_interface', _('Binded interface'),
+		_('The network interface to bind to.'));
+	o.multiple = false;
+	o.noaliases = true;
+	o.modalonly = true;
+
 	o = s.option(form.Flag, 'udp_over_tcp', _('UDP over TCP'),
 		_('Enable the SUoT protocol, requires server support. Conflict with multiplex.'));
 	o.depends('type', 'socks');

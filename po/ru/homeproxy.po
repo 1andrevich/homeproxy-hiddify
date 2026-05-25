@@ -3146,7 +3146,7 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js:59
 msgid "unchecked"
-msgstr ""
+msgstr "не проверено"
 
 #: htdocs/luci-static/resources/homeproxy.js:237
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1302
@@ -3209,3 +3209,24 @@ msgstr ""
 #: htdocs/luci-static/resources/homeproxy.js:328
 msgid "valid uuid"
 msgstr ""
+
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Binded interface"
+msgstr "Привязанный интерфейс"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Direct IP"
+msgstr "Прямой IP"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Proxy IP"
+msgstr "IP прокси"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Node"
+msgstr "Узел"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "No data"
+msgstr "Нет данных"

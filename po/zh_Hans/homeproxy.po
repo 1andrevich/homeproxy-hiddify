@@ -3151,3 +3151,24 @@ msgstr "有效端口值"
 #: htdocs/luci-static/resources/homeproxy.js:328
 msgid "valid uuid"
 msgstr "有效 uuid"
+
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Binded interface"
+msgstr "已绑定接口"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Direct IP"
+msgstr "直连 IP"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Proxy IP"
+msgstr "代理 IP"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Node"
+msgstr "节点"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "No data"
+msgstr "无数据"

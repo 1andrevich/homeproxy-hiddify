@@ -138,6 +138,9 @@ const methods = {
 			case 'speedtest':
 				url = 'https://www.speedtest.net';
 				break;
+			case 'youtube':
+				url = 'https://www.youtube.com';
+				break;
 			default:
 				return { result: false, error: 'illegal site' };
 				break;
@@ -253,6 +256,75 @@ const methods = {
 				return { status: exit_code };
 			} else
 				return { status: 255, error: 'illegal type' };
+		}
+	},
+	clash_ip_info: {
+		call: function() {
+			const fd = popen('wget -qO- --timeout=3 http://127.0.0.1:9090/proxies');
+			if (!fd)
+				return { error: 'failed to run wget' };
+			const raw = trim(fd.read('all'));
+			fd.close();
+			if (!length(raw))
+				return { error: 'Clash API not reachable — regenerate config and restart homeproxy' };
+			let data;
+			try {
+				data = json(raw);
+			} catch(e) {
+				return { error: 'invalid JSON from Clash API' };
+			}
+			const proxies = data?.proxies || {};
+
+			const lastHistory = (name) => {
+				const h = proxies[name]?.history;
+				return (h && length(h)) ? h[length(h) - 1] : null;
+			};
+
+			/* Direct IP: from direct-out node */
+			const directEntry = lastHistory('direct-out');
+
+			/* Proxy IP: active node of the first URLTest/Fallback group */
+			let proxyEntry = null;
+			let proxyNodeName = null;
+			for (let name in proxies) {
+				const p = proxies[name];
+				if (name === 'GLOBAL')
+					continue;
+				if ((p.type === 'URLTest' || p.type === 'Fallback') && p.now) {
+					proxyNodeName = p.now;
+					proxyEntry = lastHistory(p.now);
+					break;
+				}
+			}
+
+			return {
+				direct: directEntry ? { ip: directEntry.ipinfo?.ip, delay: directEntry.delay } : null,
+				proxy:  proxyEntry  ? { ip: proxyEntry.ipinfo?.ip,  delay: proxyEntry.delay, node: proxyNodeName } : null
+			};
+		}
+	},
+	clash_proxies: {
+		call: function() {
+			const fd = popen('wget -qO- --timeout=3 http://127.0.0.1:9090/proxies');
+			if (!fd)
+				return { error: 'curl not available' };
+			const raw = trim(fd.read('all'));
+			fd.close();
+			if (!length(raw))
+				return { error: 'Clash API not reachable — regenerate config and restart homeproxy' };
+			let data;
+			try {
+				data = json(raw);
+			} catch(e) {
+				return { error: 'invalid JSON from Clash API: ' + raw.slice(0, 80) };
+			}
+			const groups = {};
+			for (let name in data?.proxies) {
+				const p = data.proxies[name];
+				if (p.type === 'URLTest' || p.type === 'Fallback' || p.type === 'Selector')
+					groups[name] = { type: p.type, now: p.now, all: p.all };
+			}
+			return { groups };
 		}
 	}
 };

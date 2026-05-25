@@ -113,6 +113,8 @@ jobs:
           echo "IPK_ASSET_NAME=$(ls luci-app-homeproxy-hiddify_*_all.ipk)" >> $GITHUB_ENV
           echo "I18N_APK_ASSET_NAME=$(ls luci-i18n-homeproxy-ru_*_all.apk)" >> $GITHUB_ENV
           echo "I18N_IPK_ASSET_NAME=$(ls luci-i18n-homeproxy-ru_*_all.ipk)" >> $GITHUB_ENV
+          echo "I18N_ZH_APK_ASSET_NAME=$(ls luci-i18n-homeproxy-zh-cn_*_all.apk)" >> $GITHUB_ENV
+          echo "I18N_ZH_IPK_ASSET_NAME=$(ls luci-i18n-homeproxy-zh-cn_*_all.ipk)" >> $GITHUB_ENV
           popd
 
       - name: Build legacy IPK (OpenWRT 23.05)
@@ -151,6 +153,20 @@ jobs:
         with:
           name: ${{ env.I18N_IPK_ASSET_NAME }}
           path: .github/${{ env.I18N_IPK_ASSET_NAME }}
+
+      - name: Publishing i18n zh-cn APK to GitHub Artifacts
+        uses: actions/upload-artifact@v7
+        if: github.event_name != 'release'
+        with:
+          name: ${{ env.I18N_ZH_APK_ASSET_NAME }}
+          path: .github/${{ env.I18N_ZH_APK_ASSET_NAME }}
+
+      - name: Publishing i18n zh-cn IPK to GitHub Artifacts
+        uses: actions/upload-artifact@v7
+        if: github.event_name != 'release'
+        with:
+          name: ${{ env.I18N_ZH_IPK_ASSET_NAME }}
+          path: .github/${{ env.I18N_ZH_IPK_ASSET_NAME }}
 
       - name: Publishing signing public key to GitHub Artifacts
         uses: actions/upload-artifact@v7

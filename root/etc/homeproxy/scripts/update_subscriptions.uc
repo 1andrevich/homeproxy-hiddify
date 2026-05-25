@@ -819,10 +819,11 @@ function main() {
 			log(sprintf('Removing node: %s.', cfg.label || cfg['name']));
 		} else {
 			const cached = node_cache[cfg.grouphash][cfg['.name']];
+			const user_fields = ['bind_interface'];
 			map(keys(cfg), (v) => {
 				if (v in cached)
 					uci.set(uciconfig, cfg['.name'], v, cached[v]);
-				else
+				else if (!(v in user_fields))
 					uci.delete(uciconfig, cfg['.name'], v);
 			});
 			/* Also push new fields added by updated parsers to existing nodes */
