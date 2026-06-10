@@ -19,6 +19,184 @@ function allowInsecureConfirm(ev, _section_id, value) {
 		ev.target.firstElementChild.checked = null;
 }
 
+async function parseVpnLink(uri) {
+	/* AmneziaVPN vpn:// share format: base64url(qCompress(JSON))
+	 * qCompress = 4-byte big-endian uncompressed length + zlib stream */
+	const b64 = uri.slice(6).replace(/-/g, '+').replace(/_/g, '/');
+	const binary = atob(b64);
+	const bytes = new Uint8Array(binary.length);
+	for (let i = 0; i < binary.length; i++)
+		bytes[i] = binary.charCodeAt(i);
+
+	const ds = new DecompressionStream('deflate');
+	const writer = ds.writable.getWriter();
+	const reader = ds.readable.getReader();
+	writer.write(bytes.slice(4)); // skip 4-byte qCompress length header
+	writer.close();
+
+	const chunks = [];
+	let res;
+	while (!(res = await reader.read()).done)
+		chunks.push(res.value);
+
+	const decoded = JSON.parse(new TextDecoder().decode(
+		new Uint8Array(chunks.reduce((a, c) => [...a, ...c], []))
+	));
+
+	const container = decoded.containers?.find(c => c.container === decoded.defaultContainer)
+	               || decoded.containers?.[0];
+	if (!container) return null;
+
+	const label = decoded.description || decoded.hostName || null;
+
+	switch (container.container) {
+	case 'amnezia-awg':
+	case 'amnezia-awg2': {
+		const awg = container.awg;
+		if (!awg) return null;
+		const clientIp = awg.client_ip || '';
+		const localAddr = clientIp.includes('/') ? clientIp : (clientIp ? clientIp + '/32' : null);
+		return {
+			label: label || (awg.hostName + ':' + awg.port) || 'AmneziaWG',
+			type: 'amneziawg',
+			address: awg.hostName,
+			port: String(awg.port),
+			wireguard_local_address: localAddr ? [localAddr] : null,
+			wireguard_private_key: awg.client_priv_key,
+			wireguard_peer_public_key: awg.server_pub_key,
+			wireguard_pre_shared_key: awg.psk_key || null,
+			wireguard_mtu: awg.mtu || null,
+			wireguard_persistent_keepalive_interval: awg.persistent_keep_alive || null,
+			amnezia_jc: awg.Jc,
+			amnezia_jmin: awg.Jmin,
+			amnezia_jmax: awg.Jmax,
+			amnezia_s1: awg.S1,
+			amnezia_s2: awg.S2,
+			amnezia_s3: awg.S3 || null,
+			amnezia_s4: awg.S4 || null,
+			amnezia_h1: awg.H1,
+			amnezia_h2: awg.H2,
+			amnezia_h3: awg.H3,
+			amnezia_h4: awg.H4,
+			amnezia_i1: awg.I1 || null,
+			amnezia_i2: awg.I2 || null,
+			amnezia_i3: awg.I3 || null,
+			amnezia_i4: awg.I4 || null,
+			amnezia_i5: awg.I5 || null,
+		};
+	}
+	case 'amnezia-xray': {
+		const xray = container.xray;
+		if (!xray?.last_config) return null;
+		let xrayCfg;
+		try { xrayCfg = JSON.parse(xray.last_config); } catch(e) { return null; }
+
+		const outbound = xrayCfg.outbounds?.find(
+			o => !['freedom', 'blackhole', 'dns'].includes(o.protocol)
+		);
+		if (!outbound) return null;
+
+		const stream = outbound.streamSettings || {};
+		/* Xray network → homeproxy transport */
+		const netMap = { ws: 'ws', grpc: 'grpc', h2: 'http', http: 'http',
+		                 httpupgrade: 'httpupgrade', xhttp: 'xhttp', splithttp: 'xhttp' };
+		const transport = netMap[stream.network] || null;
+		const security = stream.security || 'none';
+
+		let config = {
+			label: label || (decoded.hostName + ':' + xray.port) || outbound.protocol,
+			transport: transport,
+		};
+
+		/* TLS / Reality */
+		if (security === 'reality') {
+			const r = stream.realitySettings || {};
+			Object.assign(config, {
+				tls: '1',
+				tls_reality: '1',
+				tls_sni: r.serverName || null,
+				tls_fingerprint: r.fingerprint || null,
+				tls_reality_public_key: r.publicKey || null,
+				tls_reality_short_id: r.shortId || null,
+			});
+		} else if (security === 'tls') {
+			const t = stream.tlsSettings || {};
+			Object.assign(config, {
+				tls: '1',
+				tls_sni: t.serverName || null,
+				tls_insecure: t.allowInsecure ? '1' : '0',
+				tls_fingerprint: t.fingerprint || null,
+			});
+		}
+
+		/* Transport details */
+		if (transport === 'ws') {
+			const ws = stream.wsSettings || {};
+			config.ws_path = ws.path || null;
+			config.transport_host = ws.headers?.Host || null;
+		} else if (transport === 'grpc') {
+			config.grpc_servicename = (stream.grpcSettings || {}).serviceName || null;
+		} else if (transport === 'xhttp') {
+			config.transport_path = (stream.xhttpSettings || stream.splithttpSettings || {}).path || null;
+		}
+
+		/* Protocol-specific fields */
+		switch (outbound.protocol) {
+		case 'vless': {
+			const vnext = outbound.settings?.vnext?.[0];
+			if (!vnext) return null;
+			const user = vnext.users?.[0] || {};
+			return Object.assign(config, {
+				type: 'vless',
+				address: vnext.address,
+				port: String(vnext.port),
+				uuid: user.id,
+				vless_flow: (security === 'reality' || security === 'tls') ? (user.flow || null) : null,
+			});
+		}
+		case 'vmess': {
+			const vnext = outbound.settings?.vnext?.[0];
+			if (!vnext) return null;
+			const user = vnext.users?.[0] || {};
+			return Object.assign(config, {
+				type: 'vmess',
+				address: vnext.address,
+				port: String(vnext.port),
+				uuid: user.id,
+				vmess_alter_id: String(user.alterId || 0),
+			});
+		}
+		case 'trojan': {
+			const server = outbound.settings?.servers?.[0];
+			if (!server) return null;
+			return Object.assign(config, {
+				type: 'trojan',
+				address: server.address,
+				port: String(server.port),
+				password: server.password,
+			});
+		}
+		case 'shadowsocks': {
+			const server = outbound.settings?.servers?.[0];
+			if (!server) return null;
+			return Object.assign(config, {
+				type: 'shadowsocks',
+				address: server.address,
+				port: String(server.port),
+				password: server.password,
+				shadowsocks_encrypt_method: server.method,
+			});
+		}
+		default:
+			return null;
+		}
+	}
+	default:
+		/* amnezia-openvpn, amnezia-ipsec, unknown — skip silently */
+		return null;
+	}
+}
+
 function parseShareLink(uri, features) {
 	let config, url, params;
 
@@ -679,6 +857,8 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 		o.value('tuic', _('Tuic'));
 	if (features.with_wireguard && features.with_gvisor)
 		o.value('wireguard', _('WireGuard'));
+	if (features.core_type === 'singbox')
+		o.value('amneziawg', _('AmneziaWG'));
 	o.value('vless', _('VLESS'));
 	o.value('vmess', _('VMess'));
 	o.rmempty = false;
@@ -704,6 +884,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	o.depends('type', 'vless');
 	o.depends('type', 'vmess');
 	o.depends('type', 'wireguard');
+	o.depends('type', 'amneziawg');
 	o.rmempty = false;
 
 	o = s.option(form.Value, 'username', _('Username'));
@@ -1201,6 +1382,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 		_('List of IP (v4 or v6) addresses prefixes to be assigned to the interface.'));
 	o.datatype = 'cidr';
 	o.depends('type', 'wireguard');
+	o.depends('type', 'amneziawg');
 	o.rmempty = false;
 	o.modalonly = true;
 
@@ -1208,6 +1390,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 		_('WireGuard requires base64-encoded private keys.'));
 	o.password = true;
 	o.depends('type', 'wireguard');
+	o.depends('type', 'amneziawg');
 	o.validate = L.bind(hp.validateBase64Key, this, 44);
 	o.rmempty = false;
 	o.modalonly = true;
@@ -1215,6 +1398,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	o = s.option(form.Value, 'wireguard_peer_public_key', _('Peer pubkic key'),
 		_('WireGuard peer public key.'));
 	o.depends('type', 'wireguard');
+	o.depends('type', 'amneziawg');
 	o.validate = L.bind(hp.validateBase64Key, this, 44);
 	o.rmempty = false;
 	o.modalonly = true;
@@ -1223,6 +1407,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 		_('WireGuard pre-shared key.'));
 	o.password = true;
 	o.depends('type', 'wireguard');
+	o.depends('type', 'amneziawg');
 	o.validate = L.bind(hp.validateBase64Key, this, 44);
 	o.modalonly = true;
 
@@ -1235,14 +1420,123 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	o.datatype = 'range(0,9000)';
 	o.placeholder = '1408';
 	o.depends('type', 'wireguard');
+	o.depends('type', 'amneziawg');
 	o.modalonly = true;
 
 	o = s.option(form.Value, 'wireguard_persistent_keepalive_interval', _('Persistent keepalive interval'),
 		_('In seconds. Disabled by default.'));
 	o.datatype = 'uinteger';
 	o.depends('type', 'wireguard');
+	o.depends('type', 'amneziawg');
 	o.modalonly = true;
 	/* Wireguard config end */
+
+	/* AmneziaWG config start */
+	o = s.option(form.Value, 'amnezia_jc', _('Jc'),
+		_('Junk packet count.'));
+	o.datatype = 'uinteger';
+	o.depends('type', 'amneziawg');
+	o.rmempty = false;
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'amnezia_jmin', _('Jmin'),
+		_('Junk packet minimum size.'));
+	o.datatype = 'uinteger';
+	o.depends('type', 'amneziawg');
+	o.rmempty = false;
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'amnezia_jmax', _('Jmax'),
+		_('Junk packet maximum size.'));
+	o.datatype = 'uinteger';
+	o.depends('type', 'amneziawg');
+	o.rmempty = false;
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'amnezia_s1', _('S1'));
+	o.datatype = 'uinteger';
+	o.depends('type', 'amneziawg');
+	o.rmempty = false;
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'amnezia_s2', _('S2'));
+	o.datatype = 'uinteger';
+	o.depends('type', 'amneziawg');
+	o.rmempty = false;
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'amnezia_s3', _('S3'));
+	o.datatype = 'uinteger';
+	o.depends('type', 'amneziawg');
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'amnezia_s4', _('S4'));
+	o.datatype = 'uinteger';
+	o.depends('type', 'amneziawg');
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'amnezia_h1', _('H1'),
+		_('Magic header range, e.g. 426560850-1096521767'));
+	o.depends('type', 'amneziawg');
+	o.rmempty = false;
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'amnezia_h2', _('H2'),
+		_('Magic header range, e.g. 1603445073-1836768565'));
+	o.depends('type', 'amneziawg');
+	o.rmempty = false;
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'amnezia_h3', _('H3'),
+		_('Magic header range, e.g. 2047861992-2141668339'));
+	o.depends('type', 'amneziawg');
+	o.rmempty = false;
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'amnezia_h4', _('H4'),
+		_('Magic header range, e.g. 2141792848-2142674170'));
+	o.depends('type', 'amneziawg');
+	o.rmempty = false;
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'amnezia_i1', _('I1'),
+		_('Optional cookie byte sequence in &lt;b 0x...&gt; format.'));
+	o.depends('type', 'amneziawg');
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'amnezia_i2', _('I2'));
+	o.depends('type', 'amneziawg');
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'amnezia_i3', _('I3'));
+	o.depends('type', 'amneziawg');
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'amnezia_i4', _('I4'));
+	o.depends('type', 'amneziawg');
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'amnezia_i5', _('I5'));
+	o.depends('type', 'amneziawg');
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'amnezia_j1', _('J1'));
+	o.depends('type', 'amneziawg');
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'amnezia_j2', _('J2'));
+	o.depends('type', 'amneziawg');
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'amnezia_j3', _('J3'));
+	o.depends('type', 'amneziawg');
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'amnezia_itime', _('ITime'));
+	o.datatype = 'uinteger';
+	o.depends('type', 'amneziawg');
+	o.modalonly = true;
+	/* AmneziaWG config end */
 
 	/* Mux config start */
 	o = s.option(form.Flag, 'multiplex', _('Multiplex'));
@@ -1541,7 +1835,7 @@ return view.extend({
 		ss.handleLinkImport = function() {
 			let textarea = new ui.Textarea();
 			ui.showModal(_('Import share links'), [
-				E('p', _('Support Hysteria, Mieru, NaïveProxy, Shadowsocks, SSH, Trojan, v2rayN (VMess), WireGuard, and XTLS (VLESS) online configuration delivery standard.')),
+				E('p', _('Support AmneziaWG (vpn://), Hysteria, Mieru, NaïveProxy, Shadowsocks, SSH, Trojan, v2rayN (VMess), WireGuard, and XTLS (VLESS) online configuration delivery standard.')),
 				textarea.render(),
 				E('div', { class: 'right' }, [
 					E('button', {
@@ -1551,23 +1845,35 @@ return view.extend({
 					'',
 					E('button', {
 						class: 'btn cbi-button-action',
-						click: ui.createHandlerFn(this, () => {
-							let input_links = textarea.getValue().trim().split('\n');
-							if (input_links && input_links[0]) {
-								/* Remove duplicate lines */
-								input_links = input_links.reduce((pre, cur) =>
-									(!pre.includes(cur) && pre.push(cur), pre), []);
+						click: ui.createHandlerFn(this, function() {
+							let input_links = textarea.getValue().trim().split('\n')
+								.map(l => l.trim()).filter(Boolean);
+							if (!input_links.length)
+								return ui.hideModal();
 
-								let allow_insecure = uci.get(data[0], 'subscription', 'allow_insecure');
-								let packet_encoding = uci.get(data[0], 'subscription', 'packet_encoding');
-								let imported_node = 0;
-								input_links.forEach((l) => {
-									let config = parseShareLink(l, features);
-									if (config) {
+							/* Remove duplicates */
+							input_links = [...new Set(input_links)];
+
+							let allow_insecure = uci.get(data[0], 'subscription', 'allow_insecure');
+							let packet_encoding = uci.get(data[0], 'subscription', 'packet_encoding');
+							const total = input_links.length;
+
+							const vpnLinks = input_links.filter(l => l.startsWith('vpn://'));
+							const uriLinks = input_links.filter(l => !l.startsWith('vpn://'));
+
+							return Promise.all(vpnLinks.map(l => parseVpnLink(l).catch(() => null)))
+								.then(vpnConfigs => {
+									const configs = [
+										...vpnConfigs.filter(Boolean),
+										...uriLinks.map(l => parseShareLink(l, features)).filter(Boolean)
+									];
+
+									let imported_node = 0;
+									configs.forEach((config) => {
 										if (config.tls === '1' && allow_insecure === '1')
-											config.tls_insecure = '1'
+											config.tls_insecure = '1';
 										if (['vless', 'vmess'].includes(config.type))
-											config.packet_encoding = packet_encoding
+											config.packet_encoding = packet_encoding;
 
 										let nameHash = hp.calcStringMD5(config.label);
 										let sid = uci.add(data[0], 'node', nameHash);
@@ -1575,23 +1881,20 @@ return view.extend({
 											uci.set(data[0], sid, k, config[k]);
 										});
 										imported_node++;
-									}
+									});
+
+									if (imported_node === 0)
+										ui.addNotification(null, E('p', _('No valid share link found.')));
+									else
+										ui.addNotification(null, E('p', _('Successfully imported %s nodes of total %s.').format(
+											imported_node, total)));
+
+									return uci.save()
+										.then(L.bind(this.map.load, this.map))
+										.then(L.bind(this.map.reset, this.map))
+										.then(L.ui.hideModal)
+										.catch(() => {});
 								});
-
-								if (imported_node === 0)
-									ui.addNotification(null, E('p', _('No valid share link found.')));
-								else
-									ui.addNotification(null, E('p', _('Successfully imported %s nodes of total %s.').format(
-										imported_node, input_links.length)));
-
-								return uci.save()
-									.then(L.bind(this.map.load, this.map))
-									.then(L.bind(this.map.reset, this.map))
-									.then(L.ui.hideModal)
-									.catch(() => {});
-							} else {
-								return ui.hideModal();
-							}
 						})
 					}, [ _('Import') ])
 				])

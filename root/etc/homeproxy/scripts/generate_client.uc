@@ -185,13 +185,15 @@ function generate_endpoint(node) {
 	if (type(node) !== 'object' || isEmpty(node))
 		return null;
 
+	const is_wg = node.type in ['wireguard', 'amneziawg'];
+
 	const endpoint = {
-		type: node.type,
+		type: is_wg ? 'wireguard' : node.type,
 		tag: 'cfg-' + node['.name'] + '-out',
 		address: node.wireguard_local_address,
 		mtu: strToInt(node.wireguard_mtu),
 		private_key: node.wireguard_private_key,
-		peers: (node.type === 'wireguard') ? [
+		peers: is_wg ? [
 			{
 				address: node.address,
 				port: strToInt(node.port),
@@ -205,7 +207,29 @@ function generate_endpoint(node) {
 				reserved: parse_port(node.wireguard_reserved),
 			}
 		] : null,
-		system: (node.type === 'wireguard') ? false : null,
+		system: is_wg ? false : null,
+		amnezia: (node.type === 'amneziawg') ? {
+			jc: strToInt(node.amnezia_jc),
+			jmin: strToInt(node.amnezia_jmin),
+			jmax: strToInt(node.amnezia_jmax),
+			s1: strToInt(node.amnezia_s1),
+			s2: strToInt(node.amnezia_s2),
+			s3: strToInt(node.amnezia_s3),
+			s4: strToInt(node.amnezia_s4),
+			h1: node.amnezia_h1 || null,
+			h2: node.amnezia_h2 || null,
+			h3: node.amnezia_h3 || null,
+			h4: node.amnezia_h4 || null,
+			i1: node.amnezia_i1 || null,
+			i2: node.amnezia_i2 || null,
+			i3: node.amnezia_i3 || null,
+			i4: node.amnezia_i4 || null,
+			i5: node.amnezia_i5 || null,
+			j1: node.amnezia_j1 || null,
+			j2: node.amnezia_j2 || null,
+			j3: node.amnezia_j3 || null,
+			itime: strToInt(node.amnezia_itime),
+		} : null,
 		tcp_fast_open: strToBool(node.tcp_fast_open),
 		tcp_multi_path: strToBool(node.tcp_multi_path),
 		udp_fragment: strToBool(node.udp_fragment)
@@ -839,7 +863,7 @@ if (!isEmpty(main_node)) {
 		urltest_nodes = main_urltest_nodes;
 	} else {
 		const main_node_cfg = uci.get_all(uciconfig, main_node) || {};
-		if (main_node_cfg.type === 'wireguard') {
+		if (main_node_cfg.type in ['wireguard', 'amneziawg']) {
 			push(config.endpoints, generate_endpoint(main_node_cfg));
 			config.endpoints[length(config.endpoints)-1].tag = 'main-out';
 		} else {
@@ -864,7 +888,7 @@ if (!isEmpty(main_node)) {
 		urltest_nodes = [...urltest_nodes, ...filter(main_udp_urltest_nodes, (l) => !~index(urltest_nodes, l))];
 	} else if (dedicated_udp_node) {
 		const main_udp_node_cfg = uci.get_all(uciconfig, main_udp_node) || {};
-		if (main_udp_node_cfg.type === 'wireguard') {
+		if (main_udp_node_cfg.type in ['wireguard', 'amneziawg']) {
 			push(config.endpoints, generate_endpoint(main_udp_node_cfg));
 			config.endpoints[length(config.endpoints)-1].tag = 'main-udp-out';
 		} else {
@@ -876,7 +900,7 @@ if (!isEmpty(main_node)) {
 	for (let i in urltest_nodes) {
 		const urltest_node = uci.get_all(uciconfig, i);
 		if (!urltest_node) continue;
-		if (urltest_node.type === 'wireguard') {
+		if (urltest_node.type in ['wireguard', 'amneziawg']) {
 			push(config.endpoints, generate_endpoint(urltest_node));
 			config.endpoints[length(config.endpoints)-1].tag = 'cfg-' + i + '-out';
 		} else {
@@ -907,7 +931,7 @@ if (!isEmpty(main_node)) {
 			urltest_nodes = [...urltest_nodes, ...filter(existing_urltest_nodes, (l) => !~index(urltest_nodes, l))];
 		} else {
 			const outbound = uci.get_all(uciconfig, cfg.node) || {};
-			if (outbound.type === 'wireguard') {
+			if (outbound.type in ['wireguard', 'amneziawg']) {
 				push(config.endpoints, generate_endpoint(outbound));
 				config.endpoints[length(config.endpoints)-1].bind_interface = cfg.bind_interface;
 				config.endpoints[length(config.endpoints)-1].detour = get_outbound(cfg.outbound);
@@ -933,7 +957,7 @@ if (!isEmpty(main_node)) {
 	for (let i in filter(urltest_nodes, (l) => !~index(routing_nodes, l))) {
 		const urltest_node = uci.get_all(uciconfig, i);
 		if (!urltest_node) continue;
-		if (urltest_node.type === 'wireguard')
+		if (urltest_node.type in ['wireguard', 'amneziawg'])
 			push(config.endpoints, generate_endpoint(urltest_node));
 		else
 			push(config.outbounds, generate_outbound(urltest_node));

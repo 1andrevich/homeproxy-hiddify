@@ -9,7 +9,8 @@ START=99
 STOP=10
 
 CONF="homeproxy"
-PROG="/usr/bin/hiddify-core"
+PROG_HIDDIFY="/usr/bin/hiddify-core"
+PROG_SINGBOX="/usr/bin/sing-box"
 
 HP_DIR="/etc/homeproxy"
 RUN_DIR="/var/run/homeproxy"
@@ -28,7 +29,14 @@ log() {
 }
 
 start_service() {
-	[ -x "$PROG" ] || { log "Error: $PROG not found or not executable. Install hiddify-core first."; return 1; }
+	if [ -x "$PROG_HIDDIFY" ]; then
+		PROG="$PROG_HIDDIFY"
+	elif [ -x "$PROG_SINGBOX" ]; then
+		PROG="$PROG_SINGBOX"
+	else
+		log "Error: No supported core found. Install hiddify-core or sing-box first."
+		return 1
+	fi
 
 	config_load "$CONF"
 
@@ -124,7 +132,7 @@ start_service() {
 	utpl -S "$HP_DIR/scripts/firewall_post.ut" > "$RUN_DIR/fw4_post.nft"
 	fw4 reload >"/dev/null" 2>&1
 
-	log "hiddify-core started."
+	log "$(basename $PROG) started."
 }
 
 stop_service() {

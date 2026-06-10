@@ -48,14 +48,15 @@ function getServiceStatus() {
 	});
 }
 
-function renderStatus(isRunning, version) {
-	let verStr = version ? 'v' + version : _('unknown');
-	let spanTemp = '<em><span style="color:%s"><strong>%s (hiddify-core %s) %s</strong></span></em>';
+function renderStatus(isRunning, features) {
+	let coreName = (features.core_type === 'singbox') ? 'sing-box' : 'hiddify-core';
+	let verStr = features.version ? 'v' + features.version : _('unknown');
+	let spanTemp = '<em><span style="color:%s"><strong>%s (%s %s) %s</strong></span></em>';
 	let renderHTML;
 	if (isRunning)
-		renderHTML = spanTemp.format('green', _('HomeProxy-hiddify'), verStr, _('RUNNING'));
+		renderHTML = spanTemp.format('green', _('HomeProxy-hiddify'), coreName, verStr, _('RUNNING'));
 	else
-		renderHTML = spanTemp.format('red', _('HomeProxy-hiddify'), verStr, _('NOT RUNNING'));
+		renderHTML = spanTemp.format('red', _('HomeProxy-hiddify'), coreName, verStr, _('NOT RUNNING'));
 
 	return renderHTML;
 }
@@ -107,7 +108,7 @@ return view.extend({
 			poll.add(function () {
 				return L.resolveDefault(getServiceStatus()).then((res) => {
 					let view = document.getElementById('service_status');
-					view.innerHTML = renderStatus(res, features.version);
+					view.innerHTML = renderStatus(res, features);
 				});
 			});
 
