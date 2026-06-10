@@ -149,6 +149,14 @@ msgstr "Разрешить небезопасное соединение по у
 msgid "Allowed payload size is in the request."
 msgstr "Допустимый размер полезной нагрузки указан в запросе."
 
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Active Node"
+msgstr "Активный узел"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "No active node"
+msgstr "Нет активного узла"
+
 #: htdocs/luci-static/resources/view/homeproxy/status.js:95
 msgid "Already at the latest version."
 msgstr "Уже установлена последняя версия."

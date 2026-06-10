@@ -338,6 +338,72 @@ const methods = {
 			}
 			return { groups };
 		}
+	},
+	clash_active_node: {
+		call: function() {
+			const fd = popen('wget -qO- --timeout=3 http://127.0.0.1:9090/proxies');
+			if (!fd)
+				return { error: 'failed to run wget' };
+			const raw = trim(fd.read('all'));
+			fd.close();
+			if (!length(raw))
+				return { error: 'Clash API not reachable' };
+			let data;
+			try {
+				data = json(raw);
+			} catch(e) {
+				return { error: 'invalid JSON from Clash API' };
+			}
+			const proxies = data?.proxies || {};
+
+			const lastDelay = (name) => {
+				const h = proxies[name]?.history;
+				return (h && length(h)) ? h[length(h) - 1].delay : null;
+			};
+
+			/* Follow GLOBAL -> proxy group -> leaf node */
+			let groupName = null;
+			let groupType = null;
+			let nodeName  = null;
+
+			const globalNow = proxies['GLOBAL']?.now;
+			if (globalNow && proxies[globalNow]) {
+				const g = proxies[globalNow];
+				if (g.type === 'URLTest' || g.type === 'Fallback' || g.type === 'Selector') {
+					groupName = globalNow;
+					groupType = g.type;
+					nodeName  = g.now;
+				} else {
+					/* GLOBAL points directly to a leaf node */
+					nodeName = globalNow;
+				}
+			}
+
+			/* Fallback: first URLTest/Fallback/Selector group */
+			if (!nodeName) {
+				for (let name in proxies) {
+					if (name === 'GLOBAL') continue;
+					const p = proxies[name];
+					if ((p.type === 'URLTest' || p.type === 'Fallback' || p.type === 'Selector') && p.now) {
+						groupName = name;
+						groupType = p.type;
+						nodeName  = p.now;
+						break;
+					}
+				}
+			}
+
+			if (!nodeName)
+				return { error: 'no active proxy node' };
+
+			return {
+				node:       nodeName,
+				type:       proxies[nodeName]?.type || null,
+				delay:      lastDelay(nodeName),
+				group:      groupName,
+				group_type: groupType
+			};
+		}
 	}
 };
 

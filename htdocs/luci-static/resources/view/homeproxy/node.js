@@ -120,7 +120,7 @@ async function parseVpnLink(uri) {
 				tls: '1',
 				tls_reality: '1',
 				tls_sni: r.serverName || null,
-				tls_fingerprint: r.fingerprint || null,
+				tls_utls: r.fingerprint || null,
 				tls_reality_public_key: r.publicKey || null,
 				tls_reality_short_id: r.shortId || null,
 			});
@@ -130,7 +130,7 @@ async function parseVpnLink(uri) {
 				tls: '1',
 				tls_sni: t.serverName || null,
 				tls_insecure: t.allowInsecure ? '1' : '0',
-				tls_fingerprint: t.fingerprint || null,
+				tls_utls: t.fingerprint || null,
 			});
 		}
 

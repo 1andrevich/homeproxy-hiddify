@@ -113,6 +113,44 @@ function getConnStat(o, site) {
 	]);
 }
 
+function getActiveNode(o) {
+	const callActiveNode = rpc.declare({
+		object: 'luci.homeproxy',
+		method: 'clash_active_node',
+		expect: { '': {} }
+	});
+
+	const resolveTag = (tag) => {
+		const m = tag && tag.match(/^cfg-(.+)-out$/);
+		if (m) {
+			const label = uci.get('homeproxy', m[1], 'label');
+			if (label) return label;
+		}
+		return tag;
+	};
+
+	const el = E('span', { 'style': 'color:gray' }, '—');
+
+	poll.add(L.bind(() => {
+		return L.resolveDefault(callActiveNode(), {}).then((ret) => {
+			if (ret.error) {
+				dom.content(el, E('span', { 'style': 'color:red' }, ret.error));
+				return;
+			}
+			if (!ret.node) {
+				dom.content(el, E('span', { 'style': 'color:gray' }, _('No active node')));
+				return;
+			}
+			const name  = resolveTag(ret.node);
+			const type  = ret.type  ? ` (${ret.type})`  : '';
+			const delay = (ret.delay && ret.delay !== 65535) ? ` — ${ret.delay} ms` : '';
+			dom.content(el, E('strong', { 'style': 'color:green' }, `${name}${type}${delay}`));
+		});
+	}));
+
+	o.default = el;
+}
+
 function getResVersion(o, type) {
 	const callResVersion = rpc.declare({
 		object: 'luci.homeproxy',
@@ -307,6 +345,11 @@ return view.extend({
 
 			o = s.option(form.DummyValue, '_check_proxy_ip', _('Proxy IP'));
 			o.cfgvalue = L.bind(getIPInfo, this, o, 'proxy');
+		}
+
+		if (features.core_type === 'singbox') {
+			o = s.option(form.DummyValue, '_active_node', _('Active Node'));
+			o.cfgvalue = L.bind(getActiveNode, this, o);
 		}
 
 		s = m.section(form.NamedSection, 'config', 'homeproxy', _('Resources management'));

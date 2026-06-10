@@ -141,6 +141,14 @@ msgid "Allowed payload size is in the request."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js:95
+msgid "Active Node"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "No active node"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "Already at the latest version."
 msgstr ""
 
