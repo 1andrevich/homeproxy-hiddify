@@ -31,8 +31,10 @@ log() {
 start_service() {
 	if [ -x "$PROG_HIDDIFY" ]; then
 		PROG="$PROG_HIDDIFY"
+		RUN_CMD="srun"
 	elif [ -x "$PROG_SINGBOX" ]; then
 		PROG="$PROG_SINGBOX"
+		RUN_CMD="run"
 	else
 		log "Error: No supported core found. Install hiddify-core or sing-box first."
 		return 1
@@ -107,7 +109,7 @@ start_service() {
 	procd_open_instance "hiddify-c"
 
 	procd_set_param command "$PROG"
-	procd_append_param command srun --config "$RUN_DIR/hiddify-c.json"
+	procd_append_param command $RUN_CMD --config "$RUN_DIR/hiddify-c.json"
 
 	# QUIC-GO GSO is broken on kernel 6.6 currently
 	uname -r | grep -Eq "^6\.6" && procd_set_param env "QUIC_GO_DISABLE_GSO"="true"

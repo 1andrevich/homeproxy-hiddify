@@ -51,14 +51,17 @@ function getServiceStatus() {
 	});
 }
 
-function renderStatus(isRunning, version) {
-	let verStr = version ? 'v' + version : _('unknown');
-	let spanTemp = '<em><span style="color:%s"><strong>%s (hiddify-core %s) %s</strong></span></em>';
+function renderStatus(isRunning, features) {
+	let coreName = features.core_type === 'singbox' ? 'sing-box' :
+	               features.core_type === 'hiddify' ? 'hiddify-core' : null;
+	let verStr = features.version ? 'v' + features.version : _('unknown');
+	let coreStr = coreName ? ('%s %s').format(coreName, verStr) : _('no core installed');
+	let spanTemp = '<em><span style="color:%s"><strong>%s (%s) %s</strong></span></em>';
 	let renderHTML;
 	if (isRunning)
-		renderHTML = spanTemp.format('green', _('HomeProxy-hiddify Server'), verStr, _('RUNNING'));
+		renderHTML = spanTemp.format('green', _('HomeProxy-hiddify Server'), coreStr, _('RUNNING'));
 	else
-		renderHTML = spanTemp.format('red', _('HomeProxy-hiddify Server'), verStr, _('NOT RUNNING'));
+		renderHTML = spanTemp.format('red', _('HomeProxy-hiddify Server'), coreStr, _('NOT RUNNING'));
 
 	return renderHTML;
 }
@@ -128,14 +131,14 @@ return view.extend({
 		let features = data[1];
 
 		m = new form.Map('homeproxy', _('HomeProxy-hiddify Server'),
-			_('The modern ImmortalWrt proxy platform based on hiddify-core.'));
+			_('The modern multi-core ImmortalWrt proxy platform.'));
 
 		s = m.section(form.TypedSection);
 		s.render = function() {
 			poll.add(() => {
 				return L.resolveDefault(getServiceStatus()).then((res) => {
 					let view = document.getElementById('service_status');
-					view.innerHTML = renderStatus(res, features.version);
+					view.innerHTML = renderStatus(res, features);
 				});
 			});
 

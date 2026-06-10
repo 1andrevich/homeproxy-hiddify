@@ -49,14 +49,16 @@ function getServiceStatus() {
 }
 
 function renderStatus(isRunning, features) {
-	let coreName = (features.core_type === 'singbox') ? 'sing-box' : 'hiddify-core';
+	let coreName = features.core_type === 'singbox' ? 'sing-box' :
+	               features.core_type === 'hiddify' ? 'hiddify-core' : null;
 	let verStr = features.version ? 'v' + features.version : _('unknown');
-	let spanTemp = '<em><span style="color:%s"><strong>%s (%s %s) %s</strong></span></em>';
+	let coreStr = coreName ? ('%s %s').format(coreName, verStr) : _('no core installed');
+	let spanTemp = '<em><span style="color:%s"><strong>%s (%s) %s</strong></span></em>';
 	let renderHTML;
 	if (isRunning)
-		renderHTML = spanTemp.format('green', _('HomeProxy-hiddify'), coreName, verStr, _('RUNNING'));
+		renderHTML = spanTemp.format('green', _('HomeProxy-hiddify'), coreStr, _('RUNNING'));
 	else
-		renderHTML = spanTemp.format('red', _('HomeProxy-hiddify'), coreName, verStr, _('NOT RUNNING'));
+		renderHTML = spanTemp.format('red', _('HomeProxy-hiddify'), coreStr, _('NOT RUNNING'));
 
 	return renderHTML;
 }
@@ -101,7 +103,7 @@ return view.extend({
 		});
 
 		m = new form.Map('homeproxy', _('HomeProxy-hiddify'),
-			_('The modern ImmortalWrt proxy platform based on hiddify-core.'));
+			_('The modern multi-core ImmortalWrt proxy platform.'));
 
 		s = m.section(form.TypedSection);
 		s.render = function () {

@@ -53,6 +53,10 @@ const dns_port = uci.get(uciconfig, uciinfra, 'dns_port') || '5333';
 
 const ntp_server = uci.get(uciconfig, uciinfra, 'ntp_server') || 'time.apple.com';
 
+/* Detect active core: hiddify-core takes priority over sing-box */
+const is_hiddify = !!access('/usr/bin/hiddify-core');
+const is_singbox = !is_hiddify && !!access('/usr/bin/sing-box');
+
 const ipv6_support = uci.get(uciconfig, ucimain, 'ipv6_support') || '0';
 
 let main_node, main_udp_node, dedicated_udp_node, default_outbound, default_outbound_dns,
@@ -645,9 +649,9 @@ push(config.inbounds, {
 	listen: '::',
 	listen_port: int(mixed_port),
 	udp_timeout: strToTime(udp_timeout),
-	sniff: true,
-	sniff_override_destination: strToBool(sniff_override),
-	set_system_proxy: false
+	sniff: is_hiddify ? true : null,
+	sniff_override_destination: is_hiddify ? strToBool(sniff_override) : null,
+	set_system_proxy: is_hiddify ? false : null,
 });
 
 if (match(proxy_mode, /redirect/))
@@ -657,8 +661,8 @@ if (match(proxy_mode, /redirect/))
 
 		listen: '::',
 		listen_port: int(redirect_port),
-		sniff: true,
-		sniff_override_destination: strToBool(sniff_override)
+		sniff: is_hiddify ? true : null,
+		sniff_override_destination: is_hiddify ? strToBool(sniff_override) : null,
 	});
 if (match(proxy_mode, /tproxy/))
 	push(config.inbounds, {
@@ -669,8 +673,8 @@ if (match(proxy_mode, /tproxy/))
 		listen_port: int(tproxy_port),
 		network: 'udp',
 		udp_timeout: strToTime(udp_timeout),
-		sniff: true,
-		sniff_override_destination: strToBool(sniff_override)
+		sniff: is_hiddify ? true : null,
+		sniff_override_destination: is_hiddify ? strToBool(sniff_override) : null,
 	});
 if (match(proxy_mode, /tun/))
 	push(config.inbounds, {
@@ -684,8 +688,8 @@ if (match(proxy_mode, /tun/))
 		endpoint_independent_nat: strToBool(endpoint_independent_nat),
 		udp_timeout: strToTime(udp_timeout),
 		stack: tcpip_stack,
-		sniff: true,
-		sniff_override_destination: strToBool(sniff_override)
+		sniff: is_hiddify ? true : null,
+		sniff_override_destination: is_hiddify ? strToBool(sniff_override) : null,
 	});
 /* Server inbounds */
 uci.foreach(uciconfig, uciserver, (cfg) => {
@@ -975,13 +979,11 @@ config.route = {
 		{
 			inbound: 'dns-in',
 			action: 'hijack-dns'
-		}
-		/*
-		 * leave for sing-box 1.13.0
-		 * {
-		 * 	action: 'sniff'
-		 * }
-		 */
+		},
+		is_singbox ? {
+			action: 'sniff',
+			override_destination: strToBool(sniff_override)
+		} : null
 	],
 	rule_set: [],
 	auto_detect_interface: isEmpty(default_interface) ? true : null,

@@ -346,7 +346,7 @@ return view.extend({
 		o.render = L.bind(getRuntimeLog, this, o, _('HomeProxy'));
 
 		o = s.option(form.DummyValue, '_hiddify-c_logview');
-		o.render = L.bind(getRuntimeLog, this, o, _('hiddify-core client'));
+		o.render = L.bind(getRuntimeLog, this, o, _('core client'));
 
 		return m.render();
 	},
