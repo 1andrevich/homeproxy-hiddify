@@ -15,7 +15,8 @@ function shellquote(s) {
 }
 
 function hasKernelModule(kmod) {
-	return (system(sprintf('[ -e "/lib/modules/$(uname -r)"/%s ]', shellquote(kmod))) === 0);
+	const modname = replace(replace(kmod, /\.ko$/, ''), /-/g, '_');
+	return !!access('/sys/module/' + modname);
 }
 
 const HP_DIR = '/etc/homeproxy';
@@ -216,38 +217,38 @@ const methods = {
 		call: function() {
 			let features = {};
 
-			let core_binary = null;
-			if (access('/usr/bin/hiddify-core')) {
-				core_binary = '/usr/bin/hiddify-core';
-				features.core_type = 'hiddify';
-			} else if (access('/usr/bin/sing-box')) {
-				core_binary = '/usr/bin/sing-box';
-				features.core_type = 'singbox';
-			}
-
-			if (core_binary) {
-				const fd = popen(core_binary + ' version');
-				if (fd) {
-					const out = fd.read('all');
-					fd.close();
-
-					const verMatch = match(out, /(?:hiddify-core|sing-box) version v?(\S+)/);
-					if (verMatch)
-						features.version = verMatch[1];
-
-					const tagsMatch = match(out, /\nTags: ([^\n]+)/);
-					if (tagsMatch)
-						for (let tag in split(tagsMatch[1], ','))
-							features[trim(tag)] = true;
+				let core_binary = null;
+				if (access('/usr/bin/hiddify-core')) {
+					core_binary = '/usr/bin/hiddify-core';
+					features.core_type = 'hiddify';
+				} else if (access('/usr/bin/sing-box')) {
+					core_binary = '/usr/bin/sing-box';
+					features.core_type = 'singbox';
 				}
-			}
 
-			features.hp_has_ip_full = access('/usr/libexec/ip-full');
-			features.hp_has_tcp_brutal = hasKernelModule('brutal.ko');
-			features.hp_has_tproxy = hasKernelModule('nft_tproxy.ko') || access('/etc/modules.d/nft-tproxy');
-			features.hp_has_tun = hasKernelModule('tun.ko') || access('/etc/modules.d/30-tun');
+				if (core_binary) {
+					const fd = popen(core_binary + ' version');
+					if (fd) {
+						const out = fd.read('all');
+						fd.close();
 
-			return features;
+						const verMatch = match(out, / version v?(\S+)/);
+						if (verMatch)
+							features.version = verMatch[1];
+
+						const tagsMatch = match(out, /\nTags: ([^\n]+)/);
+						if (tagsMatch)
+							for (let tag in split(tagsMatch[1], ','))
+								features[trim(tag)] = true;
+					}
+				}
+
+				features.hp_has_ip_full = !!access('/usr/libexec/ip-full');
+				features.hp_has_tcp_brutal = hasKernelModule('brutal.ko');
+				features.hp_has_tproxy = hasKernelModule('nft_tproxy.ko') || !!access('/etc/modules.d/nft-tproxy');
+				features.hp_has_tun = hasKernelModule('tun.ko') || !!access('/etc/modules.d/30-tun');
+
+				return features;
 		}
 	},
 

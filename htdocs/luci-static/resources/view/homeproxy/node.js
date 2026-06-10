@@ -54,19 +54,24 @@ async function parseVpnLink(uri) {
 	case 'amnezia-awg2': {
 		const awg = container.awg;
 		if (!awg) return null;
-		const clientIp = awg.client_ip || '';
+		/* detailed fields live inside last_config as a JSON string */
+		let cfg = awg;
+		if (awg.last_config) {
+			try { cfg = Object.assign({}, awg, JSON.parse(awg.last_config)); } catch(e) {}
+		}
+		const clientIp = cfg.client_ip || '';
 		const localAddr = clientIp.includes('/') ? clientIp : (clientIp ? clientIp + '/32' : null);
 		return {
-			label: label || (awg.hostName + ':' + awg.port) || 'AmneziaWG',
+			label: (label || (cfg.hostName + ':' + cfg.port) || 'AmneziaWG') + '-awg',
 			type: 'amneziawg',
-			address: awg.hostName,
-			port: String(awg.port),
+			address: cfg.hostName || decoded.hostName,
+			port: String(cfg.port || awg.port),
 			wireguard_local_address: localAddr ? [localAddr] : null,
-			wireguard_private_key: awg.client_priv_key,
-			wireguard_peer_public_key: awg.server_pub_key,
-			wireguard_pre_shared_key: awg.psk_key || null,
-			wireguard_mtu: awg.mtu || null,
-			wireguard_persistent_keepalive_interval: awg.persistent_keep_alive || null,
+			wireguard_private_key: cfg.client_priv_key,
+			wireguard_peer_public_key: cfg.server_pub_key,
+			wireguard_pre_shared_key: cfg.psk_key || null,
+			wireguard_mtu: cfg.mtu || null,
+			wireguard_persistent_keepalive_interval: cfg.persistent_keep_alive || null,
 			amnezia_jc: awg.Jc,
 			amnezia_jmin: awg.Jmin,
 			amnezia_jmax: awg.Jmax,
@@ -104,7 +109,7 @@ async function parseVpnLink(uri) {
 		const security = stream.security || 'none';
 
 		let config = {
-			label: label || (decoded.hostName + ':' + xray.port) || outbound.protocol,
+			label: (label || (decoded.hostName + ':' + xray.port) || outbound.protocol) + '-XRay',
 			transport: transport,
 		};
 
@@ -137,7 +142,11 @@ async function parseVpnLink(uri) {
 		} else if (transport === 'grpc') {
 			config.grpc_servicename = (stream.grpcSettings || {}).serviceName || null;
 		} else if (transport === 'xhttp') {
-			config.transport_path = (stream.xhttpSettings || stream.splithttpSettings || {}).path || null;
+			const xhttpCfg = stream.xhttpSettings || stream.splithttpSettings || {};
+			config.http_path = xhttpCfg.path || null;
+			config.http_host = xhttpCfg.host || null;
+			config.xhttp_mode = xhttpCfg.mode || null;
+			config.xhttp_padding_bytes = xhttpCfg.xPaddingBytes || xhttpCfg.x_padding_bytes || null;
 		}
 
 		/* Protocol-specific fields */
@@ -520,6 +529,7 @@ function parseShareLink(uri, features) {
 				config.http_path = params.get('path') ? decodeURIComponent(params.get('path')) : null;
 				config.http_host = params.get('host') ? decodeURIComponent(params.get('host')) : null;
 				config.xhttp_mode = params.get('mode') || null;
+				config.xhttp_padding_bytes = params.get('xPaddingBytes') || params.get('x_padding_bytes') || null;
 				break;
 			}
 
@@ -626,6 +636,7 @@ function parseShareLink(uri, features) {
 				config.http_path = params.get('path') ? decodeURIComponent(params.get('path')) : null;
 				config.http_host = params.get('host') ? decodeURIComponent(params.get('host')) : null;
 				config.xhttp_mode = params.get('mode') || null;
+				config.xhttp_padding_bytes = params.get('xPaddingBytes') || params.get('x_padding_bytes') || null;
 				break;
 			}
 

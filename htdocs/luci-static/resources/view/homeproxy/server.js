@@ -185,6 +185,8 @@ return view.extend({
 			o.value('naive', _('NaïveProxy'));
 		}
 		o.value('mixed', _('Mixed'));
+		if (features.core_type === 'singbox')
+			o.value('mtproxy', _('MTProxy'));
 		o.value('shadowsocks', _('Shadowsocks'));
 		o.value('socks', _('Socks'));
 		o.value('trojan', _('Trojan'));
@@ -249,6 +251,49 @@ return view.extend({
 			_('AnyTLS padding scheme in array.'));
 		o.depends('type', 'anytls');
 		o.modalonly = true;
+
+		/* MTProxy config start */
+		o = s.option(form.DynamicList, 'mtproxy_secrets', _('Secrets'),
+			_('List of MTProxy secrets. Each secret is a 32-character hex string (16 bytes). One secret per user.'));
+		o.depends('type', 'mtproxy');
+		o.validate = function(section_id, value) {
+			if (section_id && value && !/^[0-9a-fA-F]{32}$/.test(value))
+				return _('Expecting: %s').format(_('32 hex characters'));
+			return true;
+		};
+		o.rmempty = false;
+		o.modalonly = true;
+
+		o = s.option(form.Value, 'domain_fronting_host', _('Domain fronting host'),
+			_('Target hostname for FakeTLS domain fronting. Clients will see TLS to this domain.'));
+		o.datatype = 'hostname';
+		o.depends('type', 'mtproxy');
+		o.modalonly = true;
+
+		o = s.option(form.Value, 'domain_fronting_port', _('Domain fronting port'));
+		o.datatype = 'port';
+		o.default = '443';
+		o.depends({'type': 'mtproxy', 'domain_fronting_host': /[\s\S]/});
+		o.modalonly = true;
+
+		o = s.option(form.Value, 'mtproxy_idle_timeout', _('Idle timeout'),
+			_('Close idle connections after this duration (e.g. 5m, 30s).'));
+		o.placeholder = '5m';
+		o.depends('type', 'mtproxy');
+		o.modalonly = true;
+
+		o = s.option(form.Value, 'mtproxy_handshake_timeout', _('Handshake timeout'),
+			_('Maximum time to complete handshake (e.g. 10s).'));
+		o.placeholder = '10s';
+		o.depends('type', 'mtproxy');
+		o.modalonly = true;
+
+		o = s.option(form.Value, 'mtproxy_concurrency', _('Concurrency'),
+			_('Worker pool size. Leave empty for default.'));
+		o.datatype = 'uinteger';
+		o.depends('type', 'mtproxy');
+		o.modalonly = true;
+		/* MTProxy config end */
 
 		/* Hysteria (2) config start */
 		o = s.option(form.ListValue, 'hysteria_protocol', _('Protocol'));

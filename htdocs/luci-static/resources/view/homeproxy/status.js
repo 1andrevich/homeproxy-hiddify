@@ -8,6 +8,7 @@
 'require dom';
 'require form';
 'require fs';
+'require homeproxy as hp';
 'require poll';
 'require rpc';
 'require uci';
@@ -273,7 +274,11 @@ function getRuntimeLog(o, name, _option_index, section_id, _in_table) {
 }
 
 return view.extend({
-	render() {
+	load() {
+		return hp.getBuiltinFeatures();
+	},
+
+	render(features) {
 		let m, s, o;
 
 		m = new form.Map('homeproxy');
@@ -296,11 +301,13 @@ return view.extend({
 		o = s.option(form.DummyValue, '_check_speedtest', _('Speedtest'));
 		o.cfgvalue = L.bind(getConnStat, this, o, 'speedtest');
 
-		o = s.option(form.DummyValue, '_check_direct_ip', _('Direct IP'));
-		o.cfgvalue = L.bind(getIPInfo, this, o, 'direct');
+		if (features.core_type === 'hiddify') {
+			o = s.option(form.DummyValue, '_check_direct_ip', _('Direct IP'));
+			o.cfgvalue = L.bind(getIPInfo, this, o, 'direct');
 
-		o = s.option(form.DummyValue, '_check_proxy_ip', _('Proxy IP'));
-		o.cfgvalue = L.bind(getIPInfo, this, o, 'proxy');
+			o = s.option(form.DummyValue, '_check_proxy_ip', _('Proxy IP'));
+			o.cfgvalue = L.bind(getIPInfo, this, o, 'proxy');
+		}
 
 		s = m.section(form.NamedSection, 'config', 'homeproxy', _('Resources management'));
 		s.anonymous = true;

@@ -182,7 +182,22 @@ return baseclass.extend({
 			expect: { '': {} }
 		});
 
-		return L.resolveDefault(callGetSingBoxFeatures(), {});
+		return L.resolveDefault(callGetSingBoxFeatures(), {}).then((features) => {
+			/* If RPC failed or returned no core_type, fall back to core.info file */
+			if (features.core_type)
+				return features;
+			return L.resolveDefault(fs.read_direct('/var/run/homeproxy/core.info', 'text'), null)
+				.then((text) => {
+					if (text) {
+						try {
+							const info = JSON.parse(text);
+							features.core_type = info.core_type || features.core_type;
+							features.version   = info.version   || features.version;
+						} catch(e) {}
+					}
+					return features;
+				});
+		});
 	},
 
 	generateRand(type, length) {

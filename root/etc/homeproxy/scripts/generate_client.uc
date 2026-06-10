@@ -7,7 +7,7 @@
 
 'use strict';
 
-import { readfile, writefile } from 'fs';
+import { access, readfile, writefile } from 'fs';
 import { isnan } from 'math';
 import { connect } from 'ubus';
 import { cursor } from 'uci';
@@ -360,6 +360,7 @@ function generate_outbound(node) {
 			host: node.http_host || node.httpupgrade_host,
 			path: node.http_path || node.ws_path,
 			mode: (node.transport === 'xhttp') ? (node.xhttp_mode || 'auto') : null,
+			x_padding_bytes: (is_singbox && node.transport === 'xhttp') ? (node.xhttp_padding_bytes || '100-1000') : null,
 			headers: node.xhttp_headers ? json(node.xhttp_headers) : (node.ws_host ? { Host: node.ws_host } : null),
 			method: node.http_method,
 			max_early_data: strToInt(node.websocket_early_data),
@@ -737,8 +738,17 @@ uci.foreach(uciconfig, uciserver, (cfg) => {
 		zero_rtt_handshake: strToBool(cfg.tuic_enable_zero_rtt),
 		heartbeat: strToTime(cfg.tuic_heartbeat),
 
-		/* AnyTLS / HTTP / Hysteria (2) / Mixed / Socks / Trojan / Tuic / VLESS / VMess */
-		users: (cfg.type !== 'shadowsocks') ? [
+		/* MTProxy */
+		concurrency: (cfg.type === 'mtproxy') ? strToInt(cfg.mtproxy_concurrency) : null,
+		idle_timeout: (cfg.type === 'mtproxy') ? (cfg.mtproxy_idle_timeout || null) : null,
+		handshake_timeout: (cfg.type === 'mtproxy') ? (cfg.mtproxy_handshake_timeout || null) : null,
+		domain_fronting_port: (cfg.type === 'mtproxy') ? strToInt(cfg.domain_fronting_port) : null,
+		domain_fronting_host: (cfg.type === 'mtproxy') ? (cfg.domain_fronting_host || null) : null,
+
+		/* AnyTLS / HTTP / Hysteria (2) / Mixed / MTProxy / Socks / Trojan / Tuic / VLESS / VMess */
+		users: (cfg.type === 'mtproxy') ?
+			map(cfg.mtproxy_secrets || [], (s, i) => ({ name: 'user' + (i + 1), secret: s })) :
+			(cfg.type !== 'shadowsocks') ? [
 			{
 				name: !(cfg.type in ['http', 'mixed', 'naive', 'socks']) ? 'cfg-' + cfg['.name'] + '-server' : null,
 				username: cfg.username,
@@ -818,6 +828,8 @@ uci.foreach(uciconfig, uciserver, (cfg) => {
 			type: cfg.transport,
 			host: cfg.http_host || cfg.httpupgrade_host,
 			path: cfg.http_path || cfg.ws_path,
+			mode: (cfg.transport === 'xhttp') ? (cfg.xhttp_mode || 'auto') : null,
+			x_padding_bytes: (is_singbox && cfg.transport === 'xhttp') ? (cfg.xhttp_padding_bytes || '100-1000') : null,
 			headers: cfg.ws_host ? {
 				Host: cfg.ws_host
 			} : null,
@@ -981,8 +993,7 @@ config.route = {
 			action: 'hijack-dns'
 		},
 		is_singbox ? {
-			action: 'sniff',
-			override_destination: strToBool(sniff_override)
+			action: 'sniff'
 		} : null
 	],
 	rule_set: [],

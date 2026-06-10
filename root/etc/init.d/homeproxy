@@ -32,9 +32,11 @@ start_service() {
 	if [ -x "$PROG_HIDDIFY" ]; then
 		PROG="$PROG_HIDDIFY"
 		RUN_CMD="srun"
+		CORE_TYPE="hiddify"
 	elif [ -x "$PROG_SINGBOX" ]; then
 		PROG="$PROG_SINGBOX"
 		RUN_CMD="run"
+		CORE_TYPE="singbox"
 	else
 		log "Error: No supported core found. Install hiddify-core or sing-box first."
 		return 1
@@ -47,6 +49,11 @@ start_service() {
 	config_get proxy_mode "config" "proxy_mode" "redirect_tproxy"
 
 	mkdir -p "$RUN_DIR"
+
+	# Write core info for LuCI
+	local core_version
+	core_version="$("$PROG" version 2>/dev/null | head -1 | awk '{print $3}')"
+	printf '{"core_type":"%s","version":"%s"}\n' "$CORE_TYPE" "$core_version" > "$RUN_DIR/core.info"
 
 	# Generate or copy client config
 	if [ "$routing_mode" = "custom_json" ]; then
