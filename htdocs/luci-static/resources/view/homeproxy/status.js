@@ -32,6 +32,25 @@ const css = '				\
 
 const hp_dir = '/var/run/homeproxy';
 
+/* Map a sing-box outbound tag to its human-readable UCI label */
+function resolveTag(tag) {
+	const m = tag && tag.match(/^cfg-(.+)-out$/);
+	if (m) {
+		const label = uci.get('homeproxy', m[1], 'label');
+		if (label) return label;
+	}
+	/* Fixed tags: look up the backing UCI section via the 'main' config section */
+	const specials = { 'main-out': 'main_node', 'main-udp-out': 'main_udp_node' };
+	if (specials[tag]) {
+		const section = uci.get('homeproxy', 'main', specials[tag]);
+		if (section) {
+			const label = uci.get('homeproxy', section, 'label');
+			if (label) return label;
+		}
+	}
+	return tag;
+}
+
 function getIPInfo(o, type) {
 	const callIPInfo = rpc.declare({
 		object: 'luci.homeproxy',
@@ -45,21 +64,15 @@ function getIPInfo(o, type) {
 		if (!entry)
 			return E('strong', { 'style': 'color:red' }, _('No data'));
 
-		const delayStr = (entry.delay && entry.delay !== 65535) ? ` — ${entry.delay} ms` : '';
-		const resolveTag = (tag) => {
-			const m = tag && tag.match(/^cfg-(.+)-out$/);
-			if (m) {
-				const label = uci.get('homeproxy', m[1], 'label');
-				if (label) return label;
-			}
-			return tag;
-		};
-
 		const lines = [];
 		if (nodeTag)
 			lines.push(E('span', {}, [ _('Node') + ': ', E('strong', {}, resolveTag(nodeTag)) ]));
-		if (entry.ip)
-			lines.push(E('span', {}, [ 'IP: ', E('strong', { 'style': 'color:green' }, entry.ip + delayStr) ]));
+		if (entry.ip) {
+			const delayStr = (entry.delay && entry.delay !== 65535) ? ` — ${entry.delay} ms` : '';
+			const meta = [entry.country, entry.org].filter(Boolean).join(', ');
+			const label = entry.ip + (meta ? ` (${meta})` : '') + delayStr;
+			lines.push(E('span', {}, [ 'IP: ', E('strong', { 'style': 'color:green' }, label) ]));
+		}
 
 		return E('span', {}, lines.map((l) => E('div', {}, [ l ])));
 	};
@@ -119,15 +132,6 @@ function getActiveNode(o) {
 		method: 'clash_active_node',
 		expect: { '': {} }
 	});
-
-	const resolveTag = (tag) => {
-		const m = tag && tag.match(/^cfg-(.+)-out$/);
-		if (m) {
-			const label = uci.get('homeproxy', m[1], 'label');
-			if (label) return label;
-		}
-		return tag;
-	};
 
 	const el = E('span', { 'style': 'color:gray' }, '—');
 

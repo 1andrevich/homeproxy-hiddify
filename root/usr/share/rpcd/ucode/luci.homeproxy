@@ -295,23 +295,42 @@ const methods = {
 			/* Direct IP: from direct-out node */
 			const directEntry = lastHistory('direct-out');
 
-			/* Proxy IP: active node of the first URLTest/Fallback group */
+			/* Proxy IP: follow GLOBAL.now to the active leaf node */
 			let proxyEntry = null;
 			let proxyNodeName = null;
-			for (let name in proxies) {
-				const p = proxies[name];
-				if (name === 'GLOBAL')
-					continue;
-				if ((p.type === 'URLTest' || p.type === 'Fallback') && p.now) {
-					proxyNodeName = p.now;
-					proxyEntry = lastHistory(p.now);
-					break;
+			const globalNow = proxies['GLOBAL']?.now;
+			if (globalNow && proxies[globalNow]) {
+				const g = proxies[globalNow];
+				if (g.type === 'URLTest' || g.type === 'Fallback' || g.type === 'Selector')
+					proxyNodeName = g.now;
+				else
+					proxyNodeName = globalNow;
+			}
+			/* Fallback: first URLTest/Fallback/Selector group */
+			if (!proxyNodeName) {
+				for (let name in proxies) {
+					if (name === 'GLOBAL') continue;
+					const p = proxies[name];
+					if ((p.type === 'URLTest' || p.type === 'Fallback' || p.type === 'Selector') && p.now) {
+						proxyNodeName = p.now;
+						break;
+					}
 				}
 			}
+			if (proxyNodeName)
+				proxyEntry = lastHistory(proxyNodeName);
+
+			const toEntry = (h, name) => h ? {
+				ip:      h.ipinfo?.ip,
+				country: h.ipinfo?.country_code,
+				org:     h.ipinfo?.org,
+				delay:   h.delay,
+				node:    name || null
+			} : null;
 
 			return {
-				direct: directEntry ? { ip: directEntry.ipinfo?.ip, delay: directEntry.delay } : null,
-				proxy:  proxyEntry  ? { ip: proxyEntry.ipinfo?.ip,  delay: proxyEntry.delay, node: proxyNodeName } : null
+				direct: toEntry(directEntry, null),
+				proxy:  toEntry(proxyEntry, proxyNodeName)
 			};
 		}
 	},

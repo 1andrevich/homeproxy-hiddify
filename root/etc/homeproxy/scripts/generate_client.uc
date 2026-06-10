@@ -1005,11 +1005,12 @@ config.route = {
 /* Routing rules */
 if (!isEmpty(main_node)) {
 	/* Avoid DNS loop */
-	config.route.default_domain_resolver = {
+	/* sing-box-extended supports action object; hiddify-core (standard sing-box 1.12) expects a string tag */
+	config.route.default_domain_resolver = is_singbox ? {
 		action: 'route',
 		server: (routing_mode === 'bypass_mainland_china') ? 'china-dns' : 'default-dns',
 		strategy: (ipv6_support !== '1') ? 'prefer_ipv4' : null
-	};
+	} : ((routing_mode === 'bypass_mainland_china') ? 'china-dns' : 'default-dns');
 
 	/* Direct list */
 	if (length(direct_domain_list))
@@ -1081,10 +1082,10 @@ if (!isEmpty(main_node)) {
 	if (isEmpty(config.route.rule_set))
 		config.route.rule_set = null;
 } else if (!isEmpty(default_outbound)) {
-	config.route.default_domain_resolver = {
+	config.route.default_domain_resolver = is_singbox ? {
 		action: 'resolve',
 		server: get_resolver(default_outbound_dns)
-	};
+	} : get_resolver(default_outbound_dns);
 
 	if (domain_strategy)
 		push(config.route.rules, {
