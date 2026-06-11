@@ -29,20 +29,35 @@ log() {
 }
 
 start_service() {
-	if [ -x "$PROG_HIDDIFY" ]; then
-		PROG="$PROG_HIDDIFY"
-		RUN_CMD="srun"
-		CORE_TYPE="hiddify"
-	elif [ -x "$PROG_SINGBOX" ]; then
-		PROG="$PROG_SINGBOX"
-		RUN_CMD="run"
-		CORE_TYPE="singbox"
-	else
-		log "Error: No supported core found. Install hiddify-core or sing-box first."
-		return 1
-	fi
-
 	config_load "$CONF"
+
+	local preferred_core
+	config_get preferred_core "config" "preferred_core" "auto"
+
+	# Try the preferred core first; fall back to whichever is installed
+	case "$preferred_core" in
+	hiddify)
+		if [ -x "$PROG_HIDDIFY" ]; then
+			PROG="$PROG_HIDDIFY"; RUN_CMD="srun"; CORE_TYPE="hiddify"
+		fi
+		;;
+	singbox)
+		if [ -x "$PROG_SINGBOX" ]; then
+			PROG="$PROG_SINGBOX"; RUN_CMD="run"; CORE_TYPE="singbox"
+		fi
+		;;
+	esac
+
+	if [ -z "$PROG" ]; then
+		if [ -x "$PROG_HIDDIFY" ]; then
+			PROG="$PROG_HIDDIFY"; RUN_CMD="srun"; CORE_TYPE="hiddify"
+		elif [ -x "$PROG_SINGBOX" ]; then
+			PROG="$PROG_SINGBOX"; RUN_CMD="run"; CORE_TYPE="singbox"
+		else
+			log "Error: No supported core found. Install hiddify-core or sing-box first."
+			return 1
+		fi
+	fi
 
 	local routing_mode proxy_mode
 	config_get routing_mode "config" "routing_mode" "bypass_mainland_china"

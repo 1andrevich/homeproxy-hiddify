@@ -123,6 +123,17 @@ return view.extend({
 
 		s.tab('routing', _('Routing Settings'));
 
+		if (features.available_cores && features.available_cores.length > 1) {
+			o = s.taboption('routing', form.ListValue, 'preferred_core', _('Preferred core'));
+			o.value('auto', _('Auto'));
+			if (features.available_cores.indexOf('hiddify') >= 0)
+				o.value('hiddify', 'hiddify-core');
+			if (features.available_cores.indexOf('singbox') >= 0)
+				o.value('singbox', 'sing-box');
+			o.default = 'auto';
+			o.rmempty = false;
+		}
+
 		o = s.taboption('routing', form.ListValue, 'main_node', _('Main node'));
 		o.value('nil', _('Disable'));
 		o.value('urltest', _('URLTest'));

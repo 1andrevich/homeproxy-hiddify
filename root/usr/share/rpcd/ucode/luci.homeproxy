@@ -248,6 +248,10 @@ const methods = {
 				features.hp_has_tproxy = hasKernelModule('nft_tproxy.ko') || !!access('/etc/modules.d/nft-tproxy');
 				features.hp_has_tun = hasKernelModule('tun.ko') || !!access('/etc/modules.d/30-tun');
 
+				features.available_cores = [];
+				if (access('/usr/bin/hiddify-core')) push(features.available_cores, 'hiddify');
+				if (access('/usr/bin/sing-box'))     push(features.available_cores, 'singbox');
+
 				return features;
 		}
 	},

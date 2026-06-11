@@ -1789,6 +1789,10 @@ msgstr ""
 msgid "Prefer IPv6"
 msgstr ""
 
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Preferred core"
+msgstr ""
+
 #: htdocs/luci-static/resources/view/homeproxy/node.js:678
 #: htdocs/luci-static/resources/view/homeproxy/node.js:903
 msgid "Private key"
