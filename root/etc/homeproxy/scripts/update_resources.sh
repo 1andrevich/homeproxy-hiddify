@@ -66,58 +66,6 @@ check_list_update() {
 	return 0
 }
 
-check_srs_update() {
-	local listtype="$1"
-	local repo="$2"
-	local files="$3"
-	local lock="$RUN_DIR/update_resources-$listtype.lock"
-	local github_token="$(uci -q get homeproxy.config.github_token)"
-	local wget="wget --timeout=10 -q"
-
-	exec 200>"$lock"
-	if ! flock -n 200 &> "/dev/null"; then
-		log "[$(to_upper "$listtype")] A task is already running."
-		return 2
-	fi
-
-	[ -z "$github_token" ] || github_token="--header=Authorization: Bearer $github_token"
-
-	local release_info="$($wget "${github_token:--q}" -O- "https://api.github.com/repos/$repo/releases/latest")"
-	local latest_ver="$(echo -e "$release_info" | jsonfilter -qe "@.tag_name")"
-	if [ -z "$latest_ver" ]; then
-		log "[$(to_upper "$listtype")] Failed to get the latest version, please retry later."
-		return 1
-	fi
-
-	local local_ver="$(cat "$RESOURCES_DIR/$listtype.ver" 2>"/dev/null" || echo "NOT FOUND")"
-	if [ "$local_ver" = "$latest_ver" ]; then
-		log "[$(to_upper "$listtype")] Current version: $latest_ver."
-		log "[$(to_upper "$listtype")] You're already at the latest version."
-		return 3
-	else
-		log "[$(to_upper "$listtype")] Local version: $local_ver, latest version: $latest_ver."
-	fi
-
-	local failed=0
-	for filename in $files; do
-		if ! $wget "https://github.com/$repo/releases/latest/download/$filename" \
-				-O "$RUN_DIR/$filename" || [ ! -s "$RUN_DIR/$filename" ]; then
-			rm -f "$RUN_DIR/$filename"
-			log "[$(to_upper "$listtype")] Failed to download $filename."
-			failed=1
-		fi
-	done
-
-	[ "$failed" -eq 1 ] && { log "[$(to_upper "$listtype")] Update failed."; return 1; }
-
-	for filename in $files; do
-		mv -f "$RUN_DIR/$filename" "$RESOURCES_DIR/$filename"
-	done
-
-	echo -e "$latest_ver" > "$RESOURCES_DIR/$listtype.ver"
-	log "[$(to_upper "$listtype")] Successfully updated to $latest_ver."
-	return 0
-}
 
 case "$1" in
 "china_ip4")
@@ -133,16 +81,8 @@ case "$1" in
 	check_list_update "$1" "Loyalsoldier/v2ray-rules-dat" "release" "direct-list.txt" && \
 		sed -i -e "s/full://g" -e "/:/d" "$RESOURCES_DIR/china_list.txt"
 	;;
-"refilter")
-	check_srs_update "$1" "1andrevich/Re-filter-lists" \
-		"ruleset-domain-refilter_domains.srs ruleset-ip-refilter_ipsum.srs"
-	;;
-"itdoginfo")
-	check_srs_update "$1" "itdoginfo/allow-domains" \
-		"russia-inside.srs youtube.srs twitter.srs tiktok.srs telegram.srs roblox.srs porn.srs ovh.srs news.srs meta.srs hodca.srs hetzner.srs hdrezka.srs google_ai.srs google_play.srs geoblock.srs anime.srs cloudflare.srs cloudfront.srs discord.srs digitalocean.srs"
-	;;
 *)
-	echo -e "Usage: $0 <china_ip4 / china_ip6 / gfw_list / china_list / refilter / itdoginfo>"
+	echo -e "Usage: $0 <china_ip4 / china_ip6 / gfw_list / china_list>"
 	exit 1
 	;;
 esac

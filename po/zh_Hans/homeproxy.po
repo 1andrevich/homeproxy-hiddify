@@ -3198,8 +3198,8 @@ msgid "Direct DNS server for Russian domains. Plain UDP only."
 msgstr "用于俄罗斯域名的直连 DNS 服务器，仅支持 UDP。"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Yandex Primary (77.88.8.8)"
-msgstr "Yandex 主 DNS (77.88.8.8)"
+msgid "Yandex DNS (77.88.8.8)"
+msgstr "Yandex DNS (77.88.8.8)"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "SkyDNS (193.58.251.251)"
@@ -3254,8 +3254,8 @@ msgid "Re-filter (Russia blocklist: banned domains + IPs)"
 msgstr "Re-filter（俄罗斯封锁列表：域名 + IP）"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "itdog - russia-inside"
-msgstr "itdog - russia-inside"
+msgid "itdoginfo/allow-domains - Russia Inside"
+msgstr "itdoginfo/allow-domains - Russia Inside"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "YouTube"
@@ -3338,6 +3338,18 @@ msgid "DigitalOcean cloud hosting"
 msgstr "DigitalOcean（云托管）"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Same as main node"
+msgstr "与主节点相同"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Advanced custom rules"
+msgstr "高级自定义规则"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Show Routing Nodes and Routing Rules tabs for additional custom rules."
+msgstr "显示「路由节点」和「路由规则」选项卡以进行额外的自定义设置。"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Proxy calls"
 msgstr "代理通话"
 
@@ -3345,10 +3357,3 @@ msgstr "代理通话"
 msgid "Route VoIP call ports (WhatsApp, Telegram, FaceTime, etc.) through the proxy."
 msgstr "将 VoIP 通话端口（WhatsApp、Telegram、FaceTime 等）通过代理路由。"
 
-#: htdocs/luci-static/resources/view/homeproxy/status.js
-msgid "Re-filter version"
-msgstr "Re-filter 版本"
-
-#: htdocs/luci-static/resources/view/homeproxy/status.js
-msgid "itdoginfo version"
-msgstr "itdoginfo 版本"

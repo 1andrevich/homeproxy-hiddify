@@ -3141,8 +3141,8 @@ msgid "Direct DNS server for Russian domains. Plain UDP only."
 msgstr "سرور DNS مستقیم برای دامنه‌های روسی. فقط UDP ساده."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Yandex Primary (77.88.8.8)"
-msgstr "Yandex اصلی (77.88.8.8)"
+msgid "Yandex DNS (77.88.8.8)"
+msgstr "Yandex DNS (77.88.8.8)"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "SkyDNS (193.58.251.251)"
@@ -3197,8 +3197,8 @@ msgid "Re-filter (Russia blocklist: banned domains + IPs)"
 msgstr "Re-filter (لیست مسدودی روسیه: دامنه‌ها + IP)"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "itdog - russia-inside"
-msgstr "itdog - russia-inside"
+msgid "itdoginfo/allow-domains - Russia Inside"
+msgstr "itdoginfo/allow-domains - Russia Inside"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "YouTube"
@@ -3281,6 +3281,18 @@ msgid "DigitalOcean cloud hosting"
 msgstr "DigitalOcean (هاستینگ ابری)"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Same as main node"
+msgstr "مشابه گره اصلی"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Advanced custom rules"
+msgstr "قوانین سفارشی پیشرفته"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Show Routing Nodes and Routing Rules tabs for additional custom rules."
+msgstr "نمایش تب‌های «گره‌های مسیریابی» و «قوانین مسیریابی» برای تنظیمات سفارشی بیشتر."
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Proxy calls"
 msgstr "پروکسی تماس‌ها"
 
@@ -3288,10 +3300,3 @@ msgstr "پروکسی تماس‌ها"
 msgid "Route VoIP call ports (WhatsApp, Telegram, FaceTime, etc.) through the proxy."
 msgstr "پورت‌های تماس VoIP (WhatsApp، Telegram، FaceTime و غیره) را از طریق پروکسی مسیریابی کنید."
 
-#: htdocs/luci-static/resources/view/homeproxy/status.js
-msgid "Re-filter version"
-msgstr "نسخه Re-filter"
-
-#: htdocs/luci-static/resources/view/homeproxy/status.js
-msgid "itdoginfo version"
-msgstr "نسخه itdoginfo"

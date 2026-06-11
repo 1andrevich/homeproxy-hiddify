@@ -3075,7 +3075,7 @@ msgid "Direct DNS server for Russian domains. Plain UDP only."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Yandex Primary (77.88.8.8)"
+msgid "Yandex DNS (77.88.8.8)"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
@@ -3131,7 +3131,7 @@ msgid "Re-filter (Russia blocklist: banned domains + IPs)"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "itdog - russia-inside"
+msgid "itdoginfo/allow-domains - Russia Inside"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
@@ -3215,6 +3215,18 @@ msgid "DigitalOcean cloud hosting"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Same as main node"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Advanced custom rules"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Show Routing Nodes and Routing Rules tabs for additional custom rules."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Proxy calls"
 msgstr ""
 
@@ -3222,10 +3234,3 @@ msgstr ""
 msgid "Route VoIP call ports (WhatsApp, Telegram, FaceTime, etc.) through the proxy."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/homeproxy/status.js
-msgid "Re-filter version"
-msgstr ""
-
-#: htdocs/luci-static/resources/view/homeproxy/status.js
-msgid "itdoginfo version"
-msgstr ""

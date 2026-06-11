@@ -379,15 +379,6 @@ return view.extend({
 		o.rawhtml = true;
 		o.depends({'routing_mode': 'proxy_banned_ru', '!reverse': true});
 
-		o = s.option(form.DummyValue, '_refilter_version', _('Re-filter version'));
-		o.cfgvalue = L.bind(getResVersion, this, o, 'refilter');
-		o.rawhtml = true;
-		o.depends('routing_mode', 'proxy_banned_ru');
-
-		o = s.option(form.DummyValue, '_itdoginfo_version', _('itdoginfo version'));
-		o.cfgvalue = L.bind(getResVersion, this, o, 'itdoginfo');
-		o.rawhtml = true;
-		o.depends('routing_mode', 'proxy_banned_ru');
 
 		o = s.option(form.Value, 'github_token', _('GitHub token'));
 		o.password = true;

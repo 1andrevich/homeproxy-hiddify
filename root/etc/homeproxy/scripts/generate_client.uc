@@ -62,7 +62,7 @@ const ipv6_support = uci.get(uciconfig, ucimain, 'ipv6_support') || '0';
 
 let main_node, main_udp_node, dedicated_udp_node, default_outbound, default_outbound_dns,
     domain_strategy, sniff_override, dns_server, china_dns_server, russia_dns_server,
-    secure_dns_server, proxy_calls, dns_default_strategy, dns_default_server, dns_disable_cache,
+    secure_dns_server, proxy_calls, show_advanced_rules, dns_default_strategy, dns_default_server, dns_disable_cache,
     dns_disable_cache_expire, dns_independent_cache, dns_client_subnet, cache_file_store_rdrc,
     cache_file_rdrc_timeout, direct_domain_list, proxy_domain_list;
 
@@ -86,6 +86,7 @@ if (routing_mode !== 'custom') {
 		secure_dns_server = uci.get(uciconfig, ucimain, 'secure_dns_server') || 'https://1.1.1.1/dns-query';
 		domain_strategy = uci.get(uciconfig, ucimain, 'domain_strategy');
 		proxy_calls = uci.get(uciconfig, ucimain, 'proxy_calls');
+		show_advanced_rules = uci.get(uciconfig, ucimain, 'show_advanced_rules');
 	}
 
 	dns_default_strategy = (ipv6_support !== '1') ? 'ipv4_only' : null;
@@ -395,6 +396,14 @@ function generate_outbound(node) {
 	};
 
 	return outbound;
+}
+
+function has_outbound(tag) {
+	for (let ob in config.outbounds)
+		if (ob?.tag === tag) return true;
+	for (let ep in (config.endpoints || []))
+		if (ep?.tag === tag) return true;
+	return false;
 }
 
 function get_outbound(cfg) {
@@ -967,6 +976,53 @@ if (!isEmpty(main_node)) {
 			config.outbounds[length(config.outbounds)-1].tag = 'cfg-' + i + '-out';
 		}
 	}
+
+	/* Advanced routing_node outbounds for proxy_banned_ru */
+	if (routing_mode === 'proxy_banned_ru' && show_advanced_rules === '1') {
+		let adv_urltest_nodes = [],
+		    adv_routing_nodes = [];
+
+		uci.foreach(uciconfig, uciroutingnode, (cfg) => {
+			if (cfg.enabled !== '1') return;
+
+			if (cfg.node === 'urltest') {
+				const existing_urltest_nodes = filter(cfg.urltest_nodes, (k) => uci.get_all(uciconfig, k) != null);
+				push(config.outbounds, {
+					type: 'urltest',
+					tag: 'cfg-' + cfg['.name'] + '-out',
+					outbounds: map(existing_urltest_nodes, (k) => `cfg-${k}-out`),
+					url: cfg.urltest_url,
+					interval: strToTime(cfg.urltest_interval),
+					tolerance: strToInt(cfg.urltest_tolerance),
+					idle_timeout: strToTime(cfg.urltest_idle_timeout),
+					interrupt_exist_connections: strToBool(cfg.urltest_interrupt_exist_connections)
+				});
+				adv_urltest_nodes = [...adv_urltest_nodes, ...filter(existing_urltest_nodes, (l) => !~index(adv_urltest_nodes, l))];
+			} else {
+				const outbound = uci.get_all(uciconfig, cfg.node) || {};
+				if (outbound.type in ['wireguard', 'amneziawg']) {
+					push(config.endpoints, generate_endpoint(outbound));
+					config.endpoints[length(config.endpoints)-1].bind_interface = cfg.bind_interface;
+					config.endpoints[length(config.endpoints)-1].detour = get_outbound(cfg.outbound);
+				} else {
+					push(config.outbounds, generate_outbound(outbound));
+					config.outbounds[length(config.outbounds)-1].bind_interface = cfg.bind_interface;
+					config.outbounds[length(config.outbounds)-1].detour = get_outbound(cfg.outbound);
+				}
+				push(adv_routing_nodes, cfg.node);
+			}
+		});
+
+		for (let i in filter(adv_urltest_nodes, (l) => !~index(adv_routing_nodes, l))) {
+			if (has_outbound('cfg-' + i + '-out')) continue;
+			const urltest_node = uci.get_all(uciconfig, i);
+			if (!urltest_node) continue;
+			if (urltest_node.type in ['wireguard', 'amneziawg'])
+				push(config.endpoints, generate_endpoint(urltest_node));
+			else
+				push(config.outbounds, generate_outbound(urltest_node));
+		}
+	}
 } else if (!isEmpty(default_outbound)) {
 	let urltest_nodes = [],
 	    routing_nodes = [];
@@ -1101,6 +1157,44 @@ if (!isEmpty(main_node)) {
 		});
 
 	if (routing_mode === 'proxy_banned_ru') {
+		/* Advanced custom routing rules (highest priority) */
+		if (show_advanced_rules === '1') {
+			uci.foreach(uciconfig, uciroutingrule, (cfg) => {
+				if (cfg.enabled !== '1') return;
+
+				push(config.route.rules, {
+					inbound: cfg.inbound,
+					ip_version: strToInt(cfg.ip_version),
+					protocol: cfg.protocol,
+					network: cfg.network,
+					domain: cfg.domain,
+					domain_suffix: cfg.domain_suffix,
+					domain_keyword: cfg.domain_keyword,
+					domain_regex: cfg.domain_regex,
+					source_ip_cidr: cfg.source_ip_cidr,
+					source_ip_is_private: strToBool(cfg.source_ip_is_private),
+					ip_cidr: cfg.ip_cidr,
+					ip_is_private: strToBool(cfg.ip_is_private),
+					source_port: parse_port(cfg.source_port),
+					source_port_range: cfg.source_port_range,
+					port: parse_port(cfg.port),
+					port_range: cfg.port_range,
+					process_name: cfg.process_name,
+					process_path: cfg.process_path,
+					process_path_regex: cfg.process_path_regex,
+					user: cfg.user,
+					rule_set: get_ruleset(cfg.rule_set),
+					rule_set_ip_cidr_match_source: strToBool(cfg.rule_set_ip_cidr_match_source),
+					rule_set_ip_cidr_accept_empty: strToBool(cfg.rule_set_ip_cidr_accept_empty),
+					invert: strToBool(cfg.invert),
+					action: cfg.action,
+					outbound: get_outbound(cfg.outbound),
+					override_address: cfg.override_address,
+					override_port: strToInt(cfg.override_port)
+				});
+			});
+		}
+
 		/* Call proxying rules: UDP media ports + XMPP/SIP ports for VoIP apps */
 		if (proxy_calls === '1') {
 			push(config.route.rules, {
@@ -1121,38 +1215,44 @@ if (!isEmpty(main_node)) {
 		uci.foreach(uciconfig, ucirurule, (cfg) => {
 			if (cfg.enabled !== '1') return;
 
-			const out_tag = 'hp-ru-' + cfg.source + '-out';
+			/* 'main-out' means route directly through the main proxy without a separate outbound */
+			const effective_outbound = (cfg.node === 'main-out') ? 'main-out' : ('hp-ru-' + cfg.source + '-out');
 
-			if (cfg.node === 'urltest') {
-				const ut_nodes = filter(cfg.urltest_nodes || [], (k) => uci.get_all(uciconfig, k) != null);
-				push(config.outbounds, {
-					type: 'urltest',
-					tag: out_tag,
-					outbounds: map(ut_nodes, (k) => `cfg-${k}-out`),
-					interval: strToTime(cfg.urltest_interval || '180'),
-					tolerance: strToInt(cfg.urltest_tolerance || '150'),
-					idle_timeout: '1800s'
-				});
-				/* Generate underlying node outbounds for this urltest group */
-				for (let n in ut_nodes) {
-					const nc = uci.get_all(uciconfig, n);
-					if (!nc) continue;
+			if (cfg.node === 'main-out') {
+				/* no new outbound needed */
+			} else if (!has_outbound(effective_outbound)) {
+				if (cfg.node === 'urltest') {
+					const ut_nodes = filter(cfg.urltest_nodes || [], (k) => uci.get_all(uciconfig, k) != null);
+					push(config.outbounds, {
+						type: 'urltest',
+						tag: effective_outbound,
+						outbounds: map(ut_nodes, (k) => `cfg-${k}-out`),
+						interval: strToTime(cfg.urltest_interval || '180'),
+						tolerance: strToInt(cfg.urltest_tolerance || '150'),
+						idle_timeout: '1800s'
+					});
+					/* Generate underlying node outbounds, skipping already-generated tags */
+					for (let n in ut_nodes) {
+						if (has_outbound('cfg-' + n + '-out')) continue;
+						const nc = uci.get_all(uciconfig, n);
+						if (!nc) continue;
+						if (nc.type in ['wireguard', 'amneziawg']) {
+							push(config.endpoints, generate_endpoint(nc));
+							config.endpoints[length(config.endpoints)-1].tag = 'cfg-' + n + '-out';
+						} else {
+							push(config.outbounds, generate_outbound(nc));
+							config.outbounds[length(config.outbounds)-1].tag = 'cfg-' + n + '-out';
+						}
+					}
+				} else if (!isEmpty(cfg.node)) {
+					const nc = uci.get_all(uciconfig, cfg.node) || {};
 					if (nc.type in ['wireguard', 'amneziawg']) {
 						push(config.endpoints, generate_endpoint(nc));
-						config.endpoints[length(config.endpoints)-1].tag = 'cfg-' + n + '-out';
+						config.endpoints[length(config.endpoints)-1].tag = effective_outbound;
 					} else {
 						push(config.outbounds, generate_outbound(nc));
-						config.outbounds[length(config.outbounds)-1].tag = 'cfg-' + n + '-out';
+						config.outbounds[length(config.outbounds)-1].tag = effective_outbound;
 					}
-				}
-			} else if (!isEmpty(cfg.node)) {
-				const nc = uci.get_all(uciconfig, cfg.node) || {};
-				if (nc.type in ['wireguard', 'amneziawg']) {
-					push(config.endpoints, generate_endpoint(nc));
-					config.endpoints[length(config.endpoints)-1].tag = out_tag;
-				} else {
-					push(config.outbounds, generate_outbound(nc));
-					config.outbounds[length(config.outbounds)-1].tag = out_tag;
 				}
 			}
 
@@ -1163,30 +1263,40 @@ if (!isEmpty(main_node)) {
 			push(config.route.rules, {
 				rule_set: rule_sets,
 				action: 'route',
-				outbound: out_tag
+				outbound: effective_outbound
 			});
 
-			/* Rule sets */
+			/* Rule sets (remote — core handles download and 1d refresh) */
+			const has_ruleset = (tag) => filter(config.route.rule_set, (rs) => rs.tag === tag).length > 0;
 			if (cfg.source === 'refilter') {
-				push(config.route.rule_set, {
-					type: 'local',
-					tag: 'hp-ru-refilter-domain',
-					format: 'binary',
-					path: HP_DIR + '/resources/ruleset-domain-refilter_domains.srs'
-				});
-				push(config.route.rule_set, {
-					type: 'local',
-					tag: 'hp-ru-refilter-ip',
-					format: 'binary',
-					path: HP_DIR + '/resources/ruleset-ip-refilter_ipsum.srs'
-				});
+				if (!has_ruleset('hp-ru-refilter-domain'))
+					push(config.route.rule_set, {
+						type: 'remote',
+						tag: 'hp-ru-refilter-domain',
+						format: 'binary',
+						url: 'https://github.com/1andrevich/Re-filter-lists/releases/latest/download/ruleset-domain-refilter_domains.srs',
+						download_detour: 'main-out',
+						update_interval: '1d'
+					});
+				if (!has_ruleset('hp-ru-refilter-ip'))
+					push(config.route.rule_set, {
+						type: 'remote',
+						tag: 'hp-ru-refilter-ip',
+						format: 'binary',
+						url: 'https://github.com/1andrevich/Re-filter-lists/releases/latest/download/ruleset-ip-refilter_ipsum.srs',
+						download_detour: 'main-out',
+						update_interval: '1d'
+					});
 			} else {
-				push(config.route.rule_set, {
-					type: 'local',
-					tag: 'hp-ru-' + cfg.source,
-					format: 'binary',
-					path: HP_DIR + '/resources/' + cfg.source + '.srs'
-				});
+				if (!has_ruleset('hp-ru-' + cfg.source))
+					push(config.route.rule_set, {
+						type: 'remote',
+						tag: 'hp-ru-' + cfg.source,
+						format: 'binary',
+						url: 'https://github.com/itdoginfo/allow-domains/releases/latest/download/' + cfg.source + '.srs',
+						download_detour: 'main-out',
+						update_interval: '1d'
+					});
 			}
 		});
 	}

@@ -80,6 +80,7 @@ return view.extend({
 	load() {
 		return Promise.all([
 			uci.load('homeproxy'),
+			uci.load('luci'),
 			hp.getBuiltinFeatures(),
 			network.getHostHints()
 		]);
@@ -167,7 +168,7 @@ return view.extend({
 		o = s.taboption('routing', form.Value, 'main_urltest_tolerance', _('Test tolerance'),
 			_('The test tolerance in milliseconds.'));
 		o.datatype = 'uinteger';
-		o.placeholder = '50';
+		o.placeholder = '150';
 		o.depends('main_node', 'urltest');
 
 		o = s.taboption('routing', form.ListValue, 'main_udp_node', _('Main UDP node'));
@@ -177,7 +178,7 @@ return view.extend({
 		for (let i in proxy_nodes)
 			o.value(i, proxy_nodes[i]);
 		o.default = 'nil';
-		o.depends({'routing_mode': /^((?!custom).)+$/, 'proxy_mode': /^((?!redirect$).)+$/});
+		o.depends({'routing_mode': /^((?!custom|proxy_banned_ru).)+$/, 'proxy_mode': /^((?!redirect$).)+$/});
 		o.rmempty = false;
 
 		o = s.taboption('routing', hp.CBIStaticList, 'main_udp_urltest_nodes', _('URLTest nodes'),
@@ -196,7 +197,7 @@ return view.extend({
 		o = s.taboption('routing', form.Value, 'main_udp_urltest_tolerance', _('Test tolerance'),
 			_('The test tolerance in milliseconds.'));
 		o.datatype = 'uinteger';
-		o.placeholder = '50';
+		o.placeholder = '150';
 		o.depends('main_udp_node', 'urltest');
 
 		o = s.taboption('routing', form.Value, 'dns_server', _('DNS server'),
@@ -273,7 +274,7 @@ return view.extend({
 
 		o = s.taboption('routing', form.Value, 'russia_dns_server', _('Russia DNS server'),
 			_('Direct DNS server for Russian domains. Plain UDP only.'));
-		o.value('77.88.8.8', _('Yandex Primary (77.88.8.8)'));
+		o.value('77.88.8.8', _('Yandex DNS (77.88.8.8)'));
 		o.value('193.58.251.251', _('SkyDNS (193.58.251.251)'));
 		o.value('92.222.10.10', _('Comss.one (92.222.10.10)'));
 		o.depends('routing_mode', 'proxy_banned_ru');
@@ -317,15 +318,27 @@ return view.extend({
 		o.default = o.disabled;
 		o.rmempty = false;
 
+		o = s.taboption('routing', form.Flag, 'show_advanced_rules',
+			_('Advanced custom rules'),
+			_('Show Routing Nodes and Routing Rules tabs for additional custom rules.'));
+		o.depends('routing_mode', 'proxy_banned_ru');
+		o.default = o.disabled;
+		o.rmempty = false;
+
 		o = s.taboption('routing', form.ListValue, 'routing_mode', _('Routing mode'));
+		o.value('proxy_banned_ru', _('Russia (Proxy Banned)'));
+		o.value('global', _('Global'));
+		o.value('custom', _('Custom routing'));
 		o.value('gfwlist', _('GFWList'));
 		o.value('bypass_mainland_china', _('Bypass mainland China'));
 		o.value('proxy_mainland_china', _('Only proxy mainland China'));
-		o.value('proxy_banned_ru', _('Russia (Proxy Banned)'));
-		o.value('custom', _('Custom routing'));
-		o.value('global', _('Global'));
 		o.value('custom_json', _('Custom JSON'));
-		o.default = 'bypass_mainland_china';
+		const _installed_langs = uci.get_all('luci', 'languages') || {};
+		const _lang_codes = Object.keys(_installed_langs).filter(k => /^[a-z]/.test(k));
+		o.default = _lang_codes.includes('ru') ? 'proxy_banned_ru' :
+		            _lang_codes.some(k => k.startsWith('zh')) ? 'bypass_mainland_china' :
+		            _lang_codes.some(k => k !== 'en') ? 'custom' :
+		            'proxy_banned_ru';
 		o.rmempty = false;
 		o.onchange = function(ev, section_id, value) {
 			if (section_id && (value === 'custom' || value === 'custom_json'))
@@ -371,6 +384,12 @@ return view.extend({
 		o.default = o.enabled;
 		o.rmempty = false;
 		o.depends({'routing_mode': 'custom_json', '!reverse': true});
+		o.cfgvalue = function(section_id) {
+			const stored = uci.get('homeproxy', section_id, 'ipv6_support');
+			if (stored != null) return stored;
+			return (uci.get('homeproxy', section_id, 'routing_mode') === 'proxy_banned_ru')
+				? this.disabled : this.enabled;
+		};
 
 		/* Custom routing settings start */
 		/* Routing settings start */
@@ -484,7 +503,7 @@ return view.extend({
 
 		so = ss.option(form.ListValue, 'source', _('Source'));
 		so.value('refilter', _('Re-filter (Russia blocklist: banned domains + IPs)'));
-		so.value('russia-inside', _('itdog - russia-inside'));
+		so.value('russia-inside', _('itdoginfo/allow-domains - Russia Inside'));
 		so.value('youtube', _('YouTube'));
 		so.value('twitter', _('Twitter/X'));
 		so.value('tiktok', _('TikTok'));
@@ -507,8 +526,16 @@ return view.extend({
 		so.value('digitalocean', _('DigitalOcean cloud hosting'));
 		so.rmempty = false;
 		so.editable = true;
+		so.validate = function(section_id, value) {
+			for (const sid of this.section.cfgsections()) {
+				if (sid !== section_id && this.cfgvalue(sid) === value)
+					return _('Duplicate source — only the first rule will take effect');
+			}
+			return true;
+		};
 
 		so = ss.option(form.ListValue, 'node', _('Node'));
+		so.value('main-out', _('Same as main node'));
 		so.value('urltest', _('URLTest'));
 		for (let i in proxy_nodes)
 			so.value(i, proxy_nodes[i]);
@@ -542,6 +569,7 @@ return view.extend({
 		s.tab('routing_node', _('Routing Nodes'));
 		o = s.taboption('routing_node', form.SectionValue, '_routing_node', form.GridSection, 'routing_node');
 		o.depends('routing_mode', 'custom');
+		o.depends({'routing_mode': 'proxy_banned_ru', 'show_advanced_rules': '1'});
 
 		ss = o.subsection;
 		ss.addremove = true;
@@ -713,6 +741,7 @@ return view.extend({
 		s.tab('routing_rule', _('Routing Rules'));
 		o = s.taboption('routing_rule', form.SectionValue, '_routing_rule', form.GridSection, 'routing_rule');
 		o.depends('routing_mode', 'custom');
+		o.depends({'routing_mode': 'proxy_banned_ru', 'show_advanced_rules': '1'});
 
 		ss = o.subsection;
 		ss.addremove = true;
