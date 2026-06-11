@@ -94,7 +94,7 @@ start_service() {
 	mkdir -p "$DNSMASQ_DIR"
 	echo -e "conf-dir=$DNSMASQ_DIR" > "$DNSMASQ_DIR/../dnsmasq-homeproxy.conf"
 	case "$routing_mode" in
-	"bypass_mainland_china"|"custom"|"custom_json"|"global")
+	"bypass_mainland_china"|"custom"|"custom_json"|"global"|"proxy_banned_ru")
 		cat <<-EOF >> "$DNSMASQ_DIR/redirect-dns.conf"
 			no-poll
 			no-resolv

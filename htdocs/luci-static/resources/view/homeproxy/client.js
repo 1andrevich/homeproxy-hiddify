@@ -135,7 +135,7 @@ return view.extend({
 			o.rmempty = false;
 		}
 
-		o = s.taboption('routing', form.ListValue, 'main_node', _('Main node'));
+		o = s.taboption('routing', form.ListValue, 'main_node', _('Main node') + ' 🔗');
 		o.value('nil', _('Disable'));
 		o.value('urltest', _('URLTest'));
 		for (let i in proxy_nodes)
@@ -272,7 +272,7 @@ return view.extend({
 			return true;
 		}
 
-		o = s.taboption('routing', form.Value, 'russia_dns_server', _('Russia DNS server'),
+		o = s.taboption('routing', form.Value, 'russia_dns_server', _('Russia DNS server') + ' 🔓',
 			_('Direct DNS server for Russian domains. Plain UDP only.'));
 		o.value('77.88.8.8', _('Yandex DNS (77.88.8.8)'));
 		o.value('193.58.251.251', _('SkyDNS (193.58.251.251)'));
@@ -288,16 +288,17 @@ return view.extend({
 			return true;
 		}
 
-		o = s.taboption('routing', form.Value, 'secure_dns_server', _('Secure DNS server'),
+		o = s.taboption('routing', form.Value, 'secure_dns_server', _('Secure DNS server') + ' 🔒',
 			_('Encrypted DNS server for banned domains, routed via proxy. Supports DoH and DoT.'));
-		o.value('https://1.1.1.1/dns-query', _('Cloudflare DoH (1.1.1.1)'));
-		o.value('https://dns.google/dns-query', _('Google DoH'));
+		o.value('https://cloudflare-dns.com/dns-query', _('Cloudflare DoH'));
 		o.value('https://dns.quad9.net/dns-query', _('Quad9 DoH'));
 		o.value('https://dns.adguard-dns.com/dns-query', _('AdGuard DoH'));
-		o.value('tls://1.1.1.1', _('Cloudflare DoT (1.1.1.1)'));
-		o.value('tls://8.8.8.8', _('Google DoT (8.8.8.8)'));
+		o.value('https://dns.google/dns-query', _('Google DoH'));
+		o.value('tls://cloudflare-dns.com', _('Cloudflare DoT'));
+		o.value('tls://dns.quad9.net', _('Quad9 DoT'));
+		o.value('tls://dns.google', _('Google DoT'));
 		o.depends('routing_mode', 'proxy_banned_ru');
-		o.default = 'https://1.1.1.1/dns-query';
+		o.default = 'https://cloudflare-dns.com/dns-query';
 		o.rmempty = false;
 		o.validate = function(section_id, value) {
 			if (section_id && value) {
@@ -312,21 +313,21 @@ return view.extend({
 		}
 
 		o = s.taboption('routing', form.Flag, 'proxy_calls',
-			_('Proxy calls'),
+			_('Proxy calls') + ' 📞',
 			_('Route VoIP call ports (WhatsApp, Telegram, FaceTime, etc.) through the proxy.'));
 		o.depends('routing_mode', 'proxy_banned_ru');
 		o.default = o.disabled;
 		o.rmempty = false;
 
 		o = s.taboption('routing', form.Flag, 'no_proxy_torrents',
-			_('Do not proxify torrents'),
+			_('Do not proxify torrents') + ' 🧲',
 			_('Force torrent traffic (BitTorrent protocol + common ports) to bypass the proxy.'));
 		o.depends('routing_mode', 'proxy_banned_ru');
 		o.default = o.disabled;
 		o.rmempty = false;
 
 		o = s.taboption('routing', form.Flag, 'show_advanced_rules',
-			_('Advanced custom rules'),
+			_('Advanced custom rules') + ' 👨‍💻',
 			_('Show Routing Nodes and Routing Rules tabs for additional custom rules.'));
 		o.depends('routing_mode', 'proxy_banned_ru');
 		o.default = o.disabled;
@@ -509,7 +510,7 @@ return view.extend({
 		so.rmempty = false;
 		so.editable = true;
 
-		so = ss.option(form.ListValue, 'source', _('Source'));
+		so = ss.option(form.ListValue, 'source', _('Source') + ' ⤵️');
 		so.value('refilter', _('Re-filter (Russia blocklist: banned domains + IPs)'));
 		so.value('russia-inside', _('itdoginfo/allow-domains - Russia Inside'));
 		so.value('youtube', _('YouTube'));
@@ -542,9 +543,9 @@ return view.extend({
 			return true;
 		};
 
-		so = ss.option(form.ListValue, 'node', _('Node'));
+		so = ss.option(form.ListValue, 'node', _('Node') + ' 🔗');
 		so.value('main-out', _('Same as main node'));
-		so.value('urltest', _('URLTest'));
+		so.value('urltest', _('Separate URLTest'));
 		for (let i in proxy_nodes)
 			so.value(i, proxy_nodes[i]);
 		so.rmempty = false;

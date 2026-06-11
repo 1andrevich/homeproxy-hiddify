@@ -2810,6 +2810,10 @@ msgstr "انقضای UDP"
 msgid "URLTest"
 msgstr "URLTest"
 
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Separate URLTest"
+msgstr "URLTest جداگانه"
+
 #: htdocs/luci-static/resources/view/homeproxy/client.js:131
 #: htdocs/luci-static/resources/view/homeproxy/client.js:160
 #: htdocs/luci-static/resources/view/homeproxy/client.js:496
@@ -3181,12 +3185,8 @@ msgid "Encrypted DNS server for banned domains, routed via proxy. Supports DoH a
 msgstr "سرور DNS رمزنگاری‌شده برای دامنه‌های مسدود، مسیریابی از طریق پروکسی. پشتیبانی از DoH و DoT."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Cloudflare DoH (1.1.1.1)"
-msgstr "Cloudflare DoH (1.1.1.1)"
-
-#: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Google DoH"
-msgstr "Google DoH"
+msgid "Cloudflare DoH"
+msgstr "Cloudflare DoH"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Quad9 DoH"
@@ -3197,12 +3197,20 @@ msgid "AdGuard DoH"
 msgstr "AdGuard DoH"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Cloudflare DoT (1.1.1.1)"
-msgstr "Cloudflare DoT (1.1.1.1)"
+msgid "Google DoH"
+msgstr "Google DoH"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Google DoT (8.8.8.8)"
-msgstr "Google DoT (8.8.8.8)"
+msgid "Cloudflare DoT"
+msgstr "Cloudflare DoT"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Quad9 DoT"
+msgstr "Quad9 DoT"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Google DoT"
+msgstr "Google DoT"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Main node is required in Russia (Proxy Banned) mode"

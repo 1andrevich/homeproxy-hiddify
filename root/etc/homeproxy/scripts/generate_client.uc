@@ -83,7 +83,7 @@ if (routing_mode !== 'custom') {
 
 	if (routing_mode === 'proxy_banned_ru') {
 		russia_dns_server = uci.get(uciconfig, ucimain, 'russia_dns_server') || '77.88.8.8';
-		secure_dns_server = uci.get(uciconfig, ucimain, 'secure_dns_server') || 'https://1.1.1.1/dns-query';
+		secure_dns_server = uci.get(uciconfig, ucimain, 'secure_dns_server') || 'https://cloudflare-dns.com/dns-query';
 		domain_strategy = uci.get(uciconfig, ucimain, 'domain_strategy');
 		proxy_calls = uci.get(uciconfig, ucimain, 'proxy_calls');
 		no_proxy_torrents = uci.get(uciconfig, ucimain, 'no_proxy_torrents');
@@ -521,7 +521,7 @@ if (!isEmpty(main_node)) {
 		});
 		config.dns.final = 'russia-dns';
 
-		/* Route proxy-list domains to secure-dns to prevent DNS leaks */
+		/* Proxy-list domains → secure-dns (Cloudflare DoH via proxy) to prevent DNS leaks */
 		let ru_domain_rulesets = [];
 		uci.foreach(uciconfig, ucirurule, (cfg) => {
 			if (cfg.enabled !== '1') return;
@@ -1157,6 +1157,12 @@ if (!isEmpty(main_node)) {
 		});
 
 	if (routing_mode === 'proxy_banned_ru') {
+		/* Resolve domains before routing — prevents the proxy server from doing its own DNS resolution */
+		push(config.route.rules, {
+			action: 'resolve',
+			strategy: (ipv6_support !== '1') ? 'ipv4_only' : null
+		});
+
 		/* Advanced custom routing rules (highest priority) */
 		if (show_advanced_rules === '1') {
 			uci.foreach(uciconfig, uciroutingrule, (cfg) => {
@@ -1196,6 +1202,20 @@ if (!isEmpty(main_node)) {
 		}
 
 		/* Call proxying rules: UDP media ports + XMPP/SIP ports for VoIP apps */
+		/* Torrent bypass first — takes priority over proxy_calls port ranges (51413 overlaps 50000:65530) */
+		if (no_proxy_torrents === '1') {
+			push(config.route.rules, {
+				protocol: ['bittorrent'],
+				action: 'route',
+				outbound: 'direct-out'
+			});
+			push(config.route.rules, {
+				port_range: ['6881:6889', '51413:51413'],
+				action: 'route',
+				outbound: 'direct-out'
+			});
+		}
+
 		if (proxy_calls === '1') {
 			push(config.route.rules, {
 				network: 'udp',
@@ -1208,20 +1228,6 @@ if (!isEmpty(main_node)) {
 				port: [4244, 7985, 5222, 5223, 5242, 5243],
 				action: 'route',
 				outbound: 'main-out'
-			});
-		}
-
-		/* Torrent bypass: protocol detection + common ports → direct */
-		if (no_proxy_torrents === '1') {
-			push(config.route.rules, {
-				protocol: ['bittorrent'],
-				action: 'route',
-				outbound: 'direct-out'
-			});
-			push(config.route.rules, {
-				port_range: ['6881:6889', '51413:51413'],
-				action: 'route',
-				outbound: 'direct-out'
 			});
 		}
 

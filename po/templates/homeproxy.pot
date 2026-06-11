@@ -2746,6 +2746,10 @@ msgstr ""
 msgid "URLTest"
 msgstr ""
 
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Separate URLTest"
+msgstr ""
+
 #: htdocs/luci-static/resources/view/homeproxy/client.js:131
 #: htdocs/luci-static/resources/view/homeproxy/client.js:160
 #: htdocs/luci-static/resources/view/homeproxy/client.js:496
@@ -3115,11 +3119,7 @@ msgid "Encrypted DNS server for banned domains, routed via proxy. Supports DoH a
 msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Cloudflare DoH (1.1.1.1)"
-msgstr ""
-
-#: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Google DoH"
+msgid "Cloudflare DoH"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
@@ -3131,11 +3131,19 @@ msgid "AdGuard DoH"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Cloudflare DoT (1.1.1.1)"
+msgid "Google DoH"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Google DoT (8.8.8.8)"
+msgid "Cloudflare DoT"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Quad9 DoT"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Google DoT"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
