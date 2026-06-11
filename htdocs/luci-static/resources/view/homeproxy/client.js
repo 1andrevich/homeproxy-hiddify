@@ -601,6 +601,7 @@ return view.extend({
 
 		so = ss.option(form.ListValue, 'node', _('Node'),
 			_('Outbound node'));
+		so.value('main-out', _('Same as main node') + ' 🔗');
 		so.value('urltest', _('URLTest'));
 		for (let i in proxy_nodes)
 			so.value(i, proxy_nodes[i]);

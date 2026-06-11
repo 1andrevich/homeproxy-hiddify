@@ -201,10 +201,16 @@ function generate_endpoint(node) {
 
 	const is_wg = node.type in ['wireguard', 'amneziawg'];
 
+	const addPrefix = (addr) => {
+		if (!addr || match(addr, /\//)) return addr;
+		return match(addr, /:/) ? addr + '/128' : addr + '/32';
+	};
+	const raw_addr = node.wireguard_local_address;
+
 	const endpoint = {
 		type: is_wg ? 'wireguard' : node.type,
 		tag: 'cfg-' + node['.name'] + '-out',
-		address: node.wireguard_local_address,
+		address: type(raw_addr) === 'array' ? map(raw_addr, addPrefix) : addPrefix(raw_addr),
 		mtu: strToInt(node.wireguard_mtu),
 		private_key: node.wireguard_private_key,
 		peers: is_wg ? [
@@ -414,6 +420,7 @@ function get_outbound(cfg) {
 		switch (cfg) {
 		case 'block-out':
 		case 'direct-out':
+		case 'main-out':
 			return cfg;
 		default:
 			const node = uci.get(uciconfig, cfg, 'node');
@@ -1292,6 +1299,9 @@ if (!isEmpty(main_node)) {
 			});
 
 			/* Rule sets (remote — core handles download and 1d refresh) */
+			/* WireGuard/AmneziaWG endpoints are not ready at startup — download rule sets directly */
+			const main_node_type = uci.get(uciconfig, main_node, 'type') || '';
+			const ruleset_detour = (main_node_type in ['wireguard', 'amneziawg']) ? 'direct-out' : 'main-out';
 			const has_ruleset = (tag) => filter(config.route.rule_set, (rs) => rs.tag === tag).length > 0;
 			if (cfg.source === 'refilter') {
 				if (!has_ruleset('hp-ru-refilter-domain'))
@@ -1300,7 +1310,7 @@ if (!isEmpty(main_node)) {
 						tag: 'hp-ru-refilter-domain',
 						format: 'binary',
 						url: 'https://github.com/1andrevich/Re-filter-lists/releases/latest/download/ruleset-domain-refilter_domains.srs',
-						download_detour: 'main-out',
+						download_detour: ruleset_detour,
 						update_interval: '1d'
 					});
 				if (!has_ruleset('hp-ru-refilter-ip'))
@@ -1309,7 +1319,7 @@ if (!isEmpty(main_node)) {
 						tag: 'hp-ru-refilter-ip',
 						format: 'binary',
 						url: 'https://github.com/1andrevich/Re-filter-lists/releases/latest/download/ruleset-ip-refilter_ipsum.srs',
-						download_detour: 'main-out',
+						download_detour: ruleset_detour,
 						update_interval: '1d'
 					});
 			} else {
@@ -1319,7 +1329,7 @@ if (!isEmpty(main_node)) {
 						tag: 'hp-ru-' + cfg.source,
 						format: 'binary',
 						url: 'https://github.com/itdoginfo/allow-domains/releases/latest/download/' + replace(cfg.source, '-', '_') + '.srs',
-						download_detour: 'main-out',
+						download_detour: ruleset_detour,
 						update_interval: '1d'
 					});
 			}
