@@ -107,6 +107,7 @@ default_prerm' > "$TEMP_DIR/pre-deinstall"
 		--script "post-upgrade:$TEMP_DIR/post-upgrade" \
 		--script "pre-deinstall:$TEMP_DIR/pre-deinstall" \
 		--info "depends:libc firewall4 ucode-mod-digest" \
+		--info "provides:luci-app-homeproxy" \
 		${APK_SIGN_KEY:+--sign-key "$APK_SIGN_KEY"} \
 		--files "$TEMP_PKG_DIR" \
 		--output "$TEMP_DIR/${PKG_NAME}_${PKG_VERSION}.apk"
@@ -154,6 +155,9 @@ PYEOF
 		Package: $PKG_NAME
 		Version: $PKG_VERSION
 		Depends: $IPK_DEPS
+		Provides: luci-app-homeproxy
+		Conflicts: luci-app-homeproxy
+		Replaces: luci-app-homeproxy
 		Source: https://github.com/1andrevich/homeproxy-hiddify
 		SourceName: $PKG_NAME
 		Section: luci
