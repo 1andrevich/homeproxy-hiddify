@@ -333,8 +333,8 @@ return view.extend({
 		o.value('bypass_mainland_china', _('Bypass mainland China'));
 		o.value('proxy_mainland_china', _('Only proxy mainland China'));
 		o.value('custom_json', _('Custom JSON'));
-		const _installed_langs = uci.get_all('luci', 'languages') || {};
-		const _lang_codes = Object.keys(_installed_langs).filter(k => /^[a-z]/.test(k));
+		const _lang_section = (uci.sections('luci', 'internal') || []).find(s => s['.name'] === 'languages');
+		const _lang_codes = _lang_section ? Object.keys(_lang_section).filter(k => /^[a-z]/.test(k)) : [];
 		o.default = _lang_codes.includes('ru') ? 'proxy_banned_ru' :
 		            _lang_codes.some(k => k.startsWith('zh')) ? 'bypass_mainland_china' :
 		            _lang_codes.some(k => k !== 'en') ? 'custom' :
