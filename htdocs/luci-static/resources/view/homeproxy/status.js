@@ -315,12 +315,162 @@ function getRuntimeLog(o, name, _option_index, section_id, _in_table) {
 	]);
 }
 
+const callCoreInfo = rpc.declare({
+	object: 'luci.homeproxy',
+	method: 'core_info',
+	expect: { '': {} }
+});
+
+const callCoreInstall = rpc.declare({
+	object: 'luci.homeproxy',
+	method: 'core_install',
+	params: ['core'],
+	expect: { '': {} }
+});
+
+const callCoreRemove = rpc.declare({
+	object: 'luci.homeproxy',
+	method: 'core_remove',
+	params: ['core'],
+	expect: { '': {} }
+});
+
+const callCoreCheckRemote = rpc.declare({
+	object: 'luci.homeproxy',
+	method: 'core_check_remote',
+	params: ['core'],
+	expect: { '': {} }
+});
+
+function buildCoreCard(core, coreInfo) {
+	const isHiddify = core === 'hiddify';
+	const name = isHiddify ? 'hiddify-core' : 'sing-box-extended';
+	const pkgMgr = coreInfo.pkg_manager;
+	const coreData = (isHiddify ? coreInfo.hiddify : coreInfo.singbox) || {};
+	const canInstall = !!pkgMgr;
+
+	const desc = isHiddify
+		? _('Custom sing-box core with hiddify features. Supports hiddify routing mode with DNS leak protection.')
+		: _('Extended sing-box with AmneziaWG support. Use with standard routing modes.');
+
+	let installed = coreData.installed || false;
+	let version   = coreData.version   || null;
+
+	const statusEl = E('strong', {
+		style: installed ? 'color:green' : 'color:gray'
+	}, installed ? 'v' + version : _('Not installed'));
+
+	const msgEl = E('span', { style: 'margin-left:8px; font-size:0.9em' }, '');
+	const setMsg = (txt, color) => { msgEl.textContent = txt; msgEl.style.color = color || 'gray'; };
+
+	const remoteEl = E('span', { style: 'font-size:0.9em; color:gray' }, '');
+
+	const checkBtn = E('button', {
+		class: 'btn cbi-button',
+		click: async function() {
+			checkBtn.disabled = true;
+			remoteEl.textContent = _('Checking...');
+			remoteEl.style.color = 'gray';
+			const ret = await L.resolveDefault(callCoreCheckRemote(core), {});
+			checkBtn.disabled = false;
+			if (ret.error) {
+				remoteEl.textContent = ret.error;
+				remoteEl.style.color = 'red';
+			} else {
+				remoteEl.textContent = _('Latest') + ': v' + ret.version;
+				remoteEl.style.color = installed && version === ret.version ? 'green' : 'darkorange';
+			}
+		}
+	}, [ _('Check update') ]);
+
+	const installBtn = E('button', {
+		class: 'btn cbi-button cbi-button-action',
+		style: 'margin-left:4px',
+		disabled: !canInstall || null,
+		title: canInstall ? '' : _('No supported package manager detected'),
+		click: async function() {
+			const prevInstalled = installed;
+			const prevVersion   = version;
+			installBtn.disabled = true;
+			removeBtn.disabled  = true;
+			statusEl.textContent = _('Installing...');
+			statusEl.style.color = 'gray';
+			setMsg('');
+
+			const ret = await L.resolveDefault(callCoreInstall(core), {});
+
+			if (ret.result) {
+				const fresh = await L.resolveDefault(callCoreInfo(), {});
+				const fd = (isHiddify ? fresh.hiddify : fresh.singbox) || {};
+				installed = fd.installed || false;
+				version   = fd.version   || null;
+				statusEl.textContent = installed ? 'v' + version : _('Unknown');
+				statusEl.style.color = installed ? 'green' : 'gray';
+				installBtn.textContent = _('Update');
+				installBtn.disabled = false;
+				removeBtn.disabled  = false;
+				setMsg(_('Installed successfully'), 'green');
+			} else {
+				installed = prevInstalled;
+				version   = prevVersion;
+				statusEl.textContent = installed ? 'v' + (version || '?') : _('Not installed');
+				statusEl.style.color = installed ? 'green' : 'gray';
+				installBtn.disabled = false;
+				removeBtn.disabled  = !installed;
+				setMsg(ret.error || _('Installation failed'), 'red');
+			}
+		}
+	}, [ installed ? _('Update') : _('Install') ]);
+
+	const removeBtn = E('button', {
+		class: 'btn cbi-button cbi-button-negative',
+		style: 'margin-left:4px',
+		disabled: !installed || null,
+		click: async function() {
+			removeBtn.disabled  = true;
+			installBtn.disabled = true;
+			setMsg(_('Removing...'), 'gray');
+
+			const ret = await L.resolveDefault(callCoreRemove(core), {});
+
+			installBtn.disabled = false;
+			if (ret.result) {
+				installed = false;
+				version   = null;
+				statusEl.textContent = _('Not installed');
+				statusEl.style.color = 'gray';
+				installBtn.textContent = _('Install');
+				setMsg(_('Removed successfully'), 'green');
+			} else {
+				removeBtn.disabled = false;
+				setMsg(ret.error || _('Removal failed'), 'red');
+			}
+		}
+	}, [ _('Remove') ]);
+
+	return E('div', { style: 'margin-bottom:12px; padding:8px 10px; border:1px solid #ddd; border-radius:4px' }, [
+		E('div', { style: 'display:flex; align-items:center; flex-wrap:wrap; gap:6px' }, [
+			E('strong', {}, name),
+			statusEl,
+			checkBtn,
+			remoteEl,
+			installBtn,
+			removeBtn,
+			msgEl
+		]),
+		E('div', { style: 'margin-top:4px; font-size:0.9em; color:#666' }, desc)
+	]);
+}
+
 return view.extend({
 	load() {
-		return hp.getBuiltinFeatures();
+		return Promise.all([
+			hp.getBuiltinFeatures(),
+			L.resolveDefault(callCoreInfo(), {})
+		]);
 	},
 
-	render(features) {
+	render([features, coreInfo]) {
 		let m, s, o;
 
 		m = new form.Map('homeproxy');
@@ -405,6 +555,36 @@ return view.extend({
 
 			return node;
 		}
+
+		s = m.section(form.NamedSection, 'config', 'homeproxy', _('Core management'));
+		s.anonymous = true;
+
+		o = s.option(form.DummyValue, '_core_env');
+		const tmpMB     = coreInfo.tmp_free_kb     != null ? Math.round(coreInfo.tmp_free_kb     / 1024) : '?';
+		const overlayMB = coreInfo.overlay_free_kb != null ? Math.round(coreInfo.overlay_free_kb / 1024) : '?';
+		o.default = E('div', { style: 'font-size:0.9em; color:#555; padding:2px 0 6px' }, [
+			_('Package manager') + ': ',
+			E('strong', {}, coreInfo.pkg_manager || _('none detected')),
+			E('span', { style: 'margin:0 8px' }, '|'),
+			_('Architecture') + ': ',
+			E('strong', {}, coreInfo.arch || '?'),
+			E('span', { style: 'margin:0 8px' }, '|'),
+			_('Free /tmp') + ': ',
+			E('strong', {
+				style: (coreInfo.tmp_free_kb != null && coreInfo.tmp_free_kb < 30720) ? 'color:red' : 'color:green'
+			}, tmpMB + ' MB'),
+			E('span', { style: 'margin:0 8px' }, '|'),
+			_('Free overlay') + ': ',
+			E('strong', {
+				style: (coreInfo.overlay_free_kb != null && coreInfo.overlay_free_kb < 30720) ? 'color:red' : 'color:green'
+			}, overlayMB + ' MB')
+		]);
+
+		o = s.option(form.DummyValue, '_core_hiddify');
+		o.default = buildCoreCard('hiddify', coreInfo);
+
+		o = s.option(form.DummyValue, '_core_singbox');
+		o.default = buildCoreCard('singbox', coreInfo);
 
 		s = m.section(form.NamedSection, 'config', 'homeproxy');
 		s.anonymous = true;

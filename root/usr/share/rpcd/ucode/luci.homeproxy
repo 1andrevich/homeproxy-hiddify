@@ -366,6 +366,223 @@ const methods = {
 			return { groups };
 		}
 	},
+	core_info: {
+		call: function() {
+			let pkg_manager = null;
+			for (let p in ['/usr/bin/apk', '/sbin/apk', '/usr/sbin/apk']) {
+				if (access(p)) { pkg_manager = 'apk'; break; }
+			}
+			if (!pkg_manager) {
+				for (let p in ['/bin/opkg', '/usr/bin/opkg']) {
+					if (access(p)) { pkg_manager = 'opkg'; break; }
+				}
+			}
+
+			const os_rel = readfile('/etc/os-release') || '';
+			const arch_m = match(os_rel, /OPENWRT_ARCH="([^"]+)"/) ||
+			               match(os_rel, /OPENWRT_ARCH=([^\n]+)/);
+			let arch = arch_m ? trim(arch_m[1]) : '';
+
+			let tmp_free_kb = 0;
+			const tmp_fd = popen("df -k /tmp | awk 'NR==2{print $4}'");
+			if (tmp_fd) { tmp_free_kb = int(trim(tmp_fd.read('all'))); tmp_fd.close(); }
+
+			let overlay_free_kb = 0;
+			const ovl_fd = popen("df -k /overlay 2>/dev/null | awk 'NR==2{print $4}'");
+			if (ovl_fd) { overlay_free_kb = int(trim(ovl_fd.read('all'))); ovl_fd.close(); }
+			if (!overlay_free_kb) {
+				const root_fd = popen("df -k / | awk 'NR==2{print $4}'");
+				if (root_fd) { overlay_free_kb = int(trim(root_fd.read('all'))); root_fd.close(); }
+			}
+
+			const hiddify_installed = !!access('/usr/bin/hiddify-core');
+			let hiddify_version = null;
+			if (hiddify_installed) {
+				const fd = popen('/usr/bin/hiddify-core version 2>/dev/null');
+				if (fd) {
+					const out = fd.read('all'); fd.close();
+					const m = match(out, /version v?(\S+)/);
+					if (m) hiddify_version = m[1];
+				}
+			}
+
+			const singbox_installed = !!access('/usr/bin/sing-box');
+			let singbox_version = null;
+			let singbox_extended = false;
+			if (singbox_installed) {
+				const fd = popen('/usr/bin/sing-box version 2>/dev/null');
+				if (fd) {
+					const out = fd.read('all'); fd.close();
+					const m = match(out, /version v?(\S+)/);
+					if (m) singbox_version = m[1];
+					singbox_extended = !!match(out, /amneziawg|with_amnezia/);
+				}
+			}
+
+			return { pkg_manager, arch, tmp_free_kb, overlay_free_kb,
+				hiddify: { installed: hiddify_installed, version: hiddify_version },
+				singbox: { installed: singbox_installed, version: singbox_version, extended: singbox_extended }
+			};
+		}
+	},
+
+	core_check_remote: {
+		args: { core: 'core' },
+		call: function(req) {
+			const core = req.args?.core;
+			if (!(core in ['hiddify', 'singbox']))
+				return { error: 'illegal core' };
+
+			const api_url = core === 'hiddify'
+				? 'https://api.github.com/repos/1andrevich/hiddify-core/releases/latest'
+				: 'https://api.github.com/repos/shtorm-7/sing-box-extended/releases/latest';
+
+			const fd = popen('wget -qO- --timeout=10 ' + shellquote(api_url) + ' 2>/dev/null');
+			if (!fd) return { error: 'wget failed' };
+			const raw = trim(fd.read('all')); fd.close();
+			if (!length(raw)) return { error: 'no response from GitHub API' };
+
+			let data;
+			try { data = json(raw); } catch(e) { return { error: 'invalid JSON from GitHub API' }; }
+
+			const tag = data?.tag_name;
+			if (!tag) return { error: 'could not read tag_name from response' };
+
+			return { tag, version: replace(tag, /^v/, '') };
+		}
+	},
+
+	core_install: {
+		args: { core: 'core' },
+		call: function(req) {
+			const core = req.args?.core;
+			if (!(core in ['hiddify', 'singbox']))
+				return { result: false, error: 'illegal core' };
+
+			let pkg_manager = null;
+			for (let p in ['/usr/bin/apk', '/sbin/apk', '/usr/sbin/apk']) {
+				if (access(p)) { pkg_manager = 'apk'; break; }
+			}
+			if (!pkg_manager) {
+				for (let p in ['/bin/opkg', '/usr/bin/opkg']) {
+					if (access(p)) { pkg_manager = 'opkg'; break; }
+				}
+			}
+			if (!pkg_manager)
+				return { result: false, error: 'no supported package manager found (apk or opkg)' };
+
+			let arch = '';
+			const arch_fd = popen('. /etc/os-release && echo "$OPENWRT_ARCH"');
+			if (arch_fd) { arch = trim(arch_fd.read('all')); arch_fd.close(); }
+			if (!arch || !match(arch, /^[a-zA-Z0-9_-]+$/))
+				return { result: false, error: 'could not detect device architecture' };
+
+			let tmp_free_kb = 0;
+			const tmp_fd = popen("df -k /tmp | awk 'NR==2{print $4}'");
+			if (tmp_fd) { tmp_free_kb = int(trim(tmp_fd.read('all'))); tmp_fd.close(); }
+			if (tmp_free_kb < 30720)
+				return { result: false, error: `not enough /tmp space: ${tmp_free_kb} KB free, need at least 30 MB` };
+
+			let overlay_free_kb = 0;
+			const ovl_fd = popen("df -k /overlay 2>/dev/null | awk 'NR==2{print $4}'");
+			if (ovl_fd) { overlay_free_kb = int(trim(ovl_fd.read('all'))); ovl_fd.close(); }
+			if (!overlay_free_kb) {
+				const root_fd = popen("df -k / | awk 'NR==2{print $4}'");
+				if (root_fd) { overlay_free_kb = int(trim(root_fd.read('all'))); root_fd.close(); }
+			}
+			if (overlay_free_kb < 30720)
+				return { result: false, error: `not enough overlay space: ${overlay_free_kb} KB free, need at least 30 MB` };
+
+			let exit_code;
+
+			if (core === 'hiddify') {
+				if (pkg_manager === 'apk') {
+					exit_code = system(
+						'wget -qO /tmp/homeproxy-hiddify.pub https://github.com/1andrevich/homeproxy-hiddify/releases/latest/download/homeproxy-hiddify.pub' +
+						' && cp /tmp/homeproxy-hiddify.pub /etc/apk/keys/' +
+						` && wget -qO /tmp/hiddify-core.apk https://github.com/1andrevich/hiddify-core/releases/latest/download/hiddify-core_${arch}.apk` +
+						' && apk add --no-cache --allow-untrusted /tmp/hiddify-core.apk' +
+						'; RC=$?; rm -f /tmp/hiddify-core.apk /tmp/homeproxy-hiddify.pub; exit $RC',
+						300000
+					);
+				} else {
+					exit_code = system(
+						`wget -qO /tmp/hiddify-core.ipk https://github.com/1andrevich/hiddify-core/releases/latest/download/hiddify-core_${arch}.ipk` +
+						' && opkg install --force-reinstall /tmp/hiddify-core.ipk' +
+						'; RC=$?; rm -f /tmp/hiddify-core.ipk; exit $RC',
+						300000
+					);
+				}
+			} else {
+				const api_fd = popen('wget -qO- --timeout=10 https://api.github.com/repos/shtorm-7/sing-box-extended/releases/latest 2>/dev/null');
+				if (!api_fd) return { result: false, error: 'failed to contact GitHub API' };
+				const api_raw = trim(api_fd.read('all')); api_fd.close();
+				if (!length(api_raw)) return { result: false, error: 'no response from GitHub API' };
+
+				let api_data;
+				try { api_data = json(api_raw); } catch(e) { return { result: false, error: 'invalid JSON from GitHub API' }; }
+
+				if (!api_data?.tag_name)
+					return { result: false, error: 'could not determine latest version from GitHub' };
+
+				/* Find the right asset: OpenWRT package matching this arch and package manager */
+				const ext = pkg_manager === 'apk' ? '.apk' : '.ipk';
+				let dl_url = null;
+				for (let asset in (api_data?.assets || [])) {
+					const n = asset?.name || '';
+					if (!match(n, /openwrt/)) continue;
+					if (length(split(n, arch)) < 2) continue;
+					if (ext === '.apk' && !match(n, /\.apk$/)) continue;
+					if (ext === '.ipk' && !match(n, /\.ipk$/)) continue;
+					dl_url = asset?.browser_download_url;
+					break;
+				}
+				if (!dl_url)
+					return { result: false, error: `no ${ext} package found for ${arch} in latest release` };
+
+				const tmp_pkg = `/tmp/sing-box-extended${ext}`;
+				exit_code = system(
+					`wget -qO ${tmp_pkg} ${shellquote(dl_url)}` +
+					(pkg_manager === 'apk'
+						? ` && apk add --no-cache --allow-untrusted ${tmp_pkg}`
+						: ` && opkg install --force-reinstall ${tmp_pkg}`) +
+					`; RC=$?; rm -f ${tmp_pkg}; exit $RC`,
+					300000
+				);
+			}
+
+			return { result: (exit_code === 0) };
+		}
+	},
+
+	core_remove: {
+		args: { core: 'core' },
+		call: function(req) {
+			const core = req.args?.core;
+			if (!(core in ['hiddify', 'singbox']))
+				return { result: false, error: 'illegal core' };
+
+			let pkg_manager = null;
+			for (let p in ['/usr/bin/apk', '/sbin/apk', '/usr/sbin/apk']) {
+				if (access(p)) { pkg_manager = 'apk'; break; }
+			}
+			if (!pkg_manager) {
+				for (let p in ['/bin/opkg', '/usr/bin/opkg']) {
+					if (access(p)) { pkg_manager = 'opkg'; break; }
+				}
+			}
+			if (!pkg_manager)
+				return { result: false, error: 'no supported package manager found' };
+
+			const pkg_name = core === 'hiddify' ? 'hiddify-core' : 'sing-box-extended';
+			const exit_code = pkg_manager === 'apk'
+				? system(`apk del ${pkg_name}`, 30000)
+				: system(`opkg remove ${pkg_name}`, 30000);
+
+			return { result: (exit_code === 0) };
+		}
+	},
+
 	clash_active_node: {
 		call: function() {
 			const fd = popen('wget -qO- --timeout=3 http://127.0.0.1:9090/proxies');
