@@ -398,14 +398,6 @@ function generate_outbound(node) {
 	return outbound;
 }
 
-function has_outbound(tag) {
-	for (let ob in config.outbounds)
-		if (ob?.tag === tag) return true;
-	for (let ep in (config.endpoints || []))
-		if (ep?.tag === tag) return true;
-	return false;
-}
-
 function get_outbound(cfg) {
 	if (isEmpty(cfg))
 		return null;
@@ -460,6 +452,14 @@ function get_ruleset(cfg) {
 /* Config helper end */
 
 const config = {};
+
+const has_outbound = (tag) => {
+	for (let ob in config.outbounds)
+		if (ob?.tag === tag) return true;
+	for (let ep in (config.endpoints || []))
+		if (ep?.tag === tag) return true;
+	return false;
+};
 
 /* Log */
 config.log = {
