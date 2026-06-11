@@ -1196,6 +1196,26 @@ msgstr "واردات"
 msgid "Import share links"
 msgstr "واردات پیوند‌های اشتراکی"
 
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Import .conf file"
+msgstr "وارد کردن فایل .conf"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Import .conf"
+msgstr "وارد کردن .conf"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Select a WireGuard or AmneziaWG .conf file."
+msgstr "یک فایل .conf برای WireGuard یا AmneziaWG انتخاب کنید."
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "No valid WireGuard/AmneziaWG config found."
+msgstr "پیکربندی معتبر WireGuard/AmneziaWG یافت نشد."
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Successfully imported node: %s"
+msgstr "نود با موفقیت وارد شد: %s"
+
 #: htdocs/luci-static/resources/view/homeproxy/client.js:336
 #: htdocs/luci-static/resources/view/homeproxy/server.js:864
 msgid "In seconds."
@@ -3193,6 +3213,10 @@ msgid "RU Proxy Rules"
 msgstr "قوانین پروکسی روسیه"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Routing priority is automatic: Smaller lists (YouTube, Discord etc.) first, larger — Russia Inside second, largest — Re-filter third."
+msgstr "اولویت مسیریابی خودکار است: لیست‌های کوچک‌تر (YouTube، Discord و غیره) اول، بزرگ‌تر — Russia Inside دوم، بزرگ‌ترین — Re-filter سوم."
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Re-filter (Russia blocklist: banned domains + IPs)"
 msgstr "Re-filter (لیست مسدودی روسیه: دامنه‌ها + IP)"
 
@@ -3299,4 +3323,12 @@ msgstr "پروکسی تماس‌ها"
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Route VoIP call ports (WhatsApp, Telegram, FaceTime, etc.) through the proxy."
 msgstr "پورت‌های تماس VoIP (WhatsApp، Telegram، FaceTime و غیره) را از طریق پروکسی مسیریابی کنید."
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Do not proxify torrents"
+msgstr "تورنت‌ها را پروکسی نکن"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Force torrent traffic (BitTorrent protocol + common ports) to bypass the proxy."
+msgstr "ترافیک تورنت (پروتکل BitTorrent و پورت‌های رایج) را از پروکسی عبور نده."
 

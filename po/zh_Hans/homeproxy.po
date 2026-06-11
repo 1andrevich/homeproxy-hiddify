@@ -1199,6 +1199,26 @@ msgstr "导入"
 msgid "Import share links"
 msgstr "导入分享链接"
 
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Import .conf file"
+msgstr "导入 .conf 文件"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Import .conf"
+msgstr "导入 .conf"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Select a WireGuard or AmneziaWG .conf file."
+msgstr "选择 WireGuard 或 AmneziaWG 的 .conf 配置文件。"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "No valid WireGuard/AmneziaWG config found."
+msgstr "未找到有效的 WireGuard/AmneziaWG 配置。"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Successfully imported node: %s"
+msgstr "成功导入节点：%s"
+
 #: htdocs/luci-static/resources/view/homeproxy/client.js:336
 #: htdocs/luci-static/resources/view/homeproxy/server.js:860
 msgid "In seconds."
@@ -3250,6 +3270,10 @@ msgid "RU Proxy Rules"
 msgstr "俄罗斯代理规则"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Routing priority is automatic: Smaller lists (YouTube, Discord etc.) first, larger — Russia Inside second, largest — Re-filter third."
+msgstr "路由优先级自动设置：小列表（YouTube、Discord 等）优先，较大的 Russia Inside 其次，最大的 Re-filter 最后。"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Re-filter (Russia blocklist: banned domains + IPs)"
 msgstr "Re-filter（俄罗斯封锁列表：域名 + IP）"
 
@@ -3356,4 +3380,12 @@ msgstr "代理通话"
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Route VoIP call ports (WhatsApp, Telegram, FaceTime, etc.) through the proxy."
 msgstr "将 VoIP 通话端口（WhatsApp、Telegram、FaceTime 等）通过代理路由。"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Do not proxify torrents"
+msgstr "不代理 BT 下载"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Force torrent traffic (BitTorrent protocol + common ports) to bypass the proxy."
+msgstr "强制 BitTorrent 协议及常用端口的流量绕过代理。"
 

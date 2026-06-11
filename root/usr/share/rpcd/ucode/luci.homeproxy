@@ -302,8 +302,9 @@ const methods = {
 			/* Proxy IP: follow GLOBAL.now to the active leaf node */
 			let proxyEntry = null;
 			let proxyNodeName = null;
+			const nonProxy = (name) => name === 'direct-out' || name === 'block-out' || !name;
 			const globalNow = proxies['GLOBAL']?.now;
-			if (globalNow && proxies[globalNow]) {
+			if (globalNow && proxies[globalNow] && !nonProxy(globalNow)) {
 				const g = proxies[globalNow];
 				if (g.type === 'URLTest' || g.type === 'Fallback' || g.type === 'Selector')
 					proxyNodeName = g.now;
@@ -321,6 +322,9 @@ const methods = {
 					}
 				}
 			}
+			/* Last fallback: main-out (route-based modes use it directly) */
+			if (!proxyNodeName && proxies['main-out'])
+				proxyNodeName = 'main-out';
 			if (proxyNodeName)
 				proxyEntry = lastHistory(proxyNodeName);
 
@@ -389,8 +393,9 @@ const methods = {
 			let groupType = null;
 			let nodeName  = null;
 
+			const nonProxy = (name) => name === 'direct-out' || name === 'block-out' || !name;
 			const globalNow = proxies['GLOBAL']?.now;
-			if (globalNow && proxies[globalNow]) {
+			if (globalNow && proxies[globalNow] && !nonProxy(globalNow)) {
 				const g = proxies[globalNow];
 				if (g.type === 'URLTest' || g.type === 'Fallback' || g.type === 'Selector') {
 					groupName = globalNow;
@@ -415,6 +420,10 @@ const methods = {
 					}
 				}
 			}
+
+			/* Last fallback: main-out (route-based modes) */
+			if (!nodeName && proxies['main-out'])
+				nodeName = 'main-out';
 
 			if (!nodeName)
 				return { error: 'no active proxy node' };

@@ -359,6 +359,14 @@ return view.extend({
 		s = m.section(form.NamedSection, 'config', 'homeproxy', _('Resources management'));
 		s.anonymous = true;
 
+		o = s.option(form.DummyValue, '_active_core', _('Active core'));
+		const coreName = features.core_type === 'hiddify' ? 'hiddify-core' :
+		                 features.core_type === 'singbox' ? 'sing-box' : null;
+		const coreVer = features.version ? ' v' + features.version : '';
+		o.default = coreName
+			? E('strong', { 'style': 'color:green' }, coreName + coreVer)
+			: E('strong', { 'style': 'color:red' }, _('No core installed'));
+
 		o = s.option(form.DummyValue, '_china_ip4_version', _('China IPv4 list version'));
 		o.cfgvalue = L.bind(getResVersion, this, o, 'china_ip4');
 		o.rawhtml = true;

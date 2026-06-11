@@ -1172,6 +1172,26 @@ msgstr ""
 msgid "Import share links"
 msgstr ""
 
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Import .conf file"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Import .conf"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Select a WireGuard or AmneziaWG .conf file."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "No valid WireGuard/AmneziaWG config found."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Successfully imported node: %s"
+msgstr ""
+
 #: htdocs/luci-static/resources/view/homeproxy/client.js:336
 #: htdocs/luci-static/resources/view/homeproxy/server.js:860
 msgid "In seconds."
@@ -3127,6 +3147,10 @@ msgid "RU Proxy Rules"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Routing priority is automatic: Smaller lists (YouTube, Discord etc.) first, larger — Russia Inside second, largest — Re-filter third."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Re-filter (Russia blocklist: banned domains + IPs)"
 msgstr ""
 
@@ -3232,5 +3256,13 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Route VoIP call ports (WhatsApp, Telegram, FaceTime, etc.) through the proxy."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Do not proxify torrents"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Force torrent traffic (BitTorrent protocol + common ports) to bypass the proxy."
 msgstr ""
 

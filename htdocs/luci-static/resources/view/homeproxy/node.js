@@ -206,6 +206,64 @@ async function parseVpnLink(uri) {
 	}
 }
 
+function parseWireGuardConf(text) {
+	const lines = text.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#'));
+	let section = null;
+	const iface = {}, peer = {};
+
+	for (const line of lines) {
+		if (line === '[Interface]') { section = 'interface'; continue; }
+		if (line === '[Peer]')      { section = 'peer';      continue; }
+		const eq = line.indexOf('=');
+		if (eq < 0) continue;
+		const key = line.slice(0, eq).trim();
+		const val = line.slice(eq + 1).trim();
+		if (section === 'interface') iface[key] = val;
+		else if (section === 'peer') peer[key] = val;
+	}
+
+	if (!iface.PrivateKey || !peer.PublicKey || !peer.Endpoint) return null;
+
+	const lastColon = peer.Endpoint.lastIndexOf(':');
+	const host = peer.Endpoint.slice(0, lastColon);
+	const port = peer.Endpoint.slice(lastColon + 1);
+
+	const isAWG = !!(iface.Jc || iface.Jmin || iface.Jmax || iface.H1);
+
+	const node = {
+		label:                   isAWG ? 'AmneziaWG' : 'WireGuard',
+		type:                    isAWG ? 'amneziawg' : 'wireguard',
+		address:                 host.replace(/^\[|\]$/g, ''),
+		port:                    port,
+		wireguard_private_key:   iface.PrivateKey,
+		wireguard_peer_public_key: peer.PublicKey,
+		wireguard_pre_shared_key:  peer.PresharedKey || null,
+		wireguard_local_address: iface.Address ? iface.Address.split(',').map(a => a.trim()) : null,
+		wireguard_mtu:           iface.MTU || null,
+	};
+
+	if (isAWG) {
+		node.amnezia_jc   = iface.Jc   || null;
+		node.amnezia_jmin = iface.Jmin  || null;
+		node.amnezia_jmax = iface.Jmax  || null;
+		node.amnezia_s1   = iface.S1   || null;
+		node.amnezia_s2   = iface.S2   || null;
+		node.amnezia_s3   = iface.S3   || null;
+		node.amnezia_s4   = iface.S4   || null;
+		node.amnezia_h1   = iface.H1   || null;
+		node.amnezia_h2   = iface.H2   || null;
+		node.amnezia_h3   = iface.H3   || null;
+		node.amnezia_h4   = iface.H4   || null;
+		node.amnezia_i1   = iface.I1   || null;
+		node.amnezia_i2   = iface.I2   || null;
+		node.amnezia_i3   = iface.I3   || null;
+		node.amnezia_i4   = iface.I4   || null;
+		node.amnezia_i5   = iface.I5   || null;
+	}
+
+	return node;
+}
+
 function parseShareLink(uri, features) {
 	let config, url, params;
 
@@ -820,28 +878,6 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	s.modaltitle = L.bind(hp.loadModalTitle, this, _('Node'), _('Add a node'), data[0]);
 	s.sectiontitle = L.bind(hp.loadDefaultLabel, this, data[0]);
 
-	if (routing_mode !== 'custom') {
-		o = s.option(form.Button, '_apply', _('Apply'));
-		o.editable = true;
-		o.modalonly = false;
-		o.inputstyle = 'apply';
-		o.inputtitle = function(section_id) {
-			if (main_node == section_id) {
-				this.readonly = true;
-				return _('Applied');
-			} else {
-				this.readonly = false;
-				return _('Apply');
-			}
-		}
-		o.onclick = function(ev, section_id) {
-			uci.set(data[0], 'config', 'main_node', section_id);
-
-			return this.map.save(null, true).then(() => {
-				ui.changes.apply(true);
-			});
-		}
-	}
 
 	o = s.option(form.Value, 'label', _('Label'));
 	o.load = L.bind(hp.loadDefaultLabel, this, data[0]);
@@ -868,8 +904,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 		o.value('tuic', _('Tuic'));
 	if (features.with_wireguard && features.with_gvisor)
 		o.value('wireguard', _('WireGuard'));
-	if (features.core_type === 'singbox')
-		o.value('amneziawg', _('AmneziaWG'));
+	o.value('amneziawg', _('AmneziaWG'));
 	o.value('vless', _('VLESS'));
 	o.value('vmess', _('VMess'));
 	o.rmempty = false;
@@ -1911,6 +1946,48 @@ return view.extend({
 				])
 			])
 		}
+		ss.handleConfImport = function() {
+			const fileInput = E('input', { type: 'file', accept: '.conf', style: 'display:block;margin:8px 0' });
+			ui.showModal(_('Import .conf file'), [
+				E('p', _('Select a WireGuard or AmneziaWG .conf file.')),
+				fileInput,
+				E('div', { class: 'right' }, [
+					E('button', { class: 'btn', click: ui.hideModal }, [ _('Cancel') ]),
+					' ',
+					E('button', {
+						class: 'btn cbi-button-action',
+						click: ui.createHandlerFn(this, function() {
+							const file = fileInput.files[0];
+							if (!file) return ui.hideModal();
+
+							return new Promise((resolve) => {
+								const reader = new FileReader();
+								reader.onload = (ev) => resolve(ev.target.result);
+								reader.readAsText(file);
+							}).then((text) => {
+								const config = parseWireGuardConf(text);
+								if (!config) {
+									ui.hideModal();
+									return ui.addNotification(null, E('p', _('No valid WireGuard/AmneziaWG config found.')));
+								}
+
+								const sid = uci.add(data[0], 'node');
+								for (const [k, v] of Object.entries(config))
+									if (v != null) uci.set(data[0], sid, k, Array.isArray(v) ? v : String(v));
+
+								return uci.save()
+									.then(L.bind(this.map.load, this.map))
+									.then(L.bind(this.map.reset, this.map))
+									.then(L.ui.hideModal)
+									.then(() => ui.addNotification(null, E('p', _('Successfully imported node: %s').format(config.label))))
+									.catch(() => {});
+							});
+						})
+					}, [ _('Import') ])
+				])
+			]);
+		}
+
 		ss.renderSectionAdd = function(/* ... */) {
 			let el = form.GridSection.prototype.renderSectionAdd.apply(this, arguments),
 				nameEl = el.querySelector('.cbi-section-create-name');
@@ -1936,6 +2013,12 @@ return view.extend({
 				'title': _('Import share links'),
 				'click': ui.createHandlerFn(this, 'handleLinkImport')
 			}, [ _('Import share links') ]));
+
+			el.appendChild(E('button', {
+				'class': 'cbi-button cbi-button-add',
+				'title': _('Import .conf file'),
+				'click': ui.createHandlerFn(this, 'handleConfImport')
+			}, [ _('Import .conf') ]));
 
 			return el;
 		}

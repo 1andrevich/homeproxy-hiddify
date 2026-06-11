@@ -89,8 +89,8 @@ return view.extend({
 	render(data) {
 		let m, s, o, ss, so;
 
-		let features = data[1],
-		    hosts = data[2]?.hosts;
+		let features = data[2],
+		    hosts = data[3]?.hosts;
 
 		/* Cache all configured proxy nodes, they will be called multiple times */
 		let proxy_nodes = {};
@@ -318,6 +318,13 @@ return view.extend({
 		o.default = o.disabled;
 		o.rmempty = false;
 
+		o = s.taboption('routing', form.Flag, 'no_proxy_torrents',
+			_('Do not proxify torrents'),
+			_('Force torrent traffic (BitTorrent protocol + common ports) to bypass the proxy.'));
+		o.depends('routing_mode', 'proxy_banned_ru');
+		o.default = o.disabled;
+		o.rmempty = false;
+
 		o = s.taboption('routing', form.Flag, 'show_advanced_rules',
 			_('Advanced custom rules'),
 			_('Show Routing Nodes and Routing Rules tabs for additional custom rules.'));
@@ -495,6 +502,7 @@ return view.extend({
 		ss.anonymous = true;
 		ss.sortable = true;
 		ss.nodescriptions = true;
+		ss.description = _('Routing priority is automatic: Smaller lists (YouTube, Discord etc.) first, larger — Russia Inside second, largest — Re-filter third.');
 
 		so = ss.option(form.Flag, 'enabled', _('Enable'));
 		so.default = so.enabled;

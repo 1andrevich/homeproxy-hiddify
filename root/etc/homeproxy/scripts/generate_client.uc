@@ -62,7 +62,7 @@ const ipv6_support = uci.get(uciconfig, ucimain, 'ipv6_support') || '0';
 
 let main_node, main_udp_node, dedicated_udp_node, default_outbound, default_outbound_dns,
     domain_strategy, sniff_override, dns_server, china_dns_server, russia_dns_server,
-    secure_dns_server, proxy_calls, show_advanced_rules, dns_default_strategy, dns_default_server, dns_disable_cache,
+    secure_dns_server, proxy_calls, no_proxy_torrents, show_advanced_rules, dns_default_strategy, dns_default_server, dns_disable_cache,
     dns_disable_cache_expire, dns_independent_cache, dns_client_subnet, cache_file_store_rdrc,
     cache_file_rdrc_timeout, direct_domain_list, proxy_domain_list;
 
@@ -86,6 +86,7 @@ if (routing_mode !== 'custom') {
 		secure_dns_server = uci.get(uciconfig, ucimain, 'secure_dns_server') || 'https://1.1.1.1/dns-query';
 		domain_strategy = uci.get(uciconfig, ucimain, 'domain_strategy');
 		proxy_calls = uci.get(uciconfig, ucimain, 'proxy_calls');
+		no_proxy_torrents = uci.get(uciconfig, ucimain, 'no_proxy_torrents');
 		show_advanced_rules = uci.get(uciconfig, ucimain, 'show_advanced_rules');
 	}
 
@@ -136,9 +137,8 @@ if (match(proxy_mode, /redirect/)) {
 	self_mark = uci.get(uciconfig, 'infra', 'self_mark') || '100';
 	redirect_port = uci.get(uciconfig, 'infra', 'redirect_port') || '5331';
 }
-if (match(proxy_mode), /tproxy/)
-	if (main_udp_node !== 'nil' || routing_mode === 'custom')
-		tproxy_port = uci.get(uciconfig, 'infra', 'tproxy_port') || '5332';
+if (match(proxy_mode, /tproxy/))
+	tproxy_port = uci.get(uciconfig, 'infra', 'tproxy_port') || '5332';
 if (match(proxy_mode), /tun/) {
 	tun_name = uci.get(uciconfig, uciinfra, 'tun_name') || 'singtun0';
 	tun_addr4 = uci.get(uciconfig, uciinfra, 'tun_addr4') || '172.19.0.1/30';
@@ -1211,9 +1211,28 @@ if (!isEmpty(main_node)) {
 			});
 		}
 
-		/* Per-rule outbounds and rule sets */
-		uci.foreach(uciconfig, ucirurule, (cfg) => {
-			if (cfg.enabled !== '1') return;
+		/* Torrent bypass: protocol detection + common ports → direct */
+		if (no_proxy_torrents === '1') {
+			push(config.route.rules, {
+				protocol: ['bittorrent'],
+				action: 'route',
+				outbound: 'direct-out'
+			});
+			push(config.route.rules, {
+				port_range: ['6881:6889', '51413:51413'],
+				action: 'route',
+				outbound: 'direct-out'
+			});
+		}
+
+		/* Per-rule outbounds and rule sets
+		 * Priority order: specific services first → russia-inside → refilter (largest list last) */
+		const ru_source_priority = (s) => s === 'refilter' ? 2 : s === 'russia-inside' ? 1 : 0;
+		let ru_rules = [];
+		uci.foreach(uciconfig, ucirurule, (cfg) => { if (cfg.enabled === '1') push(ru_rules, cfg); });
+		ru_rules = sort(ru_rules, (a, b) => ru_source_priority(a.source) - ru_source_priority(b.source));
+
+		for (let cfg in ru_rules) {
 
 			/* 'main-out' means route directly through the main proxy without a separate outbound */
 			const effective_outbound = (cfg.node === 'main-out') ? 'main-out' : ('hp-ru-' + cfg.source + '-out');
@@ -1293,12 +1312,12 @@ if (!isEmpty(main_node)) {
 						type: 'remote',
 						tag: 'hp-ru-' + cfg.source,
 						format: 'binary',
-						url: 'https://github.com/itdoginfo/allow-domains/releases/latest/download/' + cfg.source + '.srs',
+						url: 'https://github.com/itdoginfo/allow-domains/releases/latest/download/' + replace(cfg.source, '-', '_') + '.srs',
 						download_detour: 'main-out',
 						update_interval: '1d'
 					});
 			}
-		});
+		}
 	}
 
 	if (routing_mode === 'bypass_mainland_china') {

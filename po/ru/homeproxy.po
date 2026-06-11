@@ -1225,6 +1225,26 @@ msgstr "Импорт"
 msgid "Import share links"
 msgstr "Импортировать ссылки для совместного использования"
 
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Import .conf file"
+msgstr "Импорт .conf файла"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Import .conf"
+msgstr "Импорт .conf"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Select a WireGuard or AmneziaWG .conf file."
+msgstr "Выберите файл конфигурации WireGuard или AmneziaWG."
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "No valid WireGuard/AmneziaWG config found."
+msgstr "Не найдена корректная конфигурация WireGuard/AmneziaWG."
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Successfully imported node: %s"
+msgstr "Узел успешно импортирован: %s"
+
 #: htdocs/luci-static/resources/view/homeproxy/client.js:336
 #: htdocs/luci-static/resources/view/homeproxy/server.js:860
 msgid "In seconds."
@@ -3308,6 +3328,10 @@ msgid "RU Proxy Rules"
 msgstr "Правила прокси (РФ)"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Routing priority is automatic: Smaller lists (YouTube, Discord etc.) first, larger — Russia Inside second, largest — Re-filter third."
+msgstr "Приоритет расставляется автоматически: меньшие списки (YouTube, Discord и др.) — первыми, крупнее — Russia Inside вторым, самый большой — Re-filter третьим."
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Re-filter (Russia blocklist: banned domains + IPs)"
 msgstr "Re-filter (Российский список блокировок: домены + IP)"
 
@@ -3414,4 +3438,12 @@ msgstr "Проксировать звонки"
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Route VoIP call ports (WhatsApp, Telegram, FaceTime, etc.) through the proxy."
 msgstr "Использовать правило для проксирования звонков в WhatsApp, Telegram, FaceTime и т.д."
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Do not proxify torrents"
+msgstr "Не проксировать торренты"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Force torrent traffic (BitTorrent protocol + common ports) to bypass the proxy."
+msgstr "Направить торрент-трафик (протокол BitTorrent и стандартные порты) в обход прокси."
 
