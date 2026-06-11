@@ -3127,3 +3127,171 @@ msgstr "مقدار معتبر درگاه"
 #: htdocs/luci-static/resources/homeproxy.js:328
 msgid "valid uuid"
 msgstr "UUID معتبر"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Russia (Proxy Banned)"
+msgstr "روسیه (سایت‌های مسدودشده)"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Russia DNS server"
+msgstr "سرور DNS روسیه"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Direct DNS server for Russian domains. Plain UDP only."
+msgstr "سرور DNS مستقیم برای دامنه‌های روسی. فقط UDP ساده."
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Yandex Primary (77.88.8.8)"
+msgstr "Yandex اصلی (77.88.8.8)"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "SkyDNS (193.58.251.251)"
+msgstr "SkyDNS (193.58.251.251)"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Comss.one (92.222.10.10)"
+msgstr "Comss.one (92.222.10.10)"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Secure DNS server"
+msgstr "سرور DNS امن"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Encrypted DNS server for banned domains, routed via proxy. Supports DoH and DoT."
+msgstr "سرور DNS رمزنگاری‌شده برای دامنه‌های مسدود، مسیریابی از طریق پروکسی. پشتیبانی از DoH و DoT."
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Cloudflare DoH (1.1.1.1)"
+msgstr "Cloudflare DoH (1.1.1.1)"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Google DoH"
+msgstr "Google DoH"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Quad9 DoH"
+msgstr "Quad9 DoH"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "AdGuard DoH"
+msgstr "AdGuard DoH"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Cloudflare DoT (1.1.1.1)"
+msgstr "Cloudflare DoT (1.1.1.1)"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Google DoT (8.8.8.8)"
+msgstr "Google DoT (8.8.8.8)"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Main node is required in Russia (Proxy Banned) mode"
+msgstr "در حالت «روسیه (سایت‌های مسدودشده)» انتخاب گره اصلی الزامی است"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "RU Proxy Rules"
+msgstr "قوانین پروکسی روسیه"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Re-filter (Russia blocklist: banned domains + IPs)"
+msgstr "Re-filter (لیست مسدودی روسیه: دامنه‌ها + IP)"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "itdog - russia-inside"
+msgstr "itdog - russia-inside"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "YouTube"
+msgstr "YouTube"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Twitter/X"
+msgstr "Twitter/X"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "TikTok"
+msgstr "TikTok"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Telegram"
+msgstr "Telegram"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Roblox"
+msgstr "Roblox"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Adult content"
+msgstr "محتوای بزرگسالان"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "OVH (France cloud hosting)"
+msgstr "OVH (هاستینگ ابری فرانسه)"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "International news sites"
+msgstr "سایت‌های خبری بین‌المللی"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Meta (Facebook, Instagram)"
+msgstr "Meta (Facebook، Instagram)"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "HODCA"
+msgstr "HODCA"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Hetzner (Germany cloud hosting)"
+msgstr "Hetzner (هاستینگ ابری آلمان)"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "HDRezka"
+msgstr "HDRezka"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Google AI services"
+msgstr "سرویس‌های هوش مصنوعی Google"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Google Play"
+msgstr "Google Play"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "GeoBlock services"
+msgstr "سرویس‌های GeoBlock"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Anime streaming"
+msgstr "پخش آنیمه"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Cloudflare CDN"
+msgstr "Cloudflare CDN"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "CloudFront CDN"
+msgstr "CloudFront CDN"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Discord"
+msgstr "Discord"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "DigitalOcean cloud hosting"
+msgstr "DigitalOcean (هاستینگ ابری)"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Proxy calls"
+msgstr "پروکسی تماس‌ها"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Route VoIP call ports (WhatsApp, Telegram, FaceTime, etc.) through the proxy."
+msgstr "پورت‌های تماس VoIP (WhatsApp، Telegram، FaceTime و غیره) را از طریق پروکسی مسیریابی کنید."
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Re-filter version"
+msgstr "نسخه Re-filter"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "itdoginfo version"
+msgstr "نسخه itdoginfo"

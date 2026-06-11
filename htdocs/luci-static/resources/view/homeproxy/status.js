@@ -362,18 +362,32 @@ return view.extend({
 		o = s.option(form.DummyValue, '_china_ip4_version', _('China IPv4 list version'));
 		o.cfgvalue = L.bind(getResVersion, this, o, 'china_ip4');
 		o.rawhtml = true;
+		o.depends({'routing_mode': 'proxy_banned_ru', '!reverse': true});
 
 		o = s.option(form.DummyValue, '_china_ip6_version', _('China IPv6 list version'));
 		o.cfgvalue = L.bind(getResVersion, this, o, 'china_ip6');
 		o.rawhtml = true;
+		o.depends({'routing_mode': 'proxy_banned_ru', '!reverse': true});
 
 		o = s.option(form.DummyValue, '_china_list_version', _('China list version'));
 		o.cfgvalue = L.bind(getResVersion, this, o, 'china_list');
 		o.rawhtml = true;
+		o.depends({'routing_mode': 'proxy_banned_ru', '!reverse': true});
 
 		o = s.option(form.DummyValue, '_gfw_list_version', _('GFW list version'));
 		o.cfgvalue = L.bind(getResVersion, this, o, 'gfw_list');
 		o.rawhtml = true;
+		o.depends({'routing_mode': 'proxy_banned_ru', '!reverse': true});
+
+		o = s.option(form.DummyValue, '_refilter_version', _('Re-filter version'));
+		o.cfgvalue = L.bind(getResVersion, this, o, 'refilter');
+		o.rawhtml = true;
+		o.depends('routing_mode', 'proxy_banned_ru');
+
+		o = s.option(form.DummyValue, '_itdoginfo_version', _('itdoginfo version'));
+		o.cfgvalue = L.bind(getResVersion, this, o, 'itdoginfo');
+		o.rawhtml = true;
+		o.depends('routing_mode', 'proxy_banned_ru');
 
 		o = s.option(form.Value, 'github_token', _('GitHub token'));
 		o.password = true;

@@ -142,6 +142,14 @@ return view.extend({
 		o.default = 'nil';
 		o.depends({'routing_mode': /^((?!custom).)+$/});
 		o.rmempty = false;
+		o.validate = function(section_id, value) {
+			if (section_id && value === 'nil') {
+				let routing_mode = this.section.formvalue(section_id, 'routing_mode');
+				if (routing_mode === 'proxy_banned_ru')
+					return _('Main node is required in Russia (Proxy Banned) mode');
+			}
+			return true;
+		}
 
 		o = s.taboption('routing', hp.CBIStaticList, 'main_urltest_nodes', _('URLTest nodes'),
 			_('List of nodes to test.'));
@@ -203,7 +211,7 @@ return view.extend({
 		o.value('117.50.10.10', _('ThreatBook Public DNS (117.50.10.10)'));
 		o.default = '8.8.8.8';
 		o.rmempty = false;
-		o.depends({'routing_mode': /^((?!custom).)+$/});
+		o.depends({'routing_mode': /^((?!custom|proxy_banned_ru).)+$/});
 		o.validate = function(section_id, value) {
 			if (section_id && !['wan'].includes(value)) {
 				if (!value)
@@ -263,10 +271,57 @@ return view.extend({
 			return true;
 		}
 
+		o = s.taboption('routing', form.Value, 'russia_dns_server', _('Russia DNS server'),
+			_('Direct DNS server for Russian domains. Plain UDP only.'));
+		o.value('77.88.8.8', _('Yandex Primary (77.88.8.8)'));
+		o.value('193.58.251.251', _('SkyDNS (193.58.251.251)'));
+		o.value('92.222.10.10', _('Comss.one (92.222.10.10)'));
+		o.depends('routing_mode', 'proxy_banned_ru');
+		o.default = '77.88.8.8';
+		o.rmempty = false;
+		o.validate = function(section_id, value) {
+			if (section_id && value) {
+				if (!stubValidator.apply('ip4addr', value) && !stubValidator.apply('ip6addr', value))
+					return _('Expecting: %s').format(_('valid DNS server address'));
+			}
+			return true;
+		}
+
+		o = s.taboption('routing', form.Value, 'secure_dns_server', _('Secure DNS server'),
+			_('Encrypted DNS server for banned domains, routed via proxy. Supports DoH and DoT.'));
+		o.value('https://1.1.1.1/dns-query', _('Cloudflare DoH (1.1.1.1)'));
+		o.value('https://dns.google/dns-query', _('Google DoH'));
+		o.value('https://dns.quad9.net/dns-query', _('Quad9 DoH'));
+		o.value('https://dns.adguard-dns.com/dns-query', _('AdGuard DoH'));
+		o.value('tls://1.1.1.1', _('Cloudflare DoT (1.1.1.1)'));
+		o.value('tls://8.8.8.8', _('Google DoT (8.8.8.8)'));
+		o.depends('routing_mode', 'proxy_banned_ru');
+		o.default = 'https://1.1.1.1/dns-query';
+		o.rmempty = false;
+		o.validate = function(section_id, value) {
+			if (section_id && value) {
+				try {
+					let url = new URL(value.replace(/^.*:\/\//, 'http://'));
+					if (stubValidator.apply('hostname', url.hostname) || stubValidator.apply('ipaddr', url.hostname))
+						return true;
+				} catch(e) {}
+				return _('Expecting: %s').format(_('valid DNS server address'));
+			}
+			return true;
+		}
+
+		o = s.taboption('routing', form.Flag, 'proxy_calls',
+			_('Proxy calls'),
+			_('Route VoIP call ports (WhatsApp, Telegram, FaceTime, etc.) through the proxy.'));
+		o.depends('routing_mode', 'proxy_banned_ru');
+		o.default = o.disabled;
+		o.rmempty = false;
+
 		o = s.taboption('routing', form.ListValue, 'routing_mode', _('Routing mode'));
 		o.value('gfwlist', _('GFWList'));
 		o.value('bypass_mainland_china', _('Bypass mainland China'));
 		o.value('proxy_mainland_china', _('Only proxy mainland China'));
+		o.value('proxy_banned_ru', _('Russia (Proxy Banned)'));
 		o.value('custom', _('Custom routing'));
 		o.value('global', _('Global'));
 		o.value('custom_json', _('Custom JSON'));
@@ -410,6 +465,78 @@ return view.extend({
 		so.default = 'default-dns';
 		so.rmempty = false;
 		/* Routing settings end */
+
+		/* RU Proxy Rules start */
+		s.tab('ru_rules', _('RU Proxy Rules'));
+		o = s.taboption('ru_rules', form.SectionValue, '_ru_rules', form.TypedSection, 'proxy_ru_rule');
+		o.depends('routing_mode', 'proxy_banned_ru');
+
+		ss = o.subsection;
+		ss.addremove = true;
+		ss.anonymous = true;
+		ss.sortable = true;
+		ss.nodescriptions = true;
+
+		so = ss.option(form.Flag, 'enabled', _('Enable'));
+		so.default = so.enabled;
+		so.rmempty = false;
+		so.editable = true;
+
+		so = ss.option(form.ListValue, 'source', _('Source'));
+		so.value('refilter', _('Re-filter (Russia blocklist: banned domains + IPs)'));
+		so.value('russia-inside', _('itdog - russia-inside'));
+		so.value('youtube', _('YouTube'));
+		so.value('twitter', _('Twitter/X'));
+		so.value('tiktok', _('TikTok'));
+		so.value('telegram', _('Telegram'));
+		so.value('roblox', _('Roblox'));
+		so.value('porn', _('Adult content'));
+		so.value('ovh', _('OVH (France cloud hosting)'));
+		so.value('news', _('International news sites'));
+		so.value('meta', _('Meta (Facebook, Instagram)'));
+		so.value('hodca', _('HODCA'));
+		so.value('hetzner', _('Hetzner (Germany cloud hosting)'));
+		so.value('hdrezka', _('HDRezka'));
+		so.value('google_ai', _('Google AI services'));
+		so.value('google_play', _('Google Play'));
+		so.value('geoblock', _('GeoBlock services'));
+		so.value('anime', _('Anime streaming'));
+		so.value('cloudflare', _('Cloudflare CDN'));
+		so.value('cloudfront', _('CloudFront CDN'));
+		so.value('discord', _('Discord'));
+		so.value('digitalocean', _('DigitalOcean cloud hosting'));
+		so.rmempty = false;
+		so.editable = true;
+
+		so = ss.option(form.ListValue, 'node', _('Node'));
+		so.value('urltest', _('URLTest'));
+		for (let i in proxy_nodes)
+			so.value(i, proxy_nodes[i]);
+		so.rmempty = false;
+		so.editable = true;
+
+		so = ss.option(hp.CBIStaticList, 'urltest_nodes', _('URLTest nodes'),
+			_('List of nodes to test.'));
+		for (let i in proxy_nodes)
+			so.value(i, proxy_nodes[i]);
+		so.depends('node', 'urltest');
+		so.rmempty = false;
+		so.modalonly = true;
+
+		so = ss.option(form.Value, 'urltest_interval', _('Test interval'),
+			_('The test interval in seconds.'));
+		so.datatype = 'uinteger';
+		so.placeholder = '180';
+		so.depends('node', 'urltest');
+		so.modalonly = true;
+
+		so = ss.option(form.Value, 'urltest_tolerance', _('Test tolerance'),
+			_('The test tolerance in milliseconds.'));
+		so.datatype = 'uinteger';
+		so.placeholder = '150';
+		so.depends('node', 'urltest');
+		so.modalonly = true;
+		/* RU Proxy Rules end */
 
 		/* Routing nodes start */
 		s.tab('routing_node', _('Routing Nodes'));

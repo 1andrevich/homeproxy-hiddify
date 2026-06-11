@@ -42,6 +42,7 @@ const uciroutingsetting = 'routing',
 const ucinode = 'node';
 const uciruleset = 'ruleset';
 const uciserver = 'server';
+const ucirurule = 'proxy_ru_rule';
 
 const routing_mode = uci.get(uciconfig, ucimain, 'routing_mode') || 'bypass_mainland_china';
 
@@ -60,10 +61,10 @@ const is_singbox = !is_hiddify && !!access('/usr/bin/sing-box');
 const ipv6_support = uci.get(uciconfig, ucimain, 'ipv6_support') || '0';
 
 let main_node, main_udp_node, dedicated_udp_node, default_outbound, default_outbound_dns,
-    domain_strategy, sniff_override, dns_server, china_dns_server, dns_default_strategy,
-    dns_default_server, dns_disable_cache, dns_disable_cache_expire, dns_independent_cache,
-    dns_client_subnet, cache_file_store_rdrc, cache_file_rdrc_timeout, direct_domain_list,
-    proxy_domain_list;
+    domain_strategy, sniff_override, dns_server, china_dns_server, russia_dns_server,
+    secure_dns_server, proxy_calls, dns_default_strategy, dns_default_server, dns_disable_cache,
+    dns_disable_cache_expire, dns_independent_cache, dns_client_subnet, cache_file_store_rdrc,
+    cache_file_rdrc_timeout, direct_domain_list, proxy_domain_list;
 
 if (routing_mode !== 'custom') {
 	main_node = uci.get(uciconfig, ucimain, 'main_node') || 'nil';
@@ -79,6 +80,14 @@ if (routing_mode !== 'custom') {
 		if (isEmpty(china_dns_server) || type(china_dns_server) !== 'string' || china_dns_server === 'wan')
 			china_dns_server = wan_dns;
 	}
+
+	if (routing_mode === 'proxy_banned_ru') {
+		russia_dns_server = uci.get(uciconfig, ucimain, 'russia_dns_server') || '77.88.8.8';
+		secure_dns_server = uci.get(uciconfig, ucimain, 'secure_dns_server') || 'https://1.1.1.1/dns-query';
+		domain_strategy = uci.get(uciconfig, ucimain, 'domain_strategy');
+		proxy_calls = uci.get(uciconfig, ucimain, 'proxy_calls');
+	}
+
 	dns_default_strategy = (ipv6_support !== '1') ? 'ipv4_only' : null;
 
 	direct_domain_list = trim(readfile(HP_DIR + '/resources/direct_list.txt'));
@@ -485,73 +494,107 @@ config.dns = {
 };
 
 if (!isEmpty(main_node)) {
-	/* Main DNS */
-	push(config.dns.servers, {
-		tag: 'main-dns',
-		domain_resolver: {
-			server: 'default-dns',
-			strategy: (ipv6_support !== '1') ? 'ipv4_only' : null
-		},
-		detour: 'main-out',
-		...parse_dnsserver(dns_server, 'tcp')
-	});
-	config.dns.final = 'main-dns';
-
-	if (length(direct_domain_list))
-		push(config.dns.rules, {
-			rule_set: 'direct-domain',
-			action: 'route',
-			server: (routing_mode === 'bypass_mainland_china') ? 'china-dns' : 'default-dns'
-		});
-
-	/* Filter out SVCB/HTTPS queries for "exquisite" Apple devices */
-	if (routing_mode === 'gfwlist' || length(proxy_domain_list))
-		push(config.dns.rules, {
-			rule_set: (routing_mode !== 'gfwlist') ? 'proxy-domain' : null,
-			query_type: [64, 65],
-			action: 'reject'
-		});
-
-	if (routing_mode === 'bypass_mainland_china') {
+	if (routing_mode === 'proxy_banned_ru') {
+		/* Russia mode: direct-default routing, russia-dns for all, secure-dns for proxy lists */
 		push(config.dns.servers, {
-			tag: 'china-dns',
+			tag: 'russia-dns',
+			detour: self_mark ? 'direct-out' : null,
+			...parse_dnsserver(russia_dns_server)
+		});
+		push(config.dns.servers, {
+			tag: 'secure-dns',
+			domain_resolver: {
+				server: 'russia-dns',
+				strategy: (ipv6_support !== '1') ? 'ipv4_only' : null
+			},
+			detour: 'main-out',
+			...parse_dnsserver(secure_dns_server, 'tcp')
+		});
+		config.dns.final = 'russia-dns';
+
+		/* Route proxy-list domains to secure-dns to prevent DNS leaks */
+		let ru_domain_rulesets = [];
+		uci.foreach(uciconfig, ucirurule, (cfg) => {
+			if (cfg.enabled !== '1') return;
+			const tag = (cfg.source === 'refilter') ? 'hp-ru-refilter-domain' : ('hp-ru-' + cfg.source);
+			if (index(ru_domain_rulesets, tag) < 0)
+				push(ru_domain_rulesets, tag);
+		});
+		if (length(ru_domain_rulesets))
+			push(config.dns.rules, {
+				rule_set: ru_domain_rulesets,
+				action: 'route',
+				server: 'secure-dns'
+			});
+	} else {
+		/* Main DNS */
+		push(config.dns.servers, {
+			tag: 'main-dns',
 			domain_resolver: {
 				server: 'default-dns',
-				strategy: 'prefer_ipv6'
+				strategy: (ipv6_support !== '1') ? 'ipv4_only' : null
 			},
-			detour: self_mark ? 'direct-out' : null,
-			...parse_dnsserver(china_dns_server)
+			detour: 'main-out',
+			...parse_dnsserver(dns_server, 'tcp')
 		});
+		config.dns.final = 'main-dns';
 
-		if (length(proxy_domain_list))
+		if (length(direct_domain_list))
 			push(config.dns.rules, {
-				rule_set: 'proxy-domain',
+				rule_set: 'direct-domain',
 				action: 'route',
-				server: 'main-dns'
+				server: (routing_mode === 'bypass_mainland_china') ? 'china-dns' : 'default-dns'
 			});
 
-		push(config.dns.rules, {
-			rule_set: 'geosite-cn',
-			action: 'route',
-			server: 'china-dns',
-			strategy: 'prefer_ipv6'
-		});
-		push(config.dns.rules, {
-			type: 'logical',
-			mode: 'and',
-			rules: [
-				{
-					rule_set: 'geosite-noncn',
-					invert: true
+		/* Filter out SVCB/HTTPS queries for "exquisite" Apple devices */
+		if (routing_mode === 'gfwlist' || length(proxy_domain_list))
+			push(config.dns.rules, {
+				rule_set: (routing_mode !== 'gfwlist') ? 'proxy-domain' : null,
+				query_type: [64, 65],
+				action: 'reject'
+			});
+
+		if (routing_mode === 'bypass_mainland_china') {
+			push(config.dns.servers, {
+				tag: 'china-dns',
+				domain_resolver: {
+					server: 'default-dns',
+					strategy: 'prefer_ipv6'
 				},
-				{
-					rule_set: 'geoip-cn'
-				}
-			],
-			action: 'route',
-			server: 'china-dns',
-			strategy: 'prefer_ipv6'
-		});
+				detour: self_mark ? 'direct-out' : null,
+				...parse_dnsserver(china_dns_server)
+			});
+
+			if (length(proxy_domain_list))
+				push(config.dns.rules, {
+					rule_set: 'proxy-domain',
+					action: 'route',
+					server: 'main-dns'
+				});
+
+			push(config.dns.rules, {
+				rule_set: 'geosite-cn',
+				action: 'route',
+				server: 'china-dns',
+				strategy: 'prefer_ipv6'
+			});
+			push(config.dns.rules, {
+				type: 'logical',
+				mode: 'and',
+				rules: [
+					{
+						rule_set: 'geosite-noncn',
+						invert: true
+					},
+					{
+						rule_set: 'geoip-cn'
+					}
+				],
+				action: 'route',
+				server: 'china-dns',
+				strategy: 'prefer_ipv6'
+			});
+		}
 	}
 } else if (!isEmpty(default_outbound)) {
 	/* DNS servers */
@@ -1006,33 +1049,35 @@ config.route = {
 if (!isEmpty(main_node)) {
 	/* Avoid DNS loop */
 	/* sing-box-extended supports action object; hiddify-core (standard sing-box 1.12) expects a string tag */
+	const default_resolver_server = (routing_mode === 'bypass_mainland_china') ? 'china-dns' :
+	                                (routing_mode === 'proxy_banned_ru') ? 'russia-dns' : 'default-dns';
 	config.route.default_domain_resolver = is_singbox ? {
 		action: 'route',
-		server: (routing_mode === 'bypass_mainland_china') ? 'china-dns' : 'default-dns',
+		server: default_resolver_server,
 		strategy: (ipv6_support !== '1') ? 'prefer_ipv4' : null
-	} : ((routing_mode === 'bypass_mainland_china') ? 'china-dns' : 'default-dns');
+	} : default_resolver_server;
 
-	/* Direct list */
-	if (length(direct_domain_list))
+	/* Direct list (not needed in proxy_banned_ru — direct is the default) */
+	if (length(direct_domain_list) && routing_mode !== 'proxy_banned_ru')
 		push(config.route.rules, {
 			rule_set: 'direct-domain',
 			action: 'route',
 			outbound: 'direct-out'
 		});
 
-	/* Main UDP out */
-	if (dedicated_udp_node)
+	/* Main UDP out (not used in proxy_banned_ru — would proxy all UDP traffic) */
+	if (dedicated_udp_node && routing_mode !== 'proxy_banned_ru')
 		push(config.route.rules, {
 			network: 'udp',
 			action: 'route',
 			outbound: 'main-udp-out'
 		});
 
-	config.route.final = 'main-out';
+	config.route.final = (routing_mode === 'proxy_banned_ru') ? 'direct-out' : 'main-out';
 
 	/* Rule set */
 	/* Direct list */
-	if (length(direct_domain_list))
+	if (length(direct_domain_list) && routing_mode !== 'proxy_banned_ru')
 		push(config.route.rule_set, {
 			type: 'inline',
 			tag: 'direct-domain',
@@ -1044,7 +1089,7 @@ if (!isEmpty(main_node)) {
 		});
 
 	/* Proxy list */
-	if (length(proxy_domain_list))
+	if (length(proxy_domain_list) && routing_mode !== 'proxy_banned_ru')
 		push(config.route.rule_set, {
 			type: 'inline',
 			tag: 'proxy-domain',
@@ -1054,6 +1099,97 @@ if (!isEmpty(main_node)) {
 				}
 			]
 		});
+
+	if (routing_mode === 'proxy_banned_ru') {
+		/* Call proxying rules: UDP media ports + XMPP/SIP ports for VoIP apps */
+		if (proxy_calls === '1') {
+			push(config.route.rules, {
+				network: 'udp',
+				port: [1400, 8443],
+				port_range: ['50000:65530', '596:599', '3478:3497', '16384:16387', '16393:16402'],
+				action: 'route',
+				outbound: 'main-out'
+			});
+			push(config.route.rules, {
+				port: [4244, 7985, 5222, 5223, 5242, 5243],
+				action: 'route',
+				outbound: 'main-out'
+			});
+		}
+
+		/* Per-rule outbounds and rule sets */
+		uci.foreach(uciconfig, ucirurule, (cfg) => {
+			if (cfg.enabled !== '1') return;
+
+			const out_tag = 'hp-ru-' + cfg.source + '-out';
+
+			if (cfg.node === 'urltest') {
+				const ut_nodes = filter(cfg.urltest_nodes || [], (k) => uci.get_all(uciconfig, k) != null);
+				push(config.outbounds, {
+					type: 'urltest',
+					tag: out_tag,
+					outbounds: map(ut_nodes, (k) => `cfg-${k}-out`),
+					interval: strToTime(cfg.urltest_interval || '180'),
+					tolerance: strToInt(cfg.urltest_tolerance || '150'),
+					idle_timeout: '1800s'
+				});
+				/* Generate underlying node outbounds for this urltest group */
+				for (let n in ut_nodes) {
+					const nc = uci.get_all(uciconfig, n);
+					if (!nc) continue;
+					if (nc.type in ['wireguard', 'amneziawg']) {
+						push(config.endpoints, generate_endpoint(nc));
+						config.endpoints[length(config.endpoints)-1].tag = 'cfg-' + n + '-out';
+					} else {
+						push(config.outbounds, generate_outbound(nc));
+						config.outbounds[length(config.outbounds)-1].tag = 'cfg-' + n + '-out';
+					}
+				}
+			} else if (!isEmpty(cfg.node)) {
+				const nc = uci.get_all(uciconfig, cfg.node) || {};
+				if (nc.type in ['wireguard', 'amneziawg']) {
+					push(config.endpoints, generate_endpoint(nc));
+					config.endpoints[length(config.endpoints)-1].tag = out_tag;
+				} else {
+					push(config.outbounds, generate_outbound(nc));
+					config.outbounds[length(config.outbounds)-1].tag = out_tag;
+				}
+			}
+
+			/* Routing rules */
+			const rule_sets = (cfg.source === 'refilter')
+				? ['hp-ru-refilter-domain', 'hp-ru-refilter-ip']
+				: ['hp-ru-' + cfg.source];
+			push(config.route.rules, {
+				rule_set: rule_sets,
+				action: 'route',
+				outbound: out_tag
+			});
+
+			/* Rule sets */
+			if (cfg.source === 'refilter') {
+				push(config.route.rule_set, {
+					type: 'local',
+					tag: 'hp-ru-refilter-domain',
+					format: 'binary',
+					path: HP_DIR + '/resources/ruleset-domain-refilter_domains.srs'
+				});
+				push(config.route.rule_set, {
+					type: 'local',
+					tag: 'hp-ru-refilter-ip',
+					format: 'binary',
+					path: HP_DIR + '/resources/ruleset-ip-refilter_ipsum.srs'
+				});
+			} else {
+				push(config.route.rule_set, {
+					type: 'local',
+					tag: 'hp-ru-' + cfg.source,
+					format: 'binary',
+					path: HP_DIR + '/resources/' + cfg.source + '.srs'
+				});
+			}
+		});
+	}
 
 	if (routing_mode === 'bypass_mainland_china') {
 		push(config.route.rule_set, {
@@ -1161,7 +1297,7 @@ config.experimental = {
 		external_controller: '127.0.0.1:9090'
 	}
 };
-if (routing_mode in ['bypass_mainland_china', 'custom']) {
+if (routing_mode in ['bypass_mainland_china', 'proxy_banned_ru', 'custom']) {
 	config.experimental.cache_file = {
 		enabled: true,
 		path: RUN_DIR + '/cache.db',
