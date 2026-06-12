@@ -80,6 +80,156 @@ function log(...args) {
 	logfile.close();
 }
 
+function parse_singbox_outbound(ob, companion_map) {
+	const proxy_types = ['vless', 'vmess', 'trojan', 'shadowsocks', 'naive',
+	                     'tuic', 'hysteria2', 'wireguard', 'ssh', 'mieru', 'anytls', 'socks', 'http'];
+	if (!(ob.type in proxy_types)) return null;
+	/* Skip hidden companion outbounds (e.g. ShadowTLS wrappers tagged §hide§) */
+	if (ob.tag && match(ob.tag, /§hide§/)) return null;
+
+	const tls = ob.tls || {};
+	const utls = tls.utls || {};
+	const reality = tls.reality || {};
+	const tr = ob.transport || {};
+
+	let config = {
+		label: ob.tag || null,
+		type: ob.type,
+		address: ob.server || null,
+		port: (ob.server_port != null) ? '' + ob.server_port : null,
+		username: ob.username || ob.user || null,
+		password: ob.password || null,
+		tls: tls.enabled ? '1' : '0',
+		tls_sni: tls.server_name || null,
+		tls_insecure: tls.insecure ? '1' : null,
+		tls_alpn: tls.alpn || null,
+		tls_reality: reality.enabled ? '1' : null,
+		tls_reality_public_key: reality.enabled ? (reality.public_key || null) : null,
+		tls_reality_short_id: reality.enabled ? (reality.short_id || null) : null,
+		tls_utls: (sing_features.with_utls && utls.enabled) ? (utls.fingerprint || null) : null,
+	};
+
+	/* V2Ray transport (vless / vmess / trojan) */
+	if (tr.type) {
+		config.transport = tr.type;
+		switch (tr.type) {
+		case 'grpc':
+			config.grpc_servicename = tr.service_name || null;
+			break;
+		case 'ws':
+			config.ws_host = (tr.headers && tr.headers.Host) ? tr.headers.Host : null;
+			config.ws_path = tr.path || null;
+			break;
+		case 'httpupgrade':
+			config.httpupgrade_host = tr.host || null;
+			config.http_path = tr.path || null;
+			break;
+		case 'http':
+			config.http_host = tr.host ? [tr.host] : null;
+			config.http_path = tr.path || null;
+			break;
+		case 'xhttp':
+			config.http_path = tr.path || null;
+			config.http_host = tr.host || null;
+			config.xhttp_mode = tr.mode || null;
+			if (!isEmpty(tr.headers))
+				config.xhttp_headers = sprintf('%J', tr.headers);
+			if (tr.downloadSettings) {
+				const dl = tr.downloadSettings;
+				const dl_tls = dl.tls || {};
+				config.xhttp_download_path = dl.path || null;
+				config.xhttp_download_host = dl.host || null;
+				if (dl_tls.enabled) {
+					config.xhttp_download_security = 'tls';
+					config.xhttp_download_sni = dl_tls.server_name || null;
+					config.xhttp_download_alpn = dl_tls.alpn ? join(',', dl_tls.alpn) : null;
+					const dl_utls = dl_tls.utls || {};
+					config.xhttp_download_fp = dl_utls.fingerprint || null;
+				}
+			}
+			break;
+		}
+	}
+
+	switch (ob.type) {
+	case 'vless':
+		config.uuid = ob.uuid || null;
+		config.vless_flow = ob.flow || null;
+		config.packet_encoding = ob.packet_encoding || null;
+		break;
+	case 'vmess':
+		config.uuid = ob.uuid || null;
+		config.vmess_alterid = ob.alter_id || null;
+		break;
+	case 'shadowsocks':
+		config.shadowsocks_encrypt_method = ob.method || null;
+		if (ob.detour && companion_map[ob.detour]) {
+			const stls = companion_map[ob.detour];
+			config.address = stls.server || null;
+			config.port = (stls.server_port != null) ? '' + stls.server_port : null;
+			config.shadowtls_enabled = '1';
+			config.shadowtls_password = stls.password || null;
+			config.shadowtls_version = (stls.version != null) ? '' + stls.version : '3';
+			const stls_tls = stls.tls || {};
+			const stls_utls = stls_tls.utls || {};
+			config.tls = stls_tls.enabled ? '1' : '0';
+			config.tls_sni = stls_tls.server_name || null;
+			config.tls_insecure = stls_tls.insecure ? '1' : null;
+			config.tls_utls = (sing_features.with_utls && stls_utls.enabled) ? (stls_utls.fingerprint || null) : null;
+		}
+		break;
+	case 'naive':
+		config.naive_quic = ob.quic ? '1' : null;
+		config.naive_extra_headers = !isEmpty(ob.extra_headers) ? sprintf('%J', ob.extra_headers) : null;
+		break;
+	case 'tuic':
+		config.uuid = ob.uuid || null;
+		config.tuic_congestion_control = ob.congestion_control || null;
+		config.tuic_udp_relay_mode = ob.udp_relay_mode || null;
+		config.tuic_zero_rtt_handshake = ob.zero_rtt_handshake ? '1' : null;
+		config.tuic_heartbeat = ob.heartbeat || null;
+		break;
+	case 'hysteria2':
+		config.hysteria_up_mbps = (ob.up_mbps != null) ? '' + ob.up_mbps : null;
+		config.hysteria_down_mbps = (ob.down_mbps != null) ? '' + ob.down_mbps : null;
+		if (ob.obfs) {
+			config.hysteria_obfs_type = ob.obfs.type || null;
+			config.hysteria_obfs_password = ob.obfs.password || null;
+		}
+		break;
+	case 'wireguard':
+		config.wireguard_private_key = ob.private_key || null;
+		config.wireguard_public_key = ob.peer_public_key || null;
+		config.wireguard_pre_shared_key = ob.pre_shared_key || null;
+		config.wireguard_local_address = ob.local_address || null;
+		config.wireguard_mtu = (ob.mtu != null) ? '' + ob.mtu : null;
+		if (type(ob.reserved) === 'array')
+			config.wireguard_reserved = map(ob.reserved, s => '' + s);
+		break;
+	case 'ssh':
+		config.ssh_host_key = ob.host_key || null;
+		config.ssh_priv_key = ob.private_key || null;
+		break;
+	case 'mieru':
+		config.port = '0';
+		if (ob.portBindings && ob.portBindings[0]) {
+			/* Hiddify format */
+			config.mieru_protocol = ob.portBindings[0].protocol || null;
+			config.mieru_port_range = ob.portBindings[0].portRange || null;
+		} else if (ob.server_ports && ob.server_ports[0]) {
+			/* sing-box format — transport may be absent, infer from tag */
+			config.mieru_port_range = ob.server_ports[0] || null;
+			config.mieru_protocol = ob.transport ||
+				(match(ob.tag, /UDP/i) ? 'UDP' : (match(ob.tag, /TCP/i) ? 'TCP' : null));
+		}
+		config.mieru_multiplexing = ob.multiplexing || null;
+		config.mieru_handshake_mode = ob.handshake_mode || null;
+		break;
+	}
+
+	return config;
+}
+
 function parse_uri(uri) {
 	let config, url, params;
 
@@ -96,6 +246,9 @@ function parse_uri(uri) {
 				shadowsocks_plugin: uri.plugin,
 				shadowsocks_plugin_opts: uri.plugin_opts
 			};
+		} else {
+			/* Pre-parsed sing-box JSON outbound from parse_singbox_outbound() */
+			config = uri;
 		}
 	} else if (type(uri) === 'string') {
 		uri = split(trim(uri), '://');
@@ -285,6 +438,27 @@ function parse_uri(uri) {
 				password: ss_userinfo[1],
 				shadowsocks_plugin: ss_plugin,
 				shadowsocks_plugin_opts: ss_plugin_opts
+			};
+
+			break;
+		case 'shadowtls':
+			/* shadowtls://STLS_PASS@HOST:PORT?version=V&sni=SNI&fp=FP&method=SS_METHOD&password=SS_PASS#Label
+			 * Represents a Shadowsocks 2022 connection wrapped in ShadowTLS transport. */
+			url = parseURL('http://' + uri[1]) || {};
+			params = url.searchParams || {};
+
+			config = {
+				label: url.hash ? urldecode(url.hash) : null,
+				type: 'shadowsocks',
+				address: url.hostname,
+				port: url.port,
+				shadowsocks_encrypt_method: params.method || '2022-blake3-aes-256-gcm',
+				password: params.password ? urldecode(params.password) : null,
+				shadowtls_enabled: '1',
+				shadowtls_password: url.username ? urldecode(url.username) : null,
+				shadowtls_version: params.version || '3',
+				tls_sni: params.sni || null,
+				tls_utls: params.fp || null
 			};
 
 			break;
@@ -527,7 +701,7 @@ function parse_uri(uri) {
 						if (extra.downloadSettings) {
 							const dl = extra.downloadSettings;
 							config.xhttp_download_server = dl.address;
-							config.xhttp_download_port = String(dl.port);
+							config.xhttp_download_port = '' + dl.port;
 							if (dl.xhttpSettings) {
 								config.xhttp_download_path = dl.xhttpSettings.path;
 								config.xhttp_download_host = dl.xhttpSettings.host;
@@ -730,25 +904,60 @@ function main() {
 		const groupHash = md5(url);
 		node_cache[groupHash] = {};
 
-		const res = wGET(url, user_agent);
-		if (isEmpty(res)) {
-			log(sprintf('Failed to fetch resources from %s.', url));
-			continue;
+		/* Try Hiddify JSON format first: User-Agent triggers sing-box JSON on Hiddify Manager servers */
+		let res = wGET(url, 'HiddifyNext/2.0.0');
+		let nodes;
+
+		if (!isEmpty(res) && match(trim(res), /^\s*\{/)) {
+			let sub_json;
+			try { sub_json = json(res); } catch(e) {}
+			if (sub_json && sub_json.outbounds) {
+				const companion_map = {};
+				for (let ob in sub_json.outbounds) {
+					if (ob.tag && match(ob.tag, /§hide§/))
+						companion_map[ob.tag] = ob;
+				}
+				nodes = filter(
+					map(sub_json.outbounds, ob => parse_singbox_outbound(ob, companion_map)),
+					c => !isEmpty(c)
+				);
+				log(sprintf('Received sing-box JSON subscription from %s.', url));
+			}
 		}
 
-		let nodes;
-		try {
-			nodes = json(res).servers || json(res);
+		if (isEmpty(nodes)) {
+			/* Fallback: fetch with configured user_agent */
+			res = wGET(url, user_agent);
 
-			/* Shadowsocks SIP008 format */
-			if (nodes[0].server && nodes[0].method)
-				map(nodes, (_, i) => nodes[i].nodetype = 'sip008');
-		} catch(e) {
-			const decoded = decodeBase64Str(res);
-			if (decoded)
-				nodes = split(trim(replace(decoded, / /g, '_')), '\n');
-			else
-				nodes = split(trim(res), '\n');
+			/* Empty or HTML response: server may require /raw suffix (e.g. HAPP-style
+			 * subscription servers that serve a web page by default). */
+			if (isEmpty(res) || match(res, /^\s*</)) {
+				const rawUrl = replace(url, /\/*$/, '') + '/raw';
+				log(sprintf('%s from %s, retrying with /raw.',
+					isEmpty(res) ? 'Empty response' : 'HTML response', url));
+				const rawRes = wGET(rawUrl, user_agent);
+				if (!isEmpty(rawRes) && !match(rawRes, /^\s*</))
+					res = rawRes;
+			}
+
+			if (isEmpty(res)) {
+				log(sprintf('Failed to fetch resources from %s.', url));
+				continue;
+			}
+
+			try {
+				nodes = json(res).servers || json(res);
+
+				/* Shadowsocks SIP008 format */
+				if (nodes[0].server && nodes[0].method)
+					map(nodes, (_, i) => nodes[i].nodetype = 'sip008');
+			} catch(e) {
+				const decoded = decodeBase64Str(res);
+				if (decoded)
+					nodes = split(trim(replace(decoded, / /g, '_')), '\n');
+				else
+					nodes = split(trim(res), '\n');
+			}
 		}
 
 		let count = 0;

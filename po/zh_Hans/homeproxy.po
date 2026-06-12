@@ -1799,6 +1799,18 @@ msgstr "插件"
 msgid "Plugin opts"
 msgstr "插件参数"
 
+#: htdocs/luci-static/resources/view/homeproxy/node.js:1126
+msgid "ShadowTLS transport"
+msgstr "ShadowTLS 传输"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js:1127
+msgid "Wrap this Shadowsocks connection in ShadowTLS for TLS camouflage."
+msgstr "将此 Shadowsocks 连接包裹在 ShadowTLS 中以进行 TLS 伪装。"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js:1132
+msgid "ShadowTLS password"
+msgstr "ShadowTLS 密码"
+
 #: htdocs/luci-static/resources/view/homeproxy/client.js:848
 #: htdocs/luci-static/resources/view/homeproxy/client.js:962
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1286
@@ -2138,6 +2150,26 @@ msgstr "最新版"
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "Checking..."
 msgstr "检查中..."
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Checking requirements..."
+msgstr "检查系统要求..."
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Downloading..."
+msgstr "下载中..."
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Installing package..."
+msgstr "安装软件包..."
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Installing kernel modules..."
+msgstr "安装内核模块..."
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Download failed"
+msgstr "下载失败"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "Install"
@@ -3477,3 +3509,303 @@ msgstr "不代理 BT 下载"
 msgid "Force torrent traffic (BitTorrent protocol + common ports) to bypass the proxy."
 msgstr "强制 BitTorrent 协议及常用端口的流量绕过代理。"
 
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "HomeProxy Diagnostics"
+msgstr "HomeProxy 诊断"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Run All Tests"
+msgstr "运行全部测试"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Runs Core, Config, and Network checks simultaneously."
+msgstr "同时运行核心、配置和网络检测。"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Core & System"
+msgstr "核心与系统"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Checking core…"
+msgstr "正在检查核心…"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "RPC error"
+msgstr "RPC 错误"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "none detected"
+msgstr "未检测到"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Hiddify-core"
+msgstr "Hiddify-core"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "installed"
+msgstr "已安装"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "not found"
+msgstr "未找到"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Active binary"
+msgstr "活动二进制"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Running"
+msgstr "运行中"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "yes"
+msgstr "是"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "no"
+msgstr "否"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Listening ports"
+msgstr "监听端口"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Restarting… (may take ~5 s)"
+msgstr "重启中…（可能需要约 5 秒）"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Service restarted"
+msgstr "服务已重启"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Restart failed"
+msgstr "重启失败"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Check"
+msgstr "检查"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Restart Service"
+msgstr "重启服务"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Configuration"
+msgstr "配置"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Checking config…"
+msgstr "正在检查配置…"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Valid"
+msgstr "有效"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Size"
+msgstr "大小"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Inbounds"
+msgstr "入站"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Outbounds"
+msgstr "出站"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Rules"
+msgstr "规则"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "DNS servers"
+msgstr "DNS 服务器"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Check output"
+msgstr "检查输出"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "DNS Tests"
+msgstr "DNS 测试"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Testing DNS…"
+msgstr "正在测试 DNS…"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "DNS test only applies to Russia routing mode."
+msgstr "DNS 测试仅适用于俄罗斯路由模式。"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Russia DNS"
+msgstr "俄罗斯 DNS"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Server"
+msgstr "服务器"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Status"
+msgstr "状态"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Responding"
+msgstr "响应正常"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "No response — check server address"
+msgstr "无响应——请检查服务器地址"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "nslookup yandex.ru"
+msgstr "nslookup yandex.ru"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Secure DNS"
+msgstr "安全 DNS"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Bootstrap"
+msgstr "初始解析"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "resolves via Russia DNS"
+msgstr "通过俄罗斯 DNS 解析成功"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "failed to resolve — Russia DNS must work first"
+msgstr "解析失败——俄罗斯 DNS 需先正常工作"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "nslookup"
+msgstr "nslookup"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Test"
+msgstr "测试"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Network Intercept"
+msgstr "网络拦截"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Reading nftables…"
+msgstr "正在读取 nftables…"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "HomeProxy chains"
+msgstr "HomeProxy 链"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "found"
+msgstr "已找到"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "not found — firewall rules may be missing"
+msgstr "未找到——防火墙规则可能缺失"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Matched lines in fw4"
+msgstr "fw4 中匹配的行"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "UCI firewall settings"
+msgstr "UCI 防火墙设置"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Diagnostics Report"
+msgstr "诊断报告"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Click Generate to collect diagnostics…"
+msgstr "点击「生成」以收集诊断信息…"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Collecting diagnostics — this may take a few seconds…"
+msgstr "正在收集诊断信息，可能需要几秒钟…"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Generate"
+msgstr "生成"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Copy"
+msgstr "复制"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Sensitive values (passwords, keys, UUIDs) are redacted."
+msgstr "敏感信息（密码、密钥、UUID）已隐藏。"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Testing…"
+msgstr "测试中…"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "(empty)"
+msgstr "（空）"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Resolved"
+msgstr "已解析"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "No answer — check server address"
+msgstr "无响应——请检查服务器地址"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Resolved via proxy"
+msgstr "已通过代理解析"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "No answer — check proxy and proxy list"
+msgstr "无响应——请检查代理及代理域名列表"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Bootstrap"
+msgstr "引导服务器"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "OK"
+msgstr "正常"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "FAIL"
+msgstr "失败"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Version"
+msgstr "版本"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "sing-box"
+msgstr "sing-box"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Download"
+msgstr "下载"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "How often each node is tested (seconds). Lower = faster failover, higher = less overhead."
+msgstr "每个节点的测试频率（秒）。越低 = 切换越快，越高 = 负载越小。"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Minimum latency gap (ms) required to switch to a faster node — prevents flapping between equally fast nodes."
+msgstr "切换到更快节点所需的最小延迟差（毫秒）——防止在速度相近的节点间频繁切换。"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "In this mode: only blocked domains are routed through this node — all other traffic goes direct."
+msgstr "在此模式下：仅被封锁的域名通过此节点路由——其他所有流量直连。"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Resolves Russian domains directly, without going through the proxy."
+msgstr "直接解析俄罗斯域名，不经过代理。"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Resolves blocked domains via proxy — your ISP cannot see which sites you look up. Uses encrypted DNS (DoH/DoT = DNS over HTTPS/TLS)."
+msgstr "通过代理解析被封锁的域名——运营商无法看到您查询的站点。使用加密 DNS（DoH/DoT = DNS over HTTPS/TLS）。"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Default route is Direct. Added rules are proxied, with automatic priority:<br>1. Smaller lists (YouTube, Discord etc.)<br>2. <b>Russia Inside</b> — Russian services that must stay accessible (allows-list by itdoginfo)<br>3. <b>Re-filter</b> — community blocklist of domains and IPs banned in Russia (Roskomnadzor)"
+msgstr "默认路由为直连。已添加的规则走代理，优先级自动排列：<br>1. 小列表（YouTube、Discord 等）<br>2. <b>Russia Inside</b> — 必须保持可访问的俄罗斯服务（itdoginfo 白名单）<br>3. <b>Re-filter</b> — 俄罗斯被封锁域名和 IP 的社区黑名单（Roskomnadzor）"

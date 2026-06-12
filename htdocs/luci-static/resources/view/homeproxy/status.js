@@ -325,8 +325,20 @@ function callCoreCheckRemote(core) {
 	return fs.exec_direct('/usr/bin/ucode', [CORE_MGMT, 'check_remote', core], 'json');
 }
 
-function callCoreInstall(core) {
-	return fs.exec_direct('/usr/bin/ucode', [CORE_MGMT, 'install', core], 'json');
+function callCorePrepare(core) {
+	return fs.exec_direct('/usr/bin/ucode', [CORE_MGMT, 'prepare_install', core], 'json');
+}
+
+function callCoreDownload(url, tmpPath) {
+	return fs.exec_direct('/usr/bin/ucode', [CORE_MGMT, 'download_pkg', url, tmpPath], 'json');
+}
+
+function callCoreInstallPkg(core, tmpPath, pkgManager) {
+	return fs.exec_direct('/usr/bin/ucode', [CORE_MGMT, 'install_pkg', core, tmpPath, pkgManager], 'json');
+}
+
+function callCoreInstallKmods(pkgManager) {
+	return fs.exec_direct('/usr/bin/ucode', [CORE_MGMT, 'install_kmods', pkgManager], 'json');
 }
 
 function callCoreRemove(core) {
@@ -386,30 +398,42 @@ function buildCoreCard(core, coreInfo) {
 			removeBtn.disabled  = true;
 			statusEl.textContent = _('Installing...');
 			statusEl.style.color = 'gray';
-			setMsg('');
 
-			const ret = await L.resolveDefault(callCoreInstall(core), {});
-
-			if (ret.result) {
-				const fresh = await L.resolveDefault(callCoreInfo(), {});
-				const fd = (isHiddify ? fresh.hiddify : fresh.singbox) || {};
-				installed = fd.installed || false;
-				version   = fd.version   || null;
-				statusEl.textContent = installed ? 'v' + version : _('Unknown');
-				statusEl.style.color = installed ? 'green' : 'gray';
-				installBtn.textContent = _('Update');
-				installBtn.disabled = false;
-				removeBtn.disabled  = false;
-				setMsg(_('Installed successfully'), 'green');
-			} else {
+			const fail = (msg) => {
 				installed = prevInstalled;
 				version   = prevVersion;
 				statusEl.textContent = installed ? 'v' + (version || '?') : _('Not installed');
 				statusEl.style.color = installed ? 'green' : 'gray';
 				installBtn.disabled = false;
 				removeBtn.disabled  = !installed;
-				setMsg(ret.error || _('Installation failed'), 'red');
-			}
+				setMsg(msg, 'red');
+			};
+
+			setMsg(_('Checking requirements...'), 'gray');
+			const prep = await L.resolveDefault(callCorePrepare(core), {});
+			if (prep.error) return fail(prep.error);
+
+			setMsg(_('Downloading...'), 'gray');
+			const dl = await L.resolveDefault(callCoreDownload(prep.dl_url, prep.tmp_path), {});
+			if (!dl.result) return fail(dl.error || _('Download failed'));
+
+			setMsg(_('Installing package...'), 'gray');
+			const inst = await L.resolveDefault(callCoreInstallPkg(core, prep.tmp_path, prep.pkg_manager), {});
+			if (!inst.result) return fail(inst.error || _('Installation failed'));
+
+			setMsg(_('Installing kernel modules...'), 'gray');
+			await L.resolveDefault(callCoreInstallKmods(prep.pkg_manager), {});
+
+			const fresh = await L.resolveDefault(callCoreInfo(), {});
+			const fd = (isHiddify ? fresh.hiddify : fresh.singbox) || {};
+			installed = fd.installed || false;
+			version   = fd.version   || null;
+			statusEl.textContent = installed ? 'v' + version : _('Unknown');
+			statusEl.style.color = installed ? 'green' : 'gray';
+			installBtn.textContent = _('Update');
+			installBtn.disabled = false;
+			removeBtn.disabled  = false;
+			setMsg(_('Installed successfully'), 'green');
 		}
 	}, [ installed ? _('Update') : _('Install') ]);
 

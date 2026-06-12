@@ -135,7 +135,8 @@ return view.extend({
 			o.rmempty = false;
 		}
 
-		o = s.taboption('routing', form.ListValue, 'main_node', _('Main node') + ' 🔗');
+		o = s.taboption('routing', form.ListValue, 'main_node', _('Main node') + ' 🔗',
+			_('In this mode: only blocked domains are routed through this node — all other traffic goes direct.'));
 		o.value('nil', _('Disable'));
 		o.value('urltest', _('URLTest'));
 		for (let i in proxy_nodes)
@@ -160,13 +161,13 @@ return view.extend({
 		o.rmempty = false;
 
 		o = s.taboption('routing', form.Value, 'main_urltest_interval', _('Test interval'),
-			_('The test interval in seconds.'));
+			_('How often each node is tested (seconds). Lower = faster failover, higher = less overhead.'));
 		o.datatype = 'uinteger';
 		o.placeholder = '180';
 		o.depends('main_node', 'urltest');
 
 		o = s.taboption('routing', form.Value, 'main_urltest_tolerance', _('Test tolerance'),
-			_('The test tolerance in milliseconds.'));
+			_('Minimum latency gap (ms) required to switch to a faster node — prevents flapping between equally fast nodes.'));
 		o.datatype = 'uinteger';
 		o.placeholder = '150';
 		o.depends('main_node', 'urltest');
@@ -273,7 +274,7 @@ return view.extend({
 		}
 
 		o = s.taboption('routing', form.Value, 'russia_dns_server', _('Russia DNS server') + ' 🔓',
-			_('Direct DNS server for Russian domains. Plain UDP only.'));
+			_('Resolves Russian domains directly, without going through the proxy.'));
 		o.value('77.88.8.8', _('Yandex DNS (77.88.8.8)'));
 		o.value('193.58.251.251', _('SkyDNS (193.58.251.251)'));
 		o.value('92.222.10.10', _('Comss.one (92.222.10.10)'));
@@ -289,7 +290,7 @@ return view.extend({
 		}
 
 		o = s.taboption('routing', form.Value, 'secure_dns_server', _('Secure DNS server') + ' 🔒',
-			_('Encrypted DNS server for banned domains, routed via proxy. Supports DoH and DoT.'));
+			_('Resolves blocked domains via proxy — your ISP cannot see which sites you look up. Uses encrypted DNS (DoH/DoT = DNS over HTTPS/TLS).'));
 		o.value('https://cloudflare-dns.com/dns-query', _('Cloudflare DoH'));
 		o.value('https://dns.quad9.net/dns-query', _('Quad9 DoH'));
 		o.value('https://dns.adguard-dns.com/dns-query', _('AdGuard DoH'));
@@ -503,7 +504,7 @@ return view.extend({
 		ss.anonymous = true;
 		ss.sortable = true;
 		ss.nodescriptions = true;
-		ss.description = _('Default route is Direct, added rules have automatic priority:<br>1. Smaller lists (YouTube, Discord etc.)<br>2. Russia Inside<br>3. Re-filter');
+		ss.description = _('Default route is Direct. Added rules are proxied, with automatic priority:<br>1. Smaller lists (YouTube, Discord etc.)<br>2. <b>Russia Inside</b> — Russian services that must stay accessible (allows-list by itdoginfo)<br>3. <b>Re-filter</b> — community blocklist of domains and IPs banned in Russia (Roskomnadzor)');
 
 		so = ss.option(form.Flag, 'enabled', _('Enable'));
 		so.default = so.enabled;

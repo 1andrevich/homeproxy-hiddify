@@ -1834,6 +1834,18 @@ msgstr "Плагин"
 msgid "Plugin opts"
 msgstr "Параметры плагина"
 
+#: htdocs/luci-static/resources/view/homeproxy/node.js:1126
+msgid "ShadowTLS transport"
+msgstr "Транспорт ShadowTLS"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js:1127
+msgid "Wrap this Shadowsocks connection in ShadowTLS for TLS camouflage."
+msgstr "Обернуть это Shadowsocks-соединение в ShadowTLS для маскировки TLS."
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js:1132
+msgid "ShadowTLS password"
+msgstr "Пароль ShadowTLS"
+
 #: htdocs/luci-static/resources/view/homeproxy/client.js:848
 #: htdocs/luci-static/resources/view/homeproxy/client.js:962
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1286
@@ -2175,6 +2187,26 @@ msgstr "Последняя"
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "Checking..."
 msgstr "Проверяем..."
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Checking requirements..."
+msgstr "Проверяем требования..."
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Downloading..."
+msgstr "Загрузка..."
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Installing package..."
+msgstr "Установка пакета..."
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Installing kernel modules..."
+msgstr "Установка модулей ядра..."
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Download failed"
+msgstr "Ошибка загрузки"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "Install"
@@ -3535,3 +3567,303 @@ msgstr "Не проксировать торренты"
 msgid "Force torrent traffic (BitTorrent protocol + common ports) to bypass the proxy."
 msgstr "Направить торрент-трафик (протокол BitTorrent и стандартные порты) в обход прокси."
 
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "HomeProxy Diagnostics"
+msgstr "Диагностика HomeProxy"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Run All Tests"
+msgstr "Запустить все тесты"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Runs Core, Config, and Network checks simultaneously."
+msgstr "Запускает проверку ядра, конфигурации и сети одновременно."
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Core & System"
+msgstr "Ядро и система"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Checking core…"
+msgstr "Проверка ядра…"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "RPC error"
+msgstr "Ошибка RPC"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "none detected"
+msgstr "не обнаружено"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Hiddify-core"
+msgstr "Hiddify-core"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "installed"
+msgstr "установлено"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "not found"
+msgstr "не найдено"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Active binary"
+msgstr "Активный бинарник"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Running"
+msgstr "Запущено"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "yes"
+msgstr "да"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "no"
+msgstr "нет"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Listening ports"
+msgstr "Прослушиваемые порты"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Restarting… (may take ~5 s)"
+msgstr "Перезапуск… (может занять ~5 с)"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Service restarted"
+msgstr "Служба перезапущена"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Restart failed"
+msgstr "Ошибка перезапуска"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Check"
+msgstr "Проверить"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Restart Service"
+msgstr "Перезапустить службу"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Configuration"
+msgstr "Конфигурация"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Checking config…"
+msgstr "Проверка конфигурации…"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Valid"
+msgstr "Корректна"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Size"
+msgstr "Размер"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Inbounds"
+msgstr "Входящие"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Outbounds"
+msgstr "Исходящие"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Rules"
+msgstr "Правила"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "DNS servers"
+msgstr "DNS-серверы"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Check output"
+msgstr "Вывод проверки"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "DNS Tests"
+msgstr "Тест DNS"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Testing DNS…"
+msgstr "Тестирование DNS…"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "DNS test only applies to Russia routing mode."
+msgstr "Тест DNS применяется только в режиме маршрутизации «Россия»."
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Russia DNS"
+msgstr "Российский DNS"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Server"
+msgstr "Сервер"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Status"
+msgstr "Статус"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Responding"
+msgstr "Отвечает"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "No response — check server address"
+msgstr "Нет ответа — проверьте адрес сервера"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "nslookup yandex.ru"
+msgstr "nslookup yandex.ru"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Secure DNS"
+msgstr "Защищённый DNS"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Bootstrap"
+msgstr "Начальное разрешение"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "resolves via Russia DNS"
+msgstr "разрешается через российский DNS"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "failed to resolve — Russia DNS must work first"
+msgstr "не удалось разрешить — сначала должен работать российский DNS"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "nslookup"
+msgstr "nslookup"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Test"
+msgstr "Проверить"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Network Intercept"
+msgstr "Перехват трафика"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Reading nftables…"
+msgstr "Чтение nftables…"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "HomeProxy chains"
+msgstr "Цепочки HomeProxy"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "found"
+msgstr "найдено"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "not found — firewall rules may be missing"
+msgstr "не найдено — возможно, отсутствуют правила брандмауэра"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Matched lines in fw4"
+msgstr "Совпавшие строки в fw4"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "UCI firewall settings"
+msgstr "Настройки брандмауэра UCI"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Diagnostics Report"
+msgstr "Отчёт диагностики"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Click Generate to collect diagnostics…"
+msgstr "Нажмите «Сформировать» для сбора диагностики…"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Collecting diagnostics — this may take a few seconds…"
+msgstr "Сбор диагностики — это может занять несколько секунд…"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Generate"
+msgstr "Сформировать"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Copy"
+msgstr "Копировать"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Sensitive values (passwords, keys, UUIDs) are redacted."
+msgstr "Чувствительные данные (пароли, ключи, UUID) скрыты."
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Testing…"
+msgstr "Тестирование…"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "(empty)"
+msgstr "(пусто)"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Resolved"
+msgstr "Разрешено"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "No answer — check server address"
+msgstr "Нет ответа — проверьте адрес сервера"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Resolved via proxy"
+msgstr "Разрешено через прокси"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "No answer — check proxy and proxy list"
+msgstr "Нет ответа — проверьте прокси и список проксируемых доменов"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Bootstrap"
+msgstr "Бутстрап"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "OK"
+msgstr "ОК"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "FAIL"
+msgstr "Ошибка"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Version"
+msgstr "Версия"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "sing-box"
+msgstr "sing-box"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Download"
+msgstr "Скачать"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "How often each node is tested (seconds). Lower = faster failover, higher = less overhead."
+msgstr "Время в секундах: меньше = узлы тестируются чаще, больше = реже тесты - меньше нагрузки."
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Minimum latency gap (ms) required to switch to a faster node — prevents flapping between equally fast nodes."
+msgstr "Минимальная разница задержек (мс) для переключения на более быстрый узел — предотвращает постоянное переключение между узлами с похожей скоростью."
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "In this mode: only blocked domains are routed through this node — all other traffic goes direct."
+msgstr "В этом режиме: через этот узел проходят только заблокированные домены — весь остальной трафик идёт напрямую."
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Resolves Russian domains directly, without going through the proxy."
+msgstr "Разрешает российские домены напрямую, без прокси."
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Resolves blocked domains via proxy — your ISP cannot see which sites you look up. Uses encrypted DNS (DoH/DoT = DNS over HTTPS/TLS)."
+msgstr "Разрешает заблокированные домены через прокси — провайдер не видит, какие сайты вы запрашиваете. Использует зашифрованный DNS (DoH/DoT = DNS поверх HTTPS/TLS)."
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Default route is Direct. Added rules are proxied, with automatic priority:<br>1. Smaller lists (YouTube, Discord etc.)<br>2. <b>Russia Inside</b> — Russian services that must stay accessible (allows-list by itdoginfo)<br>3. <b>Re-filter</b> — community blocklist of domains and IPs banned in Russia (Roskomnadzor)"
+msgstr "Маршрут по умолчанию — прямой. Добавленные правила проксируются с автоматическим приоритетом:<br>1. Небольшие списки (YouTube, Discord и т.д.)<br>2. <b>Russia Inside</b> — российские сервисы, которые должны оставаться доступными (список разрешений от itdoginfo)<br>3. <b>Re-filter</b> — список заблокированных доменов и IP (Роскомнадзор, сообщество)"

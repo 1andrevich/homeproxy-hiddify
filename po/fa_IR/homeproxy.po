@@ -1801,6 +1801,18 @@ msgstr "افزونه"
 msgid "Plugin opts"
 msgstr "گزینه‌های افزونه"
 
+#: htdocs/luci-static/resources/view/homeproxy/node.js:1126
+msgid "ShadowTLS transport"
+msgstr "انتقال ShadowTLS"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js:1127
+msgid "Wrap this Shadowsocks connection in ShadowTLS for TLS camouflage."
+msgstr "این اتصال Shadowsocks را در ShadowTLS برای پنهان‌سازی TLS بپوشانید."
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js:1132
+msgid "ShadowTLS password"
+msgstr "رمز عبور ShadowTLS"
+
 #: htdocs/luci-static/resources/view/homeproxy/client.js:848
 #: htdocs/luci-static/resources/view/homeproxy/client.js:962
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1286
@@ -2109,6 +2121,26 @@ msgstr "آخرین"
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "Checking..."
 msgstr "در حال بررسی..."
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Checking requirements..."
+msgstr "در حال بررسی پیش‌نیازها..."
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Downloading..."
+msgstr "در حال دانلود..."
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Installing package..."
+msgstr "در حال نصب بسته..."
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Installing kernel modules..."
+msgstr "در حال نصب ماژول‌های هسته..."
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Download failed"
+msgstr "دانلود ناموفق"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "Install"
@@ -3420,3 +3452,303 @@ msgstr "تورنت‌ها را پروکسی نکن"
 msgid "Force torrent traffic (BitTorrent protocol + common ports) to bypass the proxy."
 msgstr "ترافیک تورنت (پروتکل BitTorrent و پورت‌های رایج) را از پروکسی عبور نده."
 
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "HomeProxy Diagnostics"
+msgstr "تشخیص HomeProxy"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Run All Tests"
+msgstr "اجرای همه تست‌ها"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Runs Core, Config, and Network checks simultaneously."
+msgstr "بررسی هسته، پیکربندی و شبکه را همزمان اجرا می‌کند."
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Core & System"
+msgstr "هسته و سیستم"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Checking core…"
+msgstr "بررسی هسته…"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "RPC error"
+msgstr "خطای RPC"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "none detected"
+msgstr "شناسایی نشد"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Hiddify-core"
+msgstr "Hiddify-core"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "installed"
+msgstr "نصب شده"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "not found"
+msgstr "یافت نشد"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Active binary"
+msgstr "باینری فعال"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Running"
+msgstr "در حال اجرا"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "yes"
+msgstr "بله"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "no"
+msgstr "خیر"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Listening ports"
+msgstr "پورت‌های در حال گوش دادن"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Restarting… (may take ~5 s)"
+msgstr "در حال راه‌اندازی مجدد… (ممکن است ~۵ ثانیه طول بکشد)"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Service restarted"
+msgstr "سرویس مجدداً راه‌اندازی شد"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Restart failed"
+msgstr "راه‌اندازی مجدد ناموفق بود"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Check"
+msgstr "بررسی"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Restart Service"
+msgstr "راه‌اندازی مجدد سرویس"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Configuration"
+msgstr "پیکربندی"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Checking config…"
+msgstr "بررسی پیکربندی…"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Valid"
+msgstr "معتبر"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Size"
+msgstr "اندازه"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Inbounds"
+msgstr "ورودی‌ها"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Outbounds"
+msgstr "خروجی‌ها"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Rules"
+msgstr "قوانین"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "DNS servers"
+msgstr "سرورهای DNS"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Check output"
+msgstr "خروجی بررسی"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "DNS Tests"
+msgstr "تست DNS"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Testing DNS…"
+msgstr "در حال تست DNS…"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "DNS test only applies to Russia routing mode."
+msgstr "تست DNS فقط در حالت مسیریابی روسیه اعمال می‌شود."
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Russia DNS"
+msgstr "DNS روسیه"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Server"
+msgstr "سرور"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Status"
+msgstr "وضعیت"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Responding"
+msgstr "پاسخ می‌دهد"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "No response — check server address"
+msgstr "بدون پاسخ — آدرس سرور را بررسی کنید"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "nslookup yandex.ru"
+msgstr "nslookup yandex.ru"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Secure DNS"
+msgstr "DNS امن"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Bootstrap"
+msgstr "راه‌اندازی اولیه"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "resolves via Russia DNS"
+msgstr "از طریق DNS روسیه حل می‌شود"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "failed to resolve — Russia DNS must work first"
+msgstr "حل نشد — DNS روسیه باید ابتدا کار کند"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "nslookup"
+msgstr "nslookup"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Test"
+msgstr "تست"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Network Intercept"
+msgstr "رهگیری شبکه"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Reading nftables…"
+msgstr "در حال خواندن nftables…"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "HomeProxy chains"
+msgstr "زنجیره‌های HomeProxy"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "found"
+msgstr "یافت شد"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "not found — firewall rules may be missing"
+msgstr "یافت نشد — قوانین فایروال ممکن است وجود نداشته باشند"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Matched lines in fw4"
+msgstr "خطوط مطابق در fw4"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "UCI firewall settings"
+msgstr "تنظیمات فایروال UCI"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Diagnostics Report"
+msgstr "گزارش تشخیص"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Click Generate to collect diagnostics…"
+msgstr "برای جمع‌آوری اطلاعات تشخیصی روی «ایجاد» کلیک کنید…"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Collecting diagnostics — this may take a few seconds…"
+msgstr "در حال جمع‌آوری اطلاعات تشخیصی — ممکن است چند ثانیه طول بکشد…"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Generate"
+msgstr "ایجاد"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Copy"
+msgstr "کپی"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Sensitive values (passwords, keys, UUIDs) are redacted."
+msgstr "مقادیر حساس (رمزها، کلیدها، UUID‌ها) پنهان شده‌اند."
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Testing…"
+msgstr "در حال تست…"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "(empty)"
+msgstr "(خالی)"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Resolved"
+msgstr "حل شد"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "No answer — check server address"
+msgstr "بدون پاسخ — آدرس سرور را بررسی کنید"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Resolved via proxy"
+msgstr "از طریق پروکسی حل شد"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "No answer — check proxy and proxy list"
+msgstr "بدون پاسخ — پروکسی و لیست پروکسی را بررسی کنید"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Bootstrap"
+msgstr "بوت‌استرپ"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "OK"
+msgstr "موفق"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "FAIL"
+msgstr "خطا"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Version"
+msgstr "نسخه"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "sing-box"
+msgstr "sing-box"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Download"
+msgstr "دانلود"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "How often each node is tested (seconds). Lower = faster failover, higher = less overhead."
+msgstr "هر چند ثانیه یک‌بار هر نود آزمایش می‌شود. کمتر = تغییر سریع‌تر، بیشتر = سربار کمتر."
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Minimum latency gap (ms) required to switch to a faster node — prevents flapping between equally fast nodes."
+msgstr "حداقل اختلاف تأخیر (میلی‌ثانیه) برای تغییر به نود سریع‌تر — از جابجایی مکرر بین نودهای مشابه جلوگیری می‌کند."
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "In this mode: only blocked domains are routed through this node — all other traffic goes direct."
+msgstr "در این حالت: فقط دامنه‌های مسدودشده از این نود عبور می‌کنند — سایر ترافیک مستقیم است."
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Resolves Russian domains directly, without going through the proxy."
+msgstr "دامنه‌های روسی را مستقیماً و بدون پروکسی حل می‌کند."
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Resolves blocked domains via proxy — your ISP cannot see which sites you look up. Uses encrypted DNS (DoH/DoT = DNS over HTTPS/TLS)."
+msgstr "دامنه‌های مسدودشده را از طریق پروکسی حل می‌کند — ISP نمی‌تواند ببیند چه سایت‌هایی جستجو می‌کنید. از DNS رمزگذاری‌شده استفاده می‌کند (DoH/DoT = DNS over HTTPS/TLS)."
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Default route is Direct. Added rules are proxied, with automatic priority:<br>1. Smaller lists (YouTube, Discord etc.)<br>2. <b>Russia Inside</b> — Russian services that must stay accessible (allows-list by itdoginfo)<br>3. <b>Re-filter</b> — community blocklist of domains and IPs banned in Russia (Roskomnadzor)"
+msgstr "مسیر پیش‌فرض مستقیم است. قوانین اضافه‌شده از پروکسی عبور می‌کنند با اولویت خودکار:<br>1. لیست‌های کوچک (YouTube، Discord و غیره)<br>2. <b>Russia Inside</b> — سرویس‌های روسی که باید در دسترس بمانند (لیست مجاز itdoginfo)<br>3. <b>Re-filter</b> — لیست سیاه دامنه‌ها و IP‌های مسدودشده در روسیه (Roskomnadzor)"

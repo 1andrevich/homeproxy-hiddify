@@ -436,6 +436,311 @@ const methods = {
 				group_type: groupType
 			};
 		}
+	},
+
+	diag_core_check: {
+		call: function() {
+			const is_hiddify = !!access('/usr/bin/hiddify-core');
+			const binary = is_hiddify ? '/usr/bin/hiddify-core' :
+			               (access('/usr/bin/sing-box') ? '/usr/bin/sing-box' : null);
+			const proc_name = is_hiddify ? 'hiddify-core' : 'sing-box';
+
+			const result = {
+				hiddify_installed: !!access('/usr/bin/hiddify-core'),
+				singbox_installed: !!access('/usr/bin/sing-box'),
+				binary:            binary,
+				version:           null,
+				running:           false,
+				pid:               null,
+				listen_ports:      []
+			};
+
+			if (!binary)
+				return result;
+
+			let fd = popen(binary + ' version 2>&1');
+			if (fd) { result.version = trim(fd.read('all')); fd.close(); }
+
+			fd = popen('pidof ' + shellquote(proc_name) + ' 2>/dev/null');
+			if (fd) {
+				const pid = trim(fd.read('all'));
+				fd.close();
+				result.running = length(pid) > 0;
+				result.pid = length(pid) > 0 ? pid : null;
+			}
+
+			fd = popen('netstat -tlnup 2>/dev/null');
+			if (fd) {
+				const ports = [];
+				for (let line = fd.read('line'); length(line); line = fd.read('line')) {
+					if (match(line, /hiddify|sing.box/))
+						push(ports, trim(line));
+				}
+				fd.close();
+				result.listen_ports = ports;
+			}
+
+			return result;
+		}
+	},
+
+	diag_config_check: {
+		call: function() {
+			const is_hiddify = !!access('/usr/bin/hiddify-core');
+			const binary = is_hiddify ? '/usr/bin/hiddify-core' :
+			               (access('/usr/bin/sing-box') ? '/usr/bin/sing-box' : null);
+			const config_path = RUN_DIR + '/hiddify-c.json';
+
+			if (!binary)
+				return { valid: false, check_output: 'No core binary found', stats: {} };
+
+			const stat = lstat(config_path);
+			if (!stat)
+				return { valid: false, check_output: 'Config not found: ' + config_path, stats: {} };
+
+			let check_output = '';
+			let fd = popen(binary + ' check -c ' + shellquote(config_path) + ' 2>&1');
+			if (fd) { check_output = trim(fd.read('all')); fd.close(); }
+
+			const valid = (system(binary + ' check -c ' + shellquote(config_path) + ' >/dev/null 2>&1') === 0);
+
+			let stats = { outbounds: 0, rules: 0, inbounds: 0, dns_servers: 0 };
+			const content = readfile(config_path);
+			if (content) {
+				try {
+					const cfg = json(content);
+					stats.outbounds    = length(cfg.outbounds || []);
+					stats.rules        = length((cfg.route || {}).rules || []);
+					stats.inbounds     = length(cfg.inbounds || []);
+					stats.dns_servers  = length(((cfg.dns || {}).servers) || []);
+				} catch(e) {}
+			}
+
+			return {
+				valid:        valid,
+				check_output: check_output,
+				size_bytes:   stat.size,
+				stats:        stats
+			};
+		}
+	},
+
+	diag_dns_ru: {
+		call: function() {
+			let fd = popen('uci get homeproxy.config.routing_mode 2>/dev/null');
+			if (!fd) return { skip: true };
+			const mode = trim(fd.read('all'));
+			fd.close();
+			if (mode !== 'proxy_banned_ru') return { skip: true };
+
+			/* Get russia-dns server address from running config */
+			const content = readfile(RUN_DIR + '/hiddify-c.json');
+			if (!content) return { error: 'Config not found — is the service running?' };
+			let cfg;
+			try { cfg = json(content); } catch(e) { return { error: 'Config parse error' }; }
+
+			let russia_server = null;
+			let secure_server = null;
+			const dns_servers = (cfg.dns || {}).servers || [];
+			for (let s in dns_servers) {
+				if (s.tag === 'russia-dns') russia_server = s.server || s.address;
+				if (s.tag === 'secure-dns') secure_server = s.server || s.address;
+			}
+			if (!russia_server) return { error: 'russia-dns server not found in config — regenerate and restart' };
+
+			/* Test 1: mail.ru via default resolver — if HomeProxy routes it to russia-dns, it resolves */
+			let russia_ok = false;
+			let russia_out = '';
+			fd = popen('nslookup mail.ru 2>&1');
+			if (fd) { russia_out = trim(fd.read('all')); fd.close(); }
+			russia_ok = !!match(russia_out, /Name:/);
+
+			/* Test 2: andrevi.ch via default resolver — HomeProxy routes to secure-dns via proxy */
+			let secure_ok = false;
+			let secure_out = '';
+			fd = popen('nslookup andrevi.ch 2>&1');
+			if (fd) { secure_out = trim(fd.read('all')); fd.close(); }
+			secure_ok = !!match(secure_out, /Name:/);
+
+			return {
+				russia_server: russia_server,
+				russia_ok:     russia_ok,
+				russia_output: russia_out,
+				secure_server: secure_server,
+				bootstrap:     russia_server,
+				secure_ok:     secure_ok,
+				secure_output: secure_out
+			};
+		}
+	},
+
+	diag_nftables: {
+		call: function() {
+			let nft_lines = [];
+			let fd = popen('nft list table inet fw4 2>/dev/null');
+			if (fd) {
+				for (let line = fd.read('line'); length(line); line = fd.read('line')) {
+					if (match(line, /homeproxy/))
+						push(nft_lines, trim(line));
+				}
+				fd.close();
+			}
+
+			let uci_lines = [];
+			fd = popen('uci show homeproxy 2>&1');
+			if (fd) {
+				for (let line = fd.read('line'); length(line); line = fd.read('line')) {
+					const l = trim(line);
+					if (match(l, /(proxy_mode|redirect_port|tproxy_port|dns_port|bypass|firewall|intercept)/))
+						push(uci_lines, l);
+				}
+				fd.close();
+			}
+
+			const nft_present = length(nft_lines) > 0;
+
+			return {
+				nft_present: nft_present,
+				nft_rules:   join('\n', nft_lines),
+				uci_firewall: join('\n', uci_lines)
+			};
+		}
+	},
+
+	diag_service_restart: {
+		call: function() {
+			const exit_code = system('/etc/init.d/homeproxy restart >/dev/null 2>&1');
+			return { result: exit_code === 0, exit_code: exit_code };
+		}
+	},
+
+	diag_report: {
+		call: function() {
+			const lines = [];
+			const add = (s) => push(lines, s);
+
+			add('# HomeProxy Diagnostics Report');
+			let fd = popen('date 2>/dev/null');
+			if (fd) { add('# Generated: ' + trim(fd.read('all'))); fd.close(); }
+			add('');
+
+			add('## System');
+			fd = popen('cat /etc/openwrt_release 2>/dev/null');
+			if (fd) { add(trim(fd.read('all'))); fd.close(); }
+			fd = popen('uname -a 2>/dev/null');
+			if (fd) { add('Kernel: ' + trim(fd.read('all'))); fd.close(); }
+			add('');
+
+			add('## Core Binary');
+			const is_hiddify = !!access('/usr/bin/hiddify-core');
+			const binary = is_hiddify ? '/usr/bin/hiddify-core' :
+			               (access('/usr/bin/sing-box') ? '/usr/bin/sing-box' : null);
+			const proc_name = is_hiddify ? 'hiddify-core' : 'sing-box';
+			if (binary) {
+				fd = popen(binary + ' version 2>&1');
+				if (fd) { add(trim(fd.read('all'))); fd.close(); }
+				fd = popen('pidof ' + shellquote(proc_name) + ' 2>/dev/null');
+				if (fd) { const pid = trim(fd.read('all')); fd.close(); add('PID: ' + (length(pid) > 0 ? pid : 'not running')); }
+			} else {
+				add('No core binary found');
+			}
+			add('');
+
+			add('## Config Stats');
+			const config_path = RUN_DIR + '/hiddify-c.json';
+			const stat = lstat(config_path);
+			if (stat) {
+				add('Size: ' + stat.size + ' bytes');
+				const content = readfile(config_path);
+				if (content) {
+					try {
+						const cfg = json(content);
+						add('Outbounds: '   + length(cfg.outbounds || []));
+						add('Rules: '       + length((cfg.route || {}).rules || []));
+						add('Inbounds: '    + length(cfg.inbounds || []));
+						add('DNS servers: ' + length(((cfg.dns || {}).servers) || []));
+					} catch(e) { add('Parse error: ' + e); }
+				}
+			} else {
+				add('Config file not found');
+			}
+			add('');
+
+			add('## UCI Config (sanitized)');
+			fd = popen('uci show homeproxy 2>&1');
+			if (fd) {
+				for (let line = fd.read('line'); length(line); line = fd.read('line')) {
+					let out = trim(line);
+					if (match(out, /(password|private_key|pre_shared_key|uuid|token|secret|subscription_url|address|tls_sni|tls_reality_public_key|tls_reality_short_id|grouphash|username|grpc_servicename|http_path|xhttp_download_server|ssh_priv_key|ssh_host_key)=/))
+						out = replace(out, /=.*$/, '=[REDACTED]');
+					add(out);
+				}
+				fd.close();
+			}
+			add('');
+
+			add('## Listening Ports');
+			fd = popen('netstat -tlnup 2>/dev/null');
+			if (fd) {
+				for (let line = fd.read('line'); length(line); line = fd.read('line')) {
+					if (match(line, /hiddify|sing.box/))
+						add(trim(line));
+				}
+				fd.close();
+			}
+			add('');
+
+			add('## Kernel Modules');
+			fd = popen('lsmod 2>/dev/null | grep -E "nft_tproxy|tun|xt_socket"');
+			if (fd) { const out = trim(fd.read('all')); fd.close(); add(length(out) > 0 ? out : '(none matched)'); }
+			add('');
+
+			add('## DNS Tests');
+			let mode_fd = popen('uci get homeproxy.config.routing_mode 2>/dev/null');
+			if (mode_fd) {
+				const routing_mode = trim(mode_fd.read('all'));
+				mode_fd.close();
+				if (routing_mode === 'proxy_banned_ru') {
+					let russia_server = null;
+					let secure_server = null;
+					const dns_servers = ((() => { try { return json(readfile(RUN_DIR + '/hiddify-c.json')); } catch(e) { return {}; } })().dns || {}).servers || [];
+					for (let s in dns_servers) {
+						if (s.tag === 'russia-dns') russia_server = s.server || s.address;
+						if (s.tag === 'secure-dns') secure_server = s.server || s.address;
+					}
+					add('Mode: proxy_banned_ru');
+					add('Russia DNS server: ' + (russia_server || 'not found'));
+					add('Secure DNS server: ' + (secure_server || 'not found'));
+					add('Bootstrap: ' + (russia_server || 'not found'));
+					let dns_fd = popen('nslookup mail.ru 2>&1');
+					if (dns_fd) { add('nslookup mail.ru:\n' + trim(dns_fd.read('all'))); dns_fd.close(); }
+					dns_fd = popen('nslookup andrevi.ch 2>&1');
+					if (dns_fd) { add('nslookup andrevi.ch:\n' + trim(dns_fd.read('all'))); dns_fd.close(); }
+				} else {
+					add('Mode: ' + routing_mode + ' (DNS test only runs in proxy_banned_ru)');
+				}
+			}
+			add('');
+
+			add('## HomeProxy Log (last 50 lines)');
+			fd = popen('tail -n 50 ' + RUN_DIR + '/homeproxy.log 2>/dev/null');
+			if (fd) {
+				for (let line = fd.read('line'); length(line); line = fd.read('line'))
+					add(replace(trim(line), /https?:\/\/[^ \t\n]+/, '[REDACTED_URL]'));
+				fd.close();
+			}
+			add('');
+
+			add('## Core Log (last 50 lines)');
+			fd = popen('tail -n 50 ' + RUN_DIR + '/hiddify-c.log 2>/dev/null');
+			if (fd) {
+				for (let line = fd.read('line'); length(line); line = fd.read('line'))
+					add(replace(trim(line), /https?:\/\/[^ \t\n]+/, '[REDACTED_URL]'));
+				fd.close();
+			}
+
+			return { report: join('\n', lines) };
+		}
 	}
 };
 

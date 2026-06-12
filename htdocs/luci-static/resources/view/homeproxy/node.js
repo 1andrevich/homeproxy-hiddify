@@ -1122,6 +1122,18 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	o.modalonly = true;
 	/* Shadowsocks config end */
 
+	/* ShadowTLS transport (overlay for Shadowsocks) */
+	o = s.option(form.Flag, 'shadowtls_enabled', _('ShadowTLS transport'),
+		_('Wrap this Shadowsocks connection in ShadowTLS for TLS camouflage.'));
+	o.depends('type', 'shadowsocks');
+	o.rmempty = false;
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'shadowtls_password', _('ShadowTLS password'));
+	o.password = true;
+	o.depends({'type': 'shadowsocks', 'shadowtls_enabled': '1'});
+	o.modalonly = true;
+
 	/* ShadowTLS config */
 	o = s.option(form.ListValue, 'shadowtls_version', _('ShadowTLS version'));
 	o.value('1', _('v1'));
@@ -1129,6 +1141,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	o.value('3', _('v3'));
 	o.default = '1';
 	o.depends('type', 'shadowtls');
+	o.depends({'type': 'shadowsocks', 'shadowtls_enabled': '1'});
 	o.rmempty = false;
 	o.modalonly = true;
 
@@ -1675,6 +1688,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	o = s.option(form.Value, 'tls_sni', _('TLS SNI'),
 		_('Used to verify the hostname on the returned certificates unless insecure is given.'));
 	o.depends('tls', '1');
+	o.depends({'type': 'shadowsocks', 'shadowtls_enabled': '1'});
 	o.modalonly = true;
 
 	o = s.option(form.DynamicList, 'tls_alpn', _('TLS ALPN'),
@@ -1687,6 +1701,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 		'<br/>' +
 		_('This is <strong>DANGEROUS</strong>, your traffic is almost like <strong>PLAIN TEXT</strong>! Use at your own risk!'));
 	o.depends('tls', '1');
+	o.depends({'type': 'shadowsocks', 'shadowtls_enabled': '1'});
 	o.onchange = allowInsecureConfirm;
 	o.modalonly = true;
 
@@ -1769,6 +1784,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 		o.value('randomized');
 		o.value('safari');
 		o.depends({'tls': '1', 'type': /^((?!hysteria2?|tuic$).)+$/});
+		o.depends({'type': 'shadowsocks', 'shadowtls_enabled': '1'});
 		o.validate = function(section_id, value) {
 			if (section_id) {
 				let tls_reality = this.map.findElement('id', 'cbid.homeproxy.%s.tls_reality'.format(section_id)).firstElementChild;

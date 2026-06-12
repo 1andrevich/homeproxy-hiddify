@@ -266,10 +266,10 @@ function generate_outbound(node) {
 		type: node.type,
 		tag: 'cfg-' + node['.name'] + '-out',
 
-		server: node.address,
-		server_port: (node.type === 'mieru') ? 0 : strToInt(node.port),
-		/* Hysteria(2) */
-		server_ports: node.hysteria_hopping_port,
+		server: (node.type === 'shadowsocks' && node.shadowtls_enabled === '1') ? null : node.address,
+		server_port: (node.type === 'mieru') ? 0 : ((node.type === 'shadowsocks' && node.shadowtls_enabled === '1') ? null : strToInt(node.port)),
+		/* Hysteria(2) / Mieru (sing-box-extended) */
+		server_ports: (!is_hiddify && node.type === 'mieru' && node.mieru_port_range) ? [node.mieru_port_range] : node.hysteria_hopping_port,
 
 		username: (node.type !== 'ssh') ? node.username : null,
 		user: (node.type === 'ssh') ? node.username : null,
@@ -303,11 +303,11 @@ function generate_outbound(node) {
 		/* ShadowTLS / Socks */
 		version: (node.type === 'shadowtls') ? strToInt(node.shadowtls_version) : ((node.type === 'socks') ? node.socks_version : null),
 		/* Mieru */
-		portBindings: (node.type === 'mieru' && node.mieru_protocol && node.mieru_port_range) ? [
+		portBindings: (is_hiddify && node.type === 'mieru' && node.mieru_protocol && node.mieru_port_range) ? [
 			{ protocol: node.mieru_protocol, portRange: node.mieru_port_range }
 		] : null,
 		multiplexing: (node.type === 'mieru') ? node.mieru_multiplexing : null,
-		handshake_mode: (node.type === 'mieru') ? node.mieru_handshake_mode : null,
+		handshake_mode: (is_hiddify && node.type === 'mieru') ? node.mieru_handshake_mode : null,
 		/* SSH */
 		client_version: node.ssh_client_version,
 		host_key: node.ssh_host_key,
@@ -371,7 +371,7 @@ function generate_outbound(node) {
 				short_id: node.tls_reality_short_id
 			} : null
 		} : null,
-		transport: !isEmpty(node.transport) ? {
+		transport: (!is_hiddify && node.type === 'mieru') ? node.mieru_protocol : !isEmpty(node.transport) ? {
 			type: node.transport,
 			host: node.http_host || node.httpupgrade_host,
 			path: node.http_path || node.ws_path,
@@ -398,10 +398,33 @@ function generate_outbound(node) {
 		tcp_fast_open: strToBool(node.tcp_fast_open),
 		tcp_multi_path: strToBool(node.tcp_multi_path),
 		udp_fragment: strToBool(node.udp_fragment),
-		bind_interface: node.bind_interface || null
+		bind_interface: node.bind_interface || null,
+		detour: (node.type === 'shadowsocks' && node.shadowtls_enabled === '1') ? ('cfg-' + node['.name'] + '-shadowtls-out') : null
 	};
 
 	return outbound;
+}
+
+/* Push outbound(s) for a node. For ShadowTLS-wrapped Shadowsocks, first pushes the
+ * hidden ShadowTLS transport outbound, then the Shadowsocks outbound with detour set. */
+function push_outbound(list, node) {
+	if (node.type === 'shadowsocks' && node.shadowtls_enabled === '1') {
+		push(list, {
+			type: 'shadowtls',
+			tag: 'cfg-' + node['.name'] + '-shadowtls-out',
+			server: node.address,
+			server_port: strToInt(node.port),
+			version: strToInt(node.shadowtls_version) || 3,
+			password: node.shadowtls_password || null,
+			tls: {
+				enabled: true,
+				server_name: node.tls_sni || null,
+				insecure: strToBool(node.tls_insecure),
+				utls: !isEmpty(node.tls_utls) ? { enabled: true, fingerprint: node.tls_utls } : null
+			}
+		});
+	}
+	push(list, generate_outbound(node));
 }
 
 function get_outbound(cfg) {
@@ -527,6 +550,21 @@ if (!isEmpty(main_node)) {
 			...parse_dnsserver(secure_dns_server, 'tcp')
 		});
 		config.dns.final = 'russia-dns';
+
+		/* andrevi.ch always via secure-dns (hardcoded diagnostic anchor) */
+		push(config.dns.rules, {
+			domain: ['andrevi.ch'],
+			action: 'route',
+			server: 'secure-dns'
+		});
+
+		/* Custom proxy list → secure-dns (before ru_domain_rulesets for explicit priority) */
+		if (length(proxy_domain_list))
+			push(config.dns.rules, {
+				rule_set: 'proxy-domain',
+				action: 'route',
+				server: 'secure-dns'
+			});
 
 		/* Proxy-list domains → secure-dns (Cloudflare DoH via proxy) to prevent DNS leaks */
 		let ru_domain_rulesets = [];
@@ -942,7 +980,7 @@ if (!isEmpty(main_node)) {
 			push(config.endpoints, generate_endpoint(main_node_cfg));
 			config.endpoints[length(config.endpoints)-1].tag = 'main-out';
 		} else {
-			push(config.outbounds, generate_outbound(main_node_cfg));
+			push_outbound(config.outbounds, main_node_cfg);
 			config.outbounds[length(config.outbounds)-1].tag = 'main-out';
 		}
 	}
@@ -967,7 +1005,7 @@ if (!isEmpty(main_node)) {
 			push(config.endpoints, generate_endpoint(main_udp_node_cfg));
 			config.endpoints[length(config.endpoints)-1].tag = 'main-udp-out';
 		} else {
-			push(config.outbounds, generate_outbound(main_udp_node_cfg));
+			push_outbound(config.outbounds, main_udp_node_cfg);
 			config.outbounds[length(config.outbounds)-1].tag = 'main-udp-out';
 		}
 	}
@@ -979,7 +1017,7 @@ if (!isEmpty(main_node)) {
 			push(config.endpoints, generate_endpoint(urltest_node));
 			config.endpoints[length(config.endpoints)-1].tag = 'cfg-' + i + '-out';
 		} else {
-			push(config.outbounds, generate_outbound(urltest_node));
+			push_outbound(config.outbounds, urltest_node);
 			config.outbounds[length(config.outbounds)-1].tag = 'cfg-' + i + '-out';
 		}
 	}
@@ -1012,9 +1050,11 @@ if (!isEmpty(main_node)) {
 					config.endpoints[length(config.endpoints)-1].bind_interface = cfg.bind_interface;
 					config.endpoints[length(config.endpoints)-1].detour = get_outbound(cfg.outbound);
 				} else {
-					push(config.outbounds, generate_outbound(outbound));
+					push_outbound(config.outbounds, outbound);
 					config.outbounds[length(config.outbounds)-1].bind_interface = cfg.bind_interface;
-					config.outbounds[length(config.outbounds)-1].detour = get_outbound(cfg.outbound);
+					const adv_chain_detour = get_outbound(cfg.outbound);
+					if (adv_chain_detour)
+						config.outbounds[length(config.outbounds)-1].detour = adv_chain_detour;
 				}
 				push(adv_routing_nodes, cfg.node);
 			}
@@ -1027,7 +1067,7 @@ if (!isEmpty(main_node)) {
 			if (urltest_node.type in ['wireguard', 'amneziawg'])
 				push(config.endpoints, generate_endpoint(urltest_node));
 			else
-				push(config.outbounds, generate_outbound(urltest_node));
+				push_outbound(config.outbounds, urltest_node);
 		}
 	}
 } else if (!isEmpty(default_outbound)) {
@@ -1063,9 +1103,11 @@ if (!isEmpty(main_node)) {
 						strategy: cfg.domain_strategy
 					};
 			} else {
-				push(config.outbounds, generate_outbound(outbound));
+				push_outbound(config.outbounds, outbound);
 				config.outbounds[length(config.outbounds)-1].bind_interface = cfg.bind_interface;
-				config.outbounds[length(config.outbounds)-1].detour = get_outbound(cfg.outbound);
+				const chain_detour = get_outbound(cfg.outbound);
+				if (chain_detour)
+					config.outbounds[length(config.outbounds)-1].detour = chain_detour;
 				if (cfg.domain_resolver)
 					config.outbounds[length(config.outbounds)-1].domain_resolver = {
 						server: get_resolver(cfg.domain_resolver),
@@ -1082,7 +1124,7 @@ if (!isEmpty(main_node)) {
 		if (urltest_node.type in ['wireguard', 'amneziawg'])
 			push(config.endpoints, generate_endpoint(urltest_node));
 		else
-			push(config.outbounds, generate_outbound(urltest_node));
+			push_outbound(config.outbounds, urltest_node);
 	}
 }
 
@@ -1151,8 +1193,8 @@ if (!isEmpty(main_node)) {
 			]
 		});
 
-	/* Proxy list */
-	if (length(proxy_domain_list) && routing_mode !== 'proxy_banned_ru')
+	/* Proxy list — also used in proxy_banned_ru for proxy-domain → main-out */
+	if (length(proxy_domain_list))
 		push(config.route.rule_set, {
 			type: 'inline',
 			tag: 'proxy-domain',
@@ -1238,6 +1280,21 @@ if (!isEmpty(main_node)) {
 			});
 		}
 
+		/* andrevi.ch always via proxy (hardcoded diagnostic anchor) */
+		push(config.route.rules, {
+			domain: ['andrevi.ch'],
+			action: 'route',
+			outbound: 'main-out'
+		});
+
+		/* Custom proxy list → main-out */
+		if (length(proxy_domain_list))
+			push(config.route.rules, {
+				rule_set: 'proxy-domain',
+				action: 'route',
+				outbound: 'main-out'
+			});
+
 		/* Per-rule outbounds and rule sets
 		 * Priority order: specific services first → russia-inside → refilter (largest list last) */
 		const ru_source_priority = (s) => s === 'refilter' ? 2 : s === 'russia-inside' ? 1 : 0;
@@ -1287,7 +1344,7 @@ if (!isEmpty(main_node)) {
 							push(config.endpoints, generate_endpoint(nc));
 							config.endpoints[length(config.endpoints)-1].tag = 'cfg-' + n + '-out';
 						} else {
-							push(config.outbounds, generate_outbound(nc));
+							push_outbound(config.outbounds, nc);
 							config.outbounds[length(config.outbounds)-1].tag = 'cfg-' + n + '-out';
 						}
 					}
@@ -1297,7 +1354,7 @@ if (!isEmpty(main_node)) {
 						push(config.endpoints, generate_endpoint(nc));
 						config.endpoints[length(config.endpoints)-1].tag = effective_outbound;
 					} else {
-						push(config.outbounds, generate_outbound(nc));
+						push_outbound(config.outbounds, nc);
 						config.outbounds[length(config.outbounds)-1].tag = effective_outbound;
 					}
 				}

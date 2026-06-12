@@ -1768,6 +1768,18 @@ msgstr ""
 msgid "Plugin opts"
 msgstr ""
 
+#: htdocs/luci-static/resources/view/homeproxy/node.js:1126
+msgid "ShadowTLS transport"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js:1127
+msgid "Wrap this Shadowsocks connection in ShadowTLS for TLS camouflage."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js:1132
+msgid "ShadowTLS password"
+msgstr ""
+
 #: htdocs/luci-static/resources/view/homeproxy/client.js:848
 #: htdocs/luci-static/resources/view/homeproxy/client.js:962
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1286
@@ -2074,6 +2086,26 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "Checking..."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Checking requirements..."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Downloading..."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Installing package..."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Installing kernel modules..."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Download failed"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js
