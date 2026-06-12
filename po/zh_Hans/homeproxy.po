@@ -1199,6 +1199,9 @@ msgstr "导入"
 msgid "Import share links"
 msgstr "导入分享链接"
 
+msgid "Support Amnezia (vpn://), Hysteria, Mieru, NaïveProxy (naive://), Shadowsocks (ss://), SSH, Trojan, v2rayN (VMess), WireGuard, and VLESS (vless://) online configuration delivery standard."
+msgstr "支持 Amnezia (vpn://)、Hysteria、Mieru、NaïveProxy (naive://)、Shadowsocks (ss://)、SSH、Trojan、v2rayN (VMess)、WireGuard 和 VLESS (vless://)。"
+
 #: htdocs/luci-static/resources/view/homeproxy/node.js
 msgid "Import .conf file"
 msgstr "导入 .conf 文件"
@@ -3345,8 +3348,8 @@ msgid "SkyDNS (193.58.251.251)"
 msgstr "SkyDNS (193.58.251.251)"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Comss.one (92.222.10.10)"
-msgstr "Comss.one (92.222.10.10)"
+msgid "Comss.one (83.220.169.155)"
+msgstr "Comss.one (83.220.169.155)"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Secure DNS server"
@@ -3797,8 +3800,8 @@ msgstr "每个节点的测试频率（秒）。越低 = 切换越快，越高 = 
 msgid "Automatically picks the fastest node by periodically measuring latency. Traffic is always sent through the lowest-latency node in the pool."
 msgstr "通过定期测量延迟自动选择最快节点。流量始终通过池中延迟最低的节点发送。"
 
-msgid "Minimum latency gap (ms) required to switch to a faster node — prevents flapping between equally fast nodes."
-msgstr "切换到更快节点所需的最小延迟差（毫秒）——防止在速度相近的节点间频繁切换。"
+msgid "Minimum latency gap (ms) required to switch to a faster node — prevents flapping between nodes with close latency values."
+msgstr "切换到更快节点所需的最小延迟差（毫秒）——防止在延迟接近的节点间频繁切换。"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "In this mode: only blocked domains are routed through this node — all other traffic goes direct."

@@ -1172,6 +1172,9 @@ msgstr ""
 msgid "Import share links"
 msgstr ""
 
+msgid "Support Amnezia (vpn://), Hysteria, Mieru, NaïveProxy (naive://), Shadowsocks (ss://), SSH, Trojan, v2rayN (VMess), WireGuard, and VLESS (vless://) online configuration delivery standard."
+msgstr ""
+
 #: htdocs/luci-static/resources/view/homeproxy/node.js
 msgid "Import .conf file"
 msgstr ""
@@ -3224,7 +3227,7 @@ msgid "SkyDNS (193.58.251.251)"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Comss.one (92.222.10.10)"
+msgid "Comss.one (83.220.169.155)"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js

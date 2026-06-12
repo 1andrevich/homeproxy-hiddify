@@ -173,7 +173,7 @@ return view.extend({
 		o.depends('main_node', 'urltest');
 
 		o = s.taboption('routing', form.Value, 'main_urltest_tolerance', _('Test tolerance'),
-			_('Minimum latency gap (ms) required to switch to a faster node — prevents flapping between equally fast nodes.'));
+			_('Minimum latency gap (ms) required to switch to a faster node — prevents flapping between nodes with close latency values.'));
 		o.datatype = 'uinteger';
 		o.placeholder = '150';
 		o.depends('main_node', 'urltest');
@@ -283,7 +283,7 @@ return view.extend({
 			_('Resolves Russian domains directly, without going through the proxy.'));
 		o.value('77.88.8.8', _('Yandex DNS (77.88.8.8)'));
 		o.value('193.58.251.251', _('SkyDNS (193.58.251.251)'));
-		o.value('92.222.10.10', _('Comss.one (92.222.10.10)'));
+		o.value('83.220.169.155', _('Comss.one (83.220.169.155)'));
 		o.depends('routing_mode', 'proxy_banned_ru');
 		o.default = '77.88.8.8';
 		o.rmempty = false;

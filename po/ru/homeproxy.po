@@ -1223,11 +1223,14 @@ msgstr "Импорт"
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1311
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1313
 msgid "Import share links"
-msgstr "Импортировать ссылки для совместного использования"
+msgstr "Импортировать ссылку-конфигурацию для подключения"
+
+msgid "Support Amnezia (vpn://), Hysteria, Mieru, NaïveProxy (naive://), Shadowsocks (ss://), SSH, Trojan, v2rayN (VMess), WireGuard, and VLESS (vless://) online configuration delivery standard."
+msgstr "Поддерживает Amnezia (vpn://), Hysteria, Mieru, NaïveProxy (naive://), Shadowsocks (ss://), SSH, Trojan, v2rayN (VMess), WireGuard и VLESS (vless://)."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js
 msgid "Import .conf file"
-msgstr "Импорт .conf файла"
+msgstr "Импорт WG (.conf) файла"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js
 msgid "Import .conf"
@@ -3403,8 +3406,8 @@ msgid "SkyDNS (193.58.251.251)"
 msgstr "SkyDNS (193.58.251.251)"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Comss.one (92.222.10.10)"
-msgstr "Comss.one (92.222.10.10)"
+msgid "Comss.one (83.220.169.155)"
+msgstr "Comss.one (83.220.169.155)"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Secure DNS server"
@@ -3855,8 +3858,8 @@ msgstr "Время в секундах: меньше = узлы тестирую
 msgid "Automatically picks the fastest node by periodically measuring latency. Traffic is always sent through the lowest-latency node in the pool."
 msgstr "Автоматически выбирает самый быстрый узел, периодически измеряя задержку. Трафик всегда идёт через узел с наименьшей задержкой в пуле."
 
-msgid "Minimum latency gap (ms) required to switch to a faster node — prevents flapping between equally fast nodes."
-msgstr "Минимальная разница задержек (мс) для переключения на более быстрый узел — предотвращает постоянное переключение между узлами с похожей скоростью."
+msgid "Minimum latency gap (ms) required to switch to a faster node — prevents flapping between nodes with close latency values."
+msgstr "Минимальная разница задержек (мс) для переключения на более быстрый узел — предотвращает постоянное переключение между узлами с близкой задержкой."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "In this mode: only blocked domains are routed through this node — all other traffic goes direct."

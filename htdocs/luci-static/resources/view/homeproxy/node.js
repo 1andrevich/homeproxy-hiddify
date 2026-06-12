@@ -1897,7 +1897,7 @@ return view.extend({
 		ss.handleLinkImport = function() {
 			let textarea = new ui.Textarea();
 			ui.showModal(_('Import share links'), [
-				E('p', _('Support AmneziaWG (vpn://), Hysteria, Mieru, NaïveProxy, Shadowsocks, SSH, Trojan, v2rayN (VMess), WireGuard, and XTLS (VLESS) online configuration delivery standard.')),
+				E('p', _('Support Amnezia (vpn://), Hysteria, Mieru, NaïveProxy (naive://), Shadowsocks (ss://), SSH, Trojan, v2rayN (VMess), WireGuard, and VLESS (vless://) online configuration delivery standard.')),
 				textarea.render(),
 				E('div', { class: 'right' }, [
 					E('button', {
