@@ -2678,6 +2678,11 @@ msgstr ""
 msgid "The modern ImmortalWrt proxy platform for ARM64/AMD64."
 msgstr ""
 
+#: htdocs/luci-static/resources/view/homeproxy/client.js:107
+#: htdocs/luci-static/resources/view/homeproxy/server.js:134
+msgid "The modern multi-core ImmortalWrt proxy platform."
+msgstr ""
+
 #: htdocs/luci-static/resources/view/homeproxy/client.js:454
 #: htdocs/luci-static/resources/view/homeproxy/server.js:875
 msgid "The network interface to bind to."
@@ -3271,11 +3276,11 @@ msgid "Default route is Direct, added rules have automatic priority:<br>1. Small
 msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Re-filter (Russia blocklist: banned domains + IPs)"
+msgid "Re-filter (Russia blocklist: 60000+ banned domains + 25000+ IPs)"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "itdoginfo/allow-domains - Russia Inside"
+msgid "itdoginfo/allow-domains - Russia Inside (1000+ entries)"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js

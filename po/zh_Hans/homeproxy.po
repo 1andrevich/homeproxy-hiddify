@@ -2770,6 +2770,9 @@ msgstr "可接受的最低 TLS 版本。"
 msgid "The modern ImmortalWrt proxy platform for ARM64/AMD64."
 msgstr "为 ARM64/AMD64 设计的现代 ImmortalWrt 代理平台。"
 
+msgid "The modern multi-core ImmortalWrt proxy platform."
+msgstr "现代多核 ImmortalWrt 代理平台。"
+
 #: htdocs/luci-static/resources/view/homeproxy/client.js:454
 #: htdocs/luci-static/resources/view/homeproxy/server.js:875
 msgid "The network interface to bind to."
@@ -3394,12 +3397,12 @@ msgid "Default route is Direct, added rules have automatic priority:<br>1. Small
 msgstr "默认路由为直连，添加的规则自动排列优先级：<br>1. 小型列表（YouTube、Discord 等）<br>2. Russia Inside<br>3. Re-filter"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Re-filter (Russia blocklist: banned domains + IPs)"
-msgstr "Re-filter（俄罗斯封锁列表：域名 + IP）"
+msgid "Re-filter (Russia blocklist: 60000+ banned domains + 25000+ IPs)"
+msgstr "Re-filter（俄罗斯封锁列表：60000+ 域名 + 25000+ IP）"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "itdoginfo/allow-domains - Russia Inside"
-msgstr "itdoginfo/allow-domains - Russia Inside"
+msgid "itdoginfo/allow-domains - Russia Inside (1000+ entries)"
+msgstr "itdoginfo/allow-domains - Russia Inside（1000+ 条目）"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "YouTube"
@@ -3791,6 +3794,9 @@ msgid "How often each node is tested (seconds). Lower = faster failover, higher 
 msgstr "每个节点的测试频率（秒）。越低 = 切换越快，越高 = 负载越小。"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Automatically picks the fastest node by periodically measuring latency. Traffic is always sent through the lowest-latency node in the pool."
+msgstr "通过定期测量延迟自动选择最快节点。流量始终通过池中延迟最低的节点发送。"
+
 msgid "Minimum latency gap (ms) required to switch to a faster node — prevents flapping between equally fast nodes."
 msgstr "切换到更快节点所需的最小延迟差（毫秒）——防止在速度相近的节点间频繁切换。"
 

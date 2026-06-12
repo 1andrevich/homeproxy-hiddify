@@ -1987,6 +1987,16 @@ return view.extend({
 									return ui.addNotification(null, E('p', _('No valid WireGuard/AmneziaWG config found.')));
 								}
 
+								const existingLabels = new Set(
+									uci.sections(data[0], 'node').map(s => s.label).filter(Boolean)
+								);
+								if (existingLabels.has(config.label)) {
+									const base = config.label;
+									let n = 2;
+									while (existingLabels.has(base + '-' + n)) n++;
+									config.label = base + '-' + n;
+								}
+
 								const sid = uci.add(data[0], 'node');
 								for (const [k, v] of Object.entries(config))
 									if (v != null) uci.set(data[0], sid, k, Array.isArray(v) ? v : String(v));

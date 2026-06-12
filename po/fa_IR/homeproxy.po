@@ -2733,6 +2733,9 @@ msgstr "حداقل نسخه‌ی TLS که قابل قبول است."
 msgid "The modern ImmortalWrt proxy platform for ARM64/AMD64."
 msgstr "پلتفرم مدرن پروکسی ImmortalWrt برای ARM64/AMD64."
 
+msgid "The modern multi-core ImmortalWrt proxy platform."
+msgstr "پلتفرم پروکسی چندهسته‌ای مدرن ImmortalWrt."
+
 #: htdocs/luci-static/resources/view/homeproxy/client.js:454
 #: htdocs/luci-static/resources/view/homeproxy/server.js:875
 msgid "The network interface to bind to."
@@ -3337,12 +3340,12 @@ msgid "Default route is Direct, added rules have automatic priority:<br>1. Small
 msgstr "مسیر پیش‌فرض مستقیم است، قوانین اضافه‌شده اولویت خودکار دارند:<br>1. لیست‌های کوچک (YouTube، Discord و غیره)<br>2. Russia Inside<br>3. Re-filter"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Re-filter (Russia blocklist: banned domains + IPs)"
-msgstr "Re-filter (لیست مسدودی روسیه: دامنه‌ها + IP)"
+msgid "Re-filter (Russia blocklist: 60000+ banned domains + 25000+ IPs)"
+msgstr "Re-filter (لیست مسدودی روسیه: ۶۰۰۰۰+ دامنه + ۲۵۰۰۰+ IP)"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "itdoginfo/allow-domains - Russia Inside"
-msgstr "itdoginfo/allow-domains - Russia Inside"
+msgid "itdoginfo/allow-domains - Russia Inside (1000+ entries)"
+msgstr "itdoginfo/allow-domains - Russia Inside (۱۰۰۰+ ورودی)"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "YouTube"
@@ -3734,6 +3737,9 @@ msgid "How often each node is tested (seconds). Lower = faster failover, higher 
 msgstr "هر چند ثانیه یک‌بار هر نود آزمایش می‌شود. کمتر = تغییر سریع‌تر، بیشتر = سربار کمتر."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Automatically picks the fastest node by periodically measuring latency. Traffic is always sent through the lowest-latency node in the pool."
+msgstr "با اندازه‌گیری دوره‌ای تأخیر، سریع‌ترین نود را به‌طور خودکار انتخاب می‌کند. ترافیک همیشه از طریق نود با کمترین تأخیر در مجموعه ارسال می‌شود."
+
 msgid "Minimum latency gap (ms) required to switch to a faster node — prevents flapping between equally fast nodes."
 msgstr "حداقل اختلاف تأخیر (میلی‌ثانیه) برای تغییر به نود سریع‌تر — از جابجایی مکرر بین نودهای مشابه جلوگیری می‌کند."
 

@@ -153,6 +153,12 @@ return view.extend({
 			return true;
 		}
 
+		o = s.taboption('routing', form.DummyValue, '_urltest_info', _('URLTest'),
+			_('Automatically picks the fastest node by periodically measuring latency. Traffic is always sent through the lowest-latency node in the pool.'));
+		o.depends('main_node', 'urltest');
+		o.rawhtml = true;
+		o.cfgvalue = function() { return ''; };
+
 		o = s.taboption('routing', hp.CBIStaticList, 'main_urltest_nodes', _('URLTest nodes'),
 			_('List of nodes to test.'));
 		for (let i in proxy_nodes)
@@ -512,8 +518,8 @@ return view.extend({
 		so.editable = true;
 
 		so = ss.option(form.ListValue, 'source', _('Source') + ' ⤵️');
-		so.value('refilter', _('Re-filter (Russia blocklist: banned domains + IPs)'));
-		so.value('russia-inside', _('itdoginfo/allow-domains - Russia Inside'));
+		so.value('refilter', _('Re-filter (Russia blocklist: 60000+ banned domains + 25000+ IPs)'));
+		so.value('russia-inside', _('itdoginfo/allow-domains - Russia Inside (1000+ entries)'));
 		so.value('youtube', _('YouTube'));
 		so.value('twitter', _('Twitter/X'));
 		so.value('tiktok', _('TikTok'));

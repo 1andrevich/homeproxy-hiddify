@@ -2823,6 +2823,9 @@ msgstr "Минимальная допустимая версия TLS."
 msgid "The modern ImmortalWrt proxy platform for ARM64/AMD64."
 msgstr "Современная прокси-платформа ImmortalWrt для ARM64/AMD64."
 
+msgid "The modern multi-core ImmortalWrt proxy platform."
+msgstr "Современная многоядерная прокси-платформа ImmortalWrt."
+
 #: htdocs/luci-static/resources/view/homeproxy/client.js:454
 #: htdocs/luci-static/resources/view/homeproxy/server.js:875
 msgid "The network interface to bind to."
@@ -3452,12 +3455,12 @@ msgid "Default route is Direct, added rules have automatic priority:<br>1. Small
 msgstr "Маршрут по умолчанию — прямой, приоритет добавленных правил автоматический:<br>1. Малые списки (YouTube, Discord и др.)<br>2. Russia Inside<br>3. Re-filter"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Re-filter (Russia blocklist: banned domains + IPs)"
-msgstr "Re-filter (Российский список блокировок: домены + IP)"
+msgid "Re-filter (Russia blocklist: 60000+ banned domains + 25000+ IPs)"
+msgstr "Re-filter (Российский список блокировок: 60000+ доменов + 25000+ IP)"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "itdoginfo/allow-domains - Russia Inside"
-msgstr "itdoginfo/allow-domains - список Russia Inside"
+msgid "itdoginfo/allow-domains - Russia Inside (1000+ entries)"
+msgstr "itdoginfo/allow-domains - Russia Inside (1000+ записей)"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "YouTube"
@@ -3849,6 +3852,9 @@ msgid "How often each node is tested (seconds). Lower = faster failover, higher 
 msgstr "Время в секундах: меньше = узлы тестируются чаще, больше = реже тесты - меньше нагрузки."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Automatically picks the fastest node by periodically measuring latency. Traffic is always sent through the lowest-latency node in the pool."
+msgstr "Автоматически выбирает самый быстрый узел, периодически измеряя задержку. Трафик всегда идёт через узел с наименьшей задержкой в пуле."
+
 msgid "Minimum latency gap (ms) required to switch to a faster node — prevents flapping between equally fast nodes."
 msgstr "Минимальная разница задержек (мс) для переключения на более быстрый узел — предотвращает постоянное переключение между узлами с похожей скоростью."
 
