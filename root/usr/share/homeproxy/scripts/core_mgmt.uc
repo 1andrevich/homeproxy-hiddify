@@ -223,4 +223,4 @@ if (action === 'info') {
 	result = { error: `unknown action: ${action}` };
 }
 
-printf('%s\n', json(result));
+printf('%s\n', result);

@@ -2103,6 +2103,86 @@ msgstr "解析策略"
 msgid "Resources management"
 msgstr "资源管理"
 
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Core management"
+msgstr "核心管理"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Package manager"
+msgstr "包管理器"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Architecture"
+msgstr "架构"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Free /tmp"
+msgstr "可用 /tmp"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Free overlay"
+msgstr "可用 overlay"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "none detected"
+msgstr "未检测到"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Not installed"
+msgstr "未安装"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Latest"
+msgstr "最新版"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Checking..."
+msgstr "检查中..."
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Install"
+msgstr "安装"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Update"
+msgstr "更新"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Remove"
+msgstr "移除"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "No supported package manager detected"
+msgstr "未检测到支持的包管理器"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Installing..."
+msgstr "安装中..."
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Installed successfully"
+msgstr "安装成功"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Installation failed"
+msgstr "安装失败"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Unknown"
+msgstr "未知"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Removing..."
+msgstr "移除中..."
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Removed successfully"
+msgstr "移除成功"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Removal failed"
+msgstr "移除失败"
+
 #: htdocs/luci-static/resources/view/homeproxy/server.js:880
 msgid "Reuse address"
 msgstr "复用地址"

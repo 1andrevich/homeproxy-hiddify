@@ -4,6 +4,7 @@
 		"read": {
 			"file": {
 				"/etc/homeproxy/scripts/update_subscriptions.uc": [ "exec" ],
+				"/usr/bin/ucode": [ "exec" ],
 				"/var/run/homeproxy/homeproxy.log": [ "read" ],
 				"/var/run/homeproxy/hiddify-c.log": [ "read" ]
 			},

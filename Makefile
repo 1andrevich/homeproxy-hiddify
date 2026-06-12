@@ -26,6 +26,12 @@ define Package/luci-app-homeproxy-hiddify/conffiles
 /etc/homeproxy/resources/proxy_list.txt
 endef
 
+define Package/luci-app-homeproxy-hiddify/postinst
+#!/bin/sh
+[ -n "$$IPKG_INSTROOT" ] || kill -HUP $$(pidof rpcd) 2>/dev/null
+exit 0
+endef
+
 include $(TOPDIR)/feeds/luci/luci.mk
 
 # call BuildPackage - OpenWrt buildroot signature

@@ -2040,6 +2040,86 @@ msgstr ""
 msgid "Resources management"
 msgstr ""
 
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Core management"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Package manager"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Architecture"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Free /tmp"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Free overlay"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "none detected"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Not installed"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Latest"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Checking..."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Install"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Update"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Remove"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "No supported package manager detected"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Installing..."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Installed successfully"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Installation failed"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Unknown"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Removing..."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Removed successfully"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Removal failed"
+msgstr ""
+
 #: htdocs/luci-static/resources/view/homeproxy/server.js:880
 msgid "Reuse address"
 msgstr ""

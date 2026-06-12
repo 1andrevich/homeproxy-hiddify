@@ -2074,6 +2074,86 @@ msgstr "استراتژی حل‌کردن"
 msgid "Resources management"
 msgstr "مدیریت منابع"
 
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Core management"
+msgstr "مدیریت هسته"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Package manager"
+msgstr "مدیر بسته"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Architecture"
+msgstr "معماری"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Free /tmp"
+msgstr "فضای آزاد /tmp"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Free overlay"
+msgstr "فضای آزاد overlay"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "none detected"
+msgstr "تشخیص داده نشد"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Not installed"
+msgstr "نصب نشده"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Latest"
+msgstr "آخرین"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Checking..."
+msgstr "در حال بررسی..."
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Install"
+msgstr "نصب"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Update"
+msgstr "به‌روزرسانی"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Remove"
+msgstr "حذف"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "No supported package manager detected"
+msgstr "مدیر بسته پشتیبانی‌شده‌ای یافت نشد"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Installing..."
+msgstr "در حال نصب..."
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Installed successfully"
+msgstr "با موفقیت نصب شد"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Installation failed"
+msgstr "نصب ناموفق"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Unknown"
+msgstr "ناشناخته"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Removing..."
+msgstr "در حال حذف..."
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Removed successfully"
+msgstr "با موفقیت حذف شد"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Removal failed"
+msgstr "حذف ناموفق"
+
 #: htdocs/luci-static/resources/view/homeproxy/server.js:880
 msgid "Reuse address"
 msgstr "استفاده‌ی مجدد از آدرس"
