@@ -1245,6 +1245,21 @@ if (!isEmpty(main_node)) {
 		uci.foreach(uciconfig, ucirurule, (cfg) => { if (cfg.enabled === '1') push(ru_rules, cfg); });
 		ru_rules = sort(ru_rules, (a, b) => ru_source_priority(a.source) - ru_source_priority(b.source));
 
+		/* Use direct-out for rule set downloads if any main node path uses WireGuard/AmneziaWG,
+		 * since those endpoints are not ready at sing-box startup */
+		const main_node_type = uci.get(uciconfig, main_node, 'type') || '';
+		let main_has_wg = (main_node_type in ['wireguard', 'amneziawg']);
+		if (!main_has_wg && main_node === 'urltest') {
+			const ut_nodes = filter(uci.get(uciconfig, ucimain, 'main_urltest_nodes') || [], (k) => uci.get_all(uciconfig, k) != null);
+			for (let n in ut_nodes) {
+				if ((uci.get(uciconfig, n, 'type') || '') in ['wireguard', 'amneziawg']) {
+					main_has_wg = true;
+					break;
+				}
+			}
+		}
+		const ruleset_detour = main_has_wg ? 'direct-out' : 'main-out';
+
 		for (let cfg in ru_rules) {
 
 			/* 'main-out' means route directly through the main proxy without a separate outbound */
@@ -1299,9 +1314,6 @@ if (!isEmpty(main_node)) {
 			});
 
 			/* Rule sets (remote — core handles download and 1d refresh) */
-			/* WireGuard/AmneziaWG endpoints are not ready at startup — download rule sets directly */
-			const main_node_type = uci.get(uciconfig, main_node, 'type') || '';
-			const ruleset_detour = (main_node_type in ['wireguard', 'amneziawg']) ? 'direct-out' : 'main-out';
 			const has_ruleset = (tag) => filter(config.route.rule_set, (rs) => rs.tag === tag).length > 0;
 			if (cfg.source === 'refilter') {
 				if (!has_ruleset('hp-ru-refilter-domain'))

@@ -3278,8 +3278,8 @@ msgid "RU Proxy Rules"
 msgstr "俄罗斯代理规则"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Routing priority is automatic: Smaller lists (YouTube, Discord etc.) first, larger — Russia Inside second, largest — Re-filter third."
-msgstr "路由优先级自动设置：小列表（YouTube、Discord 等）优先，较大的 Russia Inside 其次，最大的 Re-filter 最后。"
+msgid "Default route is Direct, added rules have automatic priority:<br>1. Smaller lists (YouTube, Discord etc.)<br>2. Russia Inside<br>3. Re-filter"
+msgstr "默认路由为直连，添加的规则自动排列优先级：<br>1. 小型列表（YouTube、Discord 等）<br>2. Russia Inside<br>3. Re-filter"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Re-filter (Russia blocklist: banned domains + IPs)"

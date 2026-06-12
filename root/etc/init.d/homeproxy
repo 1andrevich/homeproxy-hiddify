@@ -29,6 +29,8 @@ log() {
 }
 
 start_service() {
+	mkdir -p "$RUN_DIR"
+
 	config_load "$CONF"
 
 	local preferred_core
@@ -62,8 +64,6 @@ start_service() {
 	local routing_mode proxy_mode
 	config_get routing_mode "config" "routing_mode" "bypass_mainland_china"
 	config_get proxy_mode "config" "proxy_mode" "redirect_tproxy"
-
-	mkdir -p "$RUN_DIR"
 
 	# Write core info for LuCI
 	local core_version

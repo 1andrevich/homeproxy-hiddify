@@ -315,32 +315,23 @@ function getRuntimeLog(o, name, _option_index, section_id, _in_table) {
 	]);
 }
 
-const callCoreInfo = rpc.declare({
-	object: 'luci.homeproxy',
-	method: 'core_info',
-	expect: { '': {} }
-});
+const CORE_MGMT = '/usr/share/homeproxy/scripts/core_mgmt.uc';
 
-const callCoreInstall = rpc.declare({
-	object: 'luci.homeproxy',
-	method: 'core_install',
-	params: ['core'],
-	expect: { '': {} }
-});
+function callCoreInfo() {
+	return fs.exec_direct('/usr/bin/ucode', [CORE_MGMT, 'info'], 'json');
+}
 
-const callCoreRemove = rpc.declare({
-	object: 'luci.homeproxy',
-	method: 'core_remove',
-	params: ['core'],
-	expect: { '': {} }
-});
+function callCoreCheckRemote(core) {
+	return fs.exec_direct('/usr/bin/ucode', [CORE_MGMT, 'check_remote', core], 'json');
+}
 
-const callCoreCheckRemote = rpc.declare({
-	object: 'luci.homeproxy',
-	method: 'core_check_remote',
-	params: ['core'],
-	expect: { '': {} }
-});
+function callCoreInstall(core) {
+	return fs.exec_direct('/usr/bin/ucode', [CORE_MGMT, 'install', core], 'json');
+}
+
+function callCoreRemove(core) {
+	return fs.exec_direct('/usr/bin/ucode', [CORE_MGMT, 'remove', core], 'json');
+}
 
 function buildCoreCard(core, coreInfo) {
 	const isHiddify = core === 'hiddify';
@@ -350,8 +341,8 @@ function buildCoreCard(core, coreInfo) {
 	const canInstall = !!pkgMgr;
 
 	const desc = isHiddify
-		? _('Custom sing-box core with hiddify features. Supports hiddify routing mode with DNS leak protection.')
-		: _('Extended sing-box with AmneziaWG support. Use with standard routing modes.');
+		? _('hiddify-core with sing-box syntax compatibility. Supports Hiddify App protocols and advanced features. Best compatibility with Hiddify Manager protocols.')
+		: _('Extended sing-box with additional protocols including AmneziaWG and TrustTunnel support. Created by shtorm-7.');
 
 	let installed = coreData.installed || false;
 	let version   = coreData.version   || null;
@@ -466,11 +457,14 @@ return view.extend({
 	load() {
 		return Promise.all([
 			hp.getBuiltinFeatures(),
-			L.resolveDefault(callCoreInfo(), {})
+			L.resolveDefault(callCoreInfo(), {}),
+			uci.load('homeproxy')
 		]);
 	},
 
 	render([features, coreInfo]) {
+		const routingMode = uci.get('homeproxy', 'config', 'routing_mode') || '';
+		const isRuMode = routingMode === 'proxy_banned_ru';
 		let m, s, o;
 
 		m = new form.Map('homeproxy');
@@ -517,25 +511,23 @@ return view.extend({
 			? E('strong', { 'style': 'color:green' }, coreName + coreVer)
 			: E('strong', { 'style': 'color:red' }, _('No core installed'));
 
-		o = s.option(form.DummyValue, '_china_ip4_version', _('China IPv4 list version'));
-		o.cfgvalue = L.bind(getResVersion, this, o, 'china_ip4');
-		o.rawhtml = true;
-		o.depends({'routing_mode': 'proxy_banned_ru', '!reverse': true});
+		if (!isRuMode) {
+			o = s.option(form.DummyValue, '_china_ip4_version', _('China IPv4 list version'));
+			o.cfgvalue = L.bind(getResVersion, this, o, 'china_ip4');
+			o.rawhtml = true;
 
-		o = s.option(form.DummyValue, '_china_ip6_version', _('China IPv6 list version'));
-		o.cfgvalue = L.bind(getResVersion, this, o, 'china_ip6');
-		o.rawhtml = true;
-		o.depends({'routing_mode': 'proxy_banned_ru', '!reverse': true});
+			o = s.option(form.DummyValue, '_china_ip6_version', _('China IPv6 list version'));
+			o.cfgvalue = L.bind(getResVersion, this, o, 'china_ip6');
+			o.rawhtml = true;
 
-		o = s.option(form.DummyValue, '_china_list_version', _('China list version'));
-		o.cfgvalue = L.bind(getResVersion, this, o, 'china_list');
-		o.rawhtml = true;
-		o.depends({'routing_mode': 'proxy_banned_ru', '!reverse': true});
+			o = s.option(form.DummyValue, '_china_list_version', _('China list version'));
+			o.cfgvalue = L.bind(getResVersion, this, o, 'china_list');
+			o.rawhtml = true;
 
-		o = s.option(form.DummyValue, '_gfw_list_version', _('GFW list version'));
-		o.cfgvalue = L.bind(getResVersion, this, o, 'gfw_list');
-		o.rawhtml = true;
-		o.depends({'routing_mode': 'proxy_banned_ru', '!reverse': true});
+			o = s.option(form.DummyValue, '_gfw_list_version', _('GFW list version'));
+			o.cfgvalue = L.bind(getResVersion, this, o, 'gfw_list');
+			o.rawhtml = true;
+		}
 
 
 		o = s.option(form.Value, 'github_token', _('GitHub token'));

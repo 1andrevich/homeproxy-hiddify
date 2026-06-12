@@ -3155,7 +3155,7 @@ msgid "RU Proxy Rules"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Routing priority is automatic: Smaller lists (YouTube, Discord etc.) first, larger — Russia Inside second, largest — Re-filter third."
+msgid "Default route is Direct, added rules have automatic priority:<br>1. Smaller lists (YouTube, Discord etc.)<br>2. Russia Inside<br>3. Re-filter"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js

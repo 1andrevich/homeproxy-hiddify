@@ -503,7 +503,7 @@ return view.extend({
 		ss.anonymous = true;
 		ss.sortable = true;
 		ss.nodescriptions = true;
-		ss.description = _('Routing priority is automatic: Smaller lists (YouTube, Discord etc.) first, larger — Russia Inside second, largest — Re-filter third.');
+		ss.description = _('Default route is Direct, added rules have automatic priority:<br>1. Smaller lists (YouTube, Discord etc.)<br>2. Russia Inside<br>3. Re-filter');
 
 		so = ss.option(form.Flag, 'enabled', _('Enable'));
 		so.default = so.enabled;
