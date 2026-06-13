@@ -77,6 +77,10 @@ let main_node, main_udp_node, dedicated_udp_node, default_outbound, default_outb
 
 if (routing_mode !== 'custom') {
 	main_node = uci.get(uciconfig, ucimain, 'main_node') || 'nil';
+	if (main_node === 'nil') {
+		warn('homeproxy: no main_node configured, skipping config generation.\n');
+		exit(0);
+	}
 	main_udp_node = uci.get(uciconfig, ucimain, 'main_udp_node') || 'nil';
 	dedicated_udp_node = !isEmpty(main_udp_node) && !(main_udp_node in ['same', main_node]);
 
@@ -1519,13 +1523,12 @@ if (!isEmpty(main_node)) {
 
 /* ByeDPI outbound */
 if (byedpi_enabled === '1') {
-	const byedpi_port = strToInt(uci.get(uciconfig, ucimain, 'byedpi_port')) || 5335;
 	const byedpi_uot = uci.get(uciconfig, ucimain, 'byedpi_udp_over_tcp') !== '0';
 	push(config.outbounds, {
 		type: 'socks',
 		tag: 'byedpi-out',
 		server: '127.0.0.1',
-		server_port: byedpi_port,
+		server_port: 5335,
 		udp_over_tcp: byedpi_uot || null
 	});
 }

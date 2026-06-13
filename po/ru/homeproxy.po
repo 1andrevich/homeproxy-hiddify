@@ -3892,52 +3892,44 @@ msgid "Enable ByeDPI"
 msgstr "Включить ByeDPI"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Run ciadpi as a local SOCKS5 proxy that applies DPI bypass techniques (fragmentation, fake packets, OOB). Useful for unblocking throttled services (e.g. YouTube) without a VPN. Install ByeDPI on the Status page first. Traffic is only routed through ByeDPI if routing rules send it to the <code>byedpi-out</code> outbound."
-msgstr "Запускает ciadpi как локальный SOCKS5-прокси, применяющий техники обхода DPI (фрагментация, фейковые пакеты, OOB). Полезно для разблокировки замедленных сервисов (например, YouTube) без VPN. Сначала установите ByeDPI на странице Статус. Трафик направляется через ByeDPI только если правила маршрутизации отправляют его на исходящий адрес <code>byedpi-out</code>."
+msgid "A free way to unblock throttled sites (e.g. YouTube) without a VPN subscription. Works by confusing your ISP's traffic analysis — your traffic is NOT encrypted or hidden, your ISP can still see which sites you visit. Results depend on your ISP and may require trying different strategies in the ByeDPI tab. ByeDPI will be installed automatically on first enable."
+msgstr "Бесплатный способ разблокировать замедлённые сайты (например, YouTube) без VPN-подписки. Работает, сбивая систему анализа трафика провайдера — трафик НЕ шифруется и НЕ скрывается, провайдер по-прежнему видит, какие сайты вы посещаете. Результат зависит от провайдера и может потребовать подбора стратегии во вкладке ByeDPI. При первом включении ByeDPI установится автоматически."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "ByeDPI (local DPI bypass)"
 msgstr "ByeDPI (локальный обход DPI)"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "ByeDPI port"
-msgstr "Порт ByeDPI"
-
-#: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Local SOCKS5 port ciadpi listens on. Sing-box routes traffic to this port."
-msgstr "Локальный SOCKS5-порт, на котором слушает ciadpi. Sing-box направляет трафик на этот порт."
-
-#: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "UDP over TCP"
 msgstr "UDP через TCP"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Wrap UDP traffic in TCP when routing to ciadpi. Requires sing-box/hiddify-core SOCKS5 UoT support."
-msgstr "Оборачивать UDP-трафик в TCP при отправке в ciadpi. Требует поддержки UoT в sing-box/hiddify-core."
+msgid "Wrap UDP traffic in TCP when routing to ciadpi."
+msgstr "Оборачивать UDP-трафик в TCP при отправке в ciadpi."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Strategy preset"
 msgstr "Предустановленная стратегия"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Grouped by technique. Numbers match community references (e.g. \"try strategy 11\"). Based on <a href=\"https://github.com/hufrea/byedpi\" target=\"_blank\">hufrea/byedpi</a> docs and community testing. See also <a href=\"https://github.com/fatyzzz/Byedpi-Setup\" target=\"_blank\">fatyzzz/Byedpi-Setup</a>."
-msgstr "Сгруппированы по технике. Номера совпадают с принятыми в сообществе (напр. «попробуй стратегию 11»). По материалам <a href=\"https://github.com/hufrea/byedpi\" target=\"_blank\">hufrea/byedpi</a> и тестам сообщества. Также: <a href=\"https://github.com/fatyzzz/Byedpi-Setup\" target=\"_blank\">fatyzzz/Byedpi-Setup</a>."
+msgid "Grouped by technique. Based on <a href=\"https://github.com/hufrea/byedpi\" target=\"_blank\">hufrea/byedpi</a> and community testing. See also <a href=\"https://github.com/fatyzzz/Byedpi-Setup\" target=\"_blank\">fatyzzz/Byedpi-Setup</a>."
+msgstr "Сгруппированы по технике. По материалам <a href=\"https://github.com/hufrea/byedpi\" target=\"_blank\">hufrea/byedpi</a> и тестам сообщества. Также: <a href=\"https://github.com/fatyzzz/Byedpi-Setup\" target=\"_blank\">fatyzzz/Byedpi-Setup</a>."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "— select a preset —"
 msgstr "— выберите предустановку —"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Disorder — recommended for Linux"
-msgstr "Disorder — рекомендуется на Linux"
+msgid "Disorder — reorders TCP segments"
+msgstr "Disorder — переупорядочивает TCP-сегменты"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Fake TTL"
 msgstr "Fake TTL"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Fake MD5 — best on Linux"
-msgstr "Fake MD5 — лучший вариант на Linux"
+msgid "Fake MD5"
+msgstr "Fake MD5"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "TLS Record Split"
@@ -4040,8 +4032,8 @@ msgid "Block QUIC (UDP port 443)"
 msgstr "Блокировать QUIC (UDP порт 443)"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "<strong>Disclaimer:</strong> This nftables rule drops all outgoing UDP port 443 packets to external addresses, forcing browsers and apps to fall back to TCP/TLS where ciadpi can apply DPI bypass. Side effects: may break services that require QUIC, and affects all LAN clients. Only enable if TCP-based bypass is insufficient."
-msgstr "<strong>Предупреждение:</strong> Правило nftables блокирует все исходящие UDP-пакеты на порт 443 для внешних адресов, вынуждая браузеры и приложения переходить на TCP/TLS, где ciadpi применяет обход DPI. Побочные эффекты: могут не работать сервисы, требующие QUIC; затрагивает всех клиентов локальной сети. Включайте только если TCP-обхода недостаточно."
+msgid "This nftables rule drops all outgoing UDP port 443 packets to external addresses, forcing browsers and apps to fall back to TCP/TLS where ByeDPI can apply DPI bypass. Side effects: may break services that require QUIC, and affects all LAN clients. Enable if your strategy works but some sites still do not load."
+msgstr "Правило nftables блокирует все исходящие UDP-пакеты на порт 443 для внешних адресов, вынуждая браузеры и приложения переходить на TCP/TLS, где ByeDPI применяет обход DPI. Побочные эффекты: могут не работать сервисы, требующие QUIC; затрагивает всех клиентов локальной сети. Включите, если стратегия настроена, но часть сайтов всё равно не работает."
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "Installed"
@@ -4070,3 +4062,15 @@ msgstr "Включает полноценное HTTP-тестирование с
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "Local SOCKS5 DPI bypass proxy by <a href=\"https://github.com/hufrea/byedpi\" target=\"_blank\">hufrea</a>. Packages by <a href=\"https://github.com/1andrevich/ByeDPI-OpenWrt\" target=\"_blank\">1andrevich/ByeDPI-OpenWrt</a>. Configure in the Client → ByeDPI tab."
 msgstr "Локальный SOCKS5-прокси для обхода DPI от <a href=\"https://github.com/hufrea/byedpi\" target=\"_blank\">hufrea</a>. Пакеты: <a href=\"https://github.com/1andrevich/ByeDPI-OpenWrt\" target=\"_blank\">1andrevich/ByeDPI-OpenWrt</a>. Настройки: вкладка Клиент → ByeDPI."
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "No package manager found. Install ciadpi manually from the Status page."
+msgstr "Менеджер пакетов не найден. Установите ciadpi вручную на странице Статус."
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "ByeDPI (ciadpi) is not installed. Install it now?"
+msgstr "ByeDPI (ciadpi) не установлен. Установить сейчас?"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Cannot remove: ByeDPI is selected as Main Node. Change Main Node first."
+msgstr "Нельзя удалить: ByeDPI выбран в качестве основного узла. Сначала смените основной узел."

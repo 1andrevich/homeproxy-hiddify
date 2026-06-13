@@ -7,6 +7,7 @@
 'use strict';
 'require form';
 'require fs';
+'require rpc';
 'require uci';
 'require ui';
 'require view';
@@ -2198,6 +2199,319 @@ return view.extend({
 			return this.map.save(null, true);
 		}
 		/* Subscriptions settings end */
+
+		/* ByeDPI settings start */
+		s.tab('byedpi', _('ByeDPI'));
+		let byedpiSV = s.taboption('byedpi', form.SectionValue, '_byedpi', form.NamedSection, 'config', 'homeproxy');
+		ss = byedpiSV.subsection;
+		ss.anonymous = true;
+		ss.addremove = false;
+
+		o = ss.option(form.Flag, 'byedpi_udp_over_tcp', _('UDP over TCP'),
+			_('Wrap UDP traffic in TCP when routing to ciadpi.'));
+		o.default = o.enabled;
+		o.rmempty = false;
+
+		(function() {
+			const BYEDPI_PRESETS = [
+				/* 0-4: Disorder — most effective on Linux */
+				{ name: '1 — Disorder Basic',              args: '--disorder 1' },
+				{ name: '2 — Disorder at SNI',             args: '--disorder 1+s' },
+				{ name: '3 — Disorder TLS+HTTP',           args: '--proto tls,http --disorder 1' },
+				{ name: '4 — Split + Disorder',            args: '--split 1 --disorder 3' },
+				{ name: '5 — Disorder + Auto TLS Record',  args: '--disorder 1 --auto=torst --tlsrec 1+s' },
+				/* 5-9: Fake TTL */
+				{ name: '6 — Fake TTL=6',                  args: '--fake -1 --ttl 6' },
+				{ name: '7 — Fake TTL=8',                  args: '--fake -1 --ttl 8' },
+				{ name: '8 — Fake TTL=10',                 args: '--fake -1 --ttl 10' },
+				{ name: '9 — Fake TTL=12',                 args: '--fake -1 --ttl 12' },
+				{ name: '10 — Fake TTL=15',                args: '--fake -1 --ttl 15' },
+				/* 10-13: Fake MD5 — Linux-only TCP option */
+				{ name: '11 — Fake MD5',                   args: '--fake -1 --md5sig' },
+				{ name: '12 — Disorder + Fake MD5',        args: '--disorder 1 --fake -1 --md5sig' },
+				{ name: '13 — Fake MD5 TLS+HTTP',          args: '--proto tls,http --fake -1 --md5sig' },
+				{ name: '14 — Fake MD5 + Auto Reset',      args: '--fake -1 --md5sig --auto=torst --disorder 1' },
+				/* 14-17: TLS Record split */
+				{ name: '15 — TLS Record Split',           args: '--tlsrec 1+s' },
+				{ name: '16 — TLS Record + Auto',          args: '--auto=torst --tlsrec 1+s' },
+				{ name: '17 — TLS Record + Timeout',       args: '--auto=torst --timeout 3 --tlsrec 1+s' },
+				{ name: '18 — Disorder + TLS Record',      args: '--disorder 1 --tlsrec 1+s' },
+				/* 18-21: OOB */
+				{ name: '19 — OOB at SNI',                 args: '--oob 1+s' },
+				{ name: '20 — OOB at SNI+3',               args: '--oob 3+s' },
+				{ name: '21 — DisoOB at SNI',              args: '--disoob 1+s' },
+				{ name: '22 — DisoOB + Fake MD5',          args: '--disoob 1+s --fake -1 --md5sig' },
+				/* 22-25: Split */
+				{ name: '23 — Split at SNI',               args: '--split 1+s' },
+				{ name: '24 — Split at SNI Middle',        args: '--split 0+sm' },
+				{ name: '25 — Split at 2',                 args: '--split 2' },
+				{ name: '26 — Split + OOB',                args: '--split 1+s --oob 2+s' },
+				/* 26-29: HTTP modification */
+				{ name: '27 — HTTP Host Case Mix',         args: '--proto http --mod-http hcsmix' },
+				{ name: '28 — HTTP Host Double Mix',       args: '--proto http --mod-http hcsmix,dcsmix' },
+				{ name: '29 — HTTP Full Mix',              args: '--proto http --mod-http hcsmix,dcsmix,rmspace' },
+				{ name: '30 — HTTP Mix + Disorder',        args: '--proto tls,http --mod-http hcsmix --disorder 1' },
+				/* 30-31: Auto-mode */
+				{ name: '31 — Auto SSL Error Fallback',    args: '--fake -1 --ttl 8 --auto=ssl_err --fake -1 --ttl 5' },
+				{ name: '32 — Auto Reset Fallback',        args: '--fake -1 --md5sig --auto=torst --disorder 1' },
+				/* 32-34: Fake SNI / TLS mod */
+				{ name: '33 — Random SNI Fake',            args: '--fake -1 --fake-sni "????.net"' },
+				{ name: '34 — Random TLS Fake',            args: '--fake -1 --fake-tls-mod rand' },
+				{ name: '35 — Original TLS Fake',          args: '--fake -1 --fake-tls-mod orig' },
+				/* 35-39: Aggressive combos */
+				{ name: '36 — Aggressive Split',           args: '--split 1+s --disorder 3+s' },
+				{ name: '37 — Aggressive OOB + MD5',       args: '--oob 1+s --disorder 1 --fake -1 --md5sig' },
+				{ name: '38 — Aggressive DisoOB',          args: '--disoob 1+s --disorder 3+s' },
+				{ name: '39 — Aggressive Combo',           args: '--split 1+s --oob 2+s --disorder 3+s' },
+				{ name: '40 — TLS+HTTP Disorder + Record', args: '--proto tls,http --disorder 1 --tlsrec 1+s' },
+				/* 40-41: UDP */
+				{ name: '41 — UDP Fake',                   args: '--proto udp --udp-fake 5' },
+				{ name: '42 — TLS+UDP Fake MD5',           args: '--proto tls,udp --fake -1 --md5sig --udp-fake 5' },
+				/* 42: Full combo */
+				{ name: '43 — Full TLS Bypass',            args: '--proto tls --fake -1 --md5sig --tlsrec 1+s' }
+			];
+
+			const BYEDPI_GROUPS = [
+				{ label: _('Disorder — reorders TCP segments'),  range: [0,  4]  },
+				{ label: _('Fake TTL'),                          range: [5,  9]  },
+				{ label: _('Fake MD5'),                          range: [10, 13] },
+				{ label: _('TLS Record Split'),                                   range: [14, 17] },
+				{ label: _('OOB'),                                                range: [18, 21] },
+				{ label: _('Split'),                                              range: [22, 25] },
+				{ label: _('HTTP Modification'),                                  range: [26, 29] },
+				{ label: _('Auto-mode'),                                          range: [30, 31] },
+				{ label: _('Fake SNI / TLS Modification'),                        range: [32, 34] },
+				{ label: _('Aggressive'),                                         range: [35, 39] },
+				{ label: _('UDP'),                                                range: [40, 41] },
+				{ label: _('Full Combo'),                                         range: [42, 42] },
+			];
+
+			const callByeDPITest = rpc.declare({
+				object: 'luci.homeproxy',
+				method: 'byedpi_strategy_test',
+				params: ['cmd_opts', 'port'],
+				expect: { '': {} }
+			});
+
+			const callCurlStatus = rpc.declare({
+				object: 'luci.homeproxy',
+				method: 'curl_status',
+				expect: { '': {} }
+			});
+
+			function applyPreset(idx) {
+				if (BYEDPI_PRESETS[idx]) {
+					const el = document.querySelector('[name*=".byedpi_cmd_opts"]');
+					if (el) {
+						el.value = BYEDPI_PRESETS[idx].args;
+						el.dispatchEvent(new Event('change'));
+					}
+				}
+			}
+
+			/* Preset selector with optgroup categories */
+			o = ss.option(form.ListValue, 'byedpi_preset',
+				_('Strategy preset'),
+				_('Grouped by technique. Based on <a href="https://github.com/hufrea/byedpi" target="_blank">hufrea/byedpi</a> and community testing. See also <a href="https://github.com/fatyzzz/Byedpi-Setup" target="_blank">fatyzzz/Byedpi-Setup</a>.'));
+			o.value('', _('— select a preset —'));
+			for (let i = 0; i < BYEDPI_PRESETS.length; i++)
+				o.value(String(i), BYEDPI_PRESETS[i].name);
+			o.renderWidget = function(section_id, option_index, cfgvalue) {
+				const sel = E('select', {
+					'id':    this.cbid(section_id),
+					'name':  this.cbid(section_id),
+					'class': 'cbi-input-select',
+					'style': 'max-width:100%'
+				});
+				sel.appendChild(E('option', { value: '' }, _('— select a preset —')));
+				for (let g of BYEDPI_GROUPS) {
+					const grp = E('optgroup', { label: g.label });
+					for (let i = g.range[0]; i <= g.range[1]; i++) {
+						grp.appendChild(E('option', {
+							value:    String(i),
+							selected: cfgvalue === String(i) ? '' : null
+						}, BYEDPI_PRESETS[i].name));
+					}
+					sel.appendChild(grp);
+				}
+				sel.addEventListener('change', function() {
+					applyPreset(parseInt(sel.value));
+				});
+				return sel;
+			};
+
+			/* Command options — the actual value used by ciadpi */
+			o = ss.option(form.Value, 'byedpi_cmd_opts',
+				_('Command options'),
+				_('Arguments passed to ciadpi after <code>-i 127.0.0.1 -p &lt;port&gt;</code>. ' +
+				  'Select a preset above or enter custom options. See ciadpi <code>--help</code> for full flag reference.'));
+			o.placeholder = '--disorder 1';
+
+			/* Strategy tester */
+			o = ss.option(form.DummyValue, '_byedpi_tester',
+				_('Test current strategy'),
+				_('Starts ciadpi with the current options on a temporary port and tests it. ' +
+				  'With curl installed: makes a real HTTP request through ciadpi to verify DPI bypass. ' +
+				  'Without curl: only confirms arguments are valid and ciadpi starts.'));
+			o.render = function(option_index, section_id) {
+				const msgEl = E('span', { style: 'margin-left:8px; font-size:0.9em; color:gray' }, '');
+				const btn = E('button', {
+					'class': 'btn cbi-button cbi-button-action',
+					'click': ui.createHandlerFn(this, () => {
+						const el = document.querySelector('[name*=".byedpi_cmd_opts"]');
+						const opts = el ? el.value.trim() : '';
+						btn.disabled = true;
+						msgEl.style.color = 'gray';
+						msgEl.textContent = _('Testing...');
+						return L.resolveDefault(callByeDPITest(opts, 15335), {}).then((ret) => {
+							btn.disabled = false;
+							if (ret.result) {
+								msgEl.style.color = 'green';
+								msgEl.textContent = ret.method === 'curl'
+									? _('✓ HTTP request succeeded through ciadpi')
+									: _('✓ ciadpi started (install curl for full test)');
+							} else {
+								msgEl.style.color = 'red';
+								msgEl.textContent = ret.error || _('Test failed');
+							}
+						});
+					})
+				}, [ _('Test') ]);
+
+				return E('div', { 'class': 'cbi-value' }, [
+					E('label', { 'class': 'cbi-value-title' }, _('Test current strategy')),
+					E('div',   { 'class': 'cbi-value-field' }, [ btn, msgEl ])
+				]);
+			};
+			o.write = function() {};
+
+			/* Test all strategies */
+			o = ss.option(form.DummyValue, '_byedpi_test_all', _('Test all strategies'));
+			o.render = function(option_index, section_id) {
+				const progressEl = E('div', {
+					style: 'font-size:0.9em; margin:6px 0; display:none'
+				}, '');
+				const tableEl = E('table', {
+					style: 'width:100%; border-collapse:collapse; font-size:0.85em; display:none; margin-top:4px'
+				});
+
+				const btn = E('button', {
+					'class': 'btn cbi-button cbi-button-action',
+					'disabled': true,
+					'click': ui.createHandlerFn(this, function() {
+						if (!confirm(_('Test all 43 strategies sequentially?\n\n' +
+						              'Each test takes ~5-10 seconds (~5-7 min total).\n' +
+						              'LAN clients are not affected during testing.')))
+							return;
+
+						btn.disabled = true;
+						progressEl.style.display = '';
+						progressEl.style.color = 'gray';
+						progressEl.textContent = _('Preparing...');
+						tableEl.style.display = '';
+						tableEl.innerHTML = '';
+
+						const rows = [];
+						for (let i = 0; i < BYEDPI_PRESETS.length; i++) {
+							const statusCell = E('td', {
+								style: 'width:22px; text-align:center; font-size:1em; color:gray'
+							}, '–');
+							const errorCell = E('td', {
+								style: 'padding:2px 8px; color:#888; font-size:0.8em; font-style:italic'
+							}, '');
+							const applyBtn = E('button', {
+								'class': 'btn cbi-button cbi-button-save',
+								style: 'padding:1px 8px; font-size:0.8em; visibility:hidden',
+								click: (function(idx) {
+									return function() { applyPreset(idx); };
+								})(i)
+							}, [ _('Apply') ]);
+
+							tableEl.appendChild(E('tr', { style: 'border-bottom:1px solid #f0f0f0' }, [
+								statusCell,
+								E('td', { style: 'padding:2px 8px; color:#555; white-space:nowrap' },
+									BYEDPI_PRESETS[i].name),
+								E('td', { style: 'padding:2px 8px; color:#888; font-family:monospace; font-size:0.85em; word-break:break-all' },
+									BYEDPI_PRESETS[i].args),
+								errorCell,
+								E('td', { style: 'padding:2px 4px; white-space:nowrap' }, [ applyBtn ])
+							]));
+							rows.push({ statusCell, errorCell, applyBtn });
+						}
+
+						let passed = 0;
+						let chain = Promise.resolve();
+						for (let i = 0; i < BYEDPI_PRESETS.length; i++) {
+							chain = chain.then((function(idx) {
+								return function() {
+									const { statusCell, errorCell, applyBtn } = rows[idx];
+									progressEl.textContent =
+										(idx + 1) + ' / ' + BYEDPI_PRESETS.length +
+										': ' + BYEDPI_PRESETS[idx].name;
+									statusCell.textContent = '⏳';
+									return L.resolveDefault(
+										callByeDPITest(BYEDPI_PRESETS[idx].args, 15335), {}
+									).then(function(ret) {
+										if (ret.result) {
+											statusCell.textContent = '✓';
+											statusCell.style.color = 'green';
+											applyBtn.style.visibility = '';
+											passed++;
+										} else {
+											statusCell.textContent = '✗';
+											statusCell.style.color = '#cc3300';
+											errorCell.textContent = ret.error || '';
+										}
+									});
+								};
+							})(i));
+						}
+
+						return chain.then(function() {
+							progressEl.style.color = passed > 0 ? 'green' : '#cc3300';
+							progressEl.textContent =
+								_('Done') + ': ' + passed + ' / ' +
+								BYEDPI_PRESETS.length + ' ' + _('passed') +
+								(passed > 0 ? ' — ' + _('click Apply next to any working strategy') : '');
+							btn.disabled = false;
+						});
+					})
+				}, [ _('Test all strategies') ]);
+
+				const hintEl = E('div', { style: 'font-size:0.85em; color:#666; margin-bottom:6px' },
+					_('Runs all 43 presets one by one and shows which ones work. ~5-7 min total.'));
+
+				L.resolveDefault(callCurlStatus(), {}).then(function(status) {
+					if (status.installed) {
+						btn.disabled = false;
+					} else {
+						hintEl.textContent = _('Requires curl. Install it on the Status page first.');
+						hintEl.style.color = '#c00';
+					}
+				});
+
+				return E('div', { 'class': 'cbi-value' }, [
+					E('label', { 'class': 'cbi-value-title' }, _('Test all strategies')),
+					E('div', { 'class': 'cbi-value-field' }, [
+						hintEl,
+						btn,
+						progressEl,
+						tableEl
+					])
+				]);
+			};
+			o.write = function() {};
+		})();
+
+		o = ss.option(form.Flag, 'byedpi_block_quic',
+			_('Block QUIC (UDP port 443)') + ' ⚠️',
+			_('This nftables rule drops all outgoing UDP port 443 packets to external addresses, ' +
+			  'forcing browsers and apps to fall back to TCP/TLS where ByeDPI can apply DPI bypass. ' +
+			  'Side effects: may break services that require QUIC, and affects all LAN clients. ' +
+			  'Enable if your strategy works but some sites still do not load.'));
+		o.default = o.disabled;
+		o.rmempty = false;
+		/* ByeDPI settings end */
 
 		return m.render();
 	}

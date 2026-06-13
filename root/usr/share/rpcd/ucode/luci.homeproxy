@@ -819,8 +819,8 @@ const methods = {
 				fd2.close();
 			}
 			let pkg_manager = null;
-			if (access('/usr/bin/apk')) pkg_manager = 'apk';
-			else if (access('/bin/opkg')) pkg_manager = 'opkg';
+			if (access('/usr/bin/apk') || access('/sbin/apk') || access('/usr/sbin/apk')) pkg_manager = 'apk';
+			else if (access('/bin/opkg') || access('/usr/bin/opkg')) pkg_manager = 'opkg';
 			let arch = null;
 			const afd = popen("awk -F\\' '/DISTRIB_ARCH/ {print $2}' /etc/openwrt_release 2>/dev/null");
 			if (afd) { arch = trim(afd.read('all')); afd.close(); }
@@ -831,8 +831,8 @@ const methods = {
 	byedpi_prepare_install: {
 		call: function(req) {
 			let pkg_manager = null;
-			if (access('/usr/bin/apk')) pkg_manager = 'apk';
-			else if (access('/bin/opkg')) pkg_manager = 'opkg';
+			if (access('/usr/bin/apk') || access('/sbin/apk') || access('/usr/sbin/apk')) pkg_manager = 'apk';
+			else if (access('/bin/opkg') || access('/usr/bin/opkg')) pkg_manager = 'opkg';
 			if (!pkg_manager)
 				return { error: 'No supported package manager (apk/opkg)' };
 
@@ -884,6 +884,10 @@ const methods = {
 				ret = system(`opkg install ${shellquote(tmp_path)}`);
 			}
 			system(`rm -f ${shellquote(tmp_path)}`);
+			if (ret === 0) {
+				system('/etc/init.d/ciadpi stop 2>/dev/null; true');
+				system('/etc/init.d/ciadpi disable 2>/dev/null; true');
+			}
 			return { result: ret === 0 };
 		}
 	},
@@ -973,35 +977,41 @@ const methods = {
 		call: function(req) {
 			const installed = !!access('/usr/bin/curl');
 			let pkg_manager = null;
-			if (access('/usr/bin/apk')) pkg_manager = 'apk';
-			else if (access('/bin/opkg')) pkg_manager = 'opkg';
+			if (access('/usr/bin/apk') || access('/sbin/apk') || access('/usr/sbin/apk')) pkg_manager = 'apk';
+			else if (access('/bin/opkg') || access('/usr/bin/opkg')) pkg_manager = 'opkg';
 			return { installed, pkg_manager };
 		}
 	},
 
 	curl_install: {
 		call: function(req) {
-			let ret;
-			if (access('/usr/bin/apk'))
-				ret = system('apk add curl');
-			else if (access('/bin/opkg'))
-				ret = system('opkg install curl');
+			let cmd;
+			if (access('/usr/bin/apk') || access('/sbin/apk') || access('/usr/sbin/apk'))
+				cmd = 'apk add curl 2>&1';
+			else if (access('/bin/opkg') || access('/usr/bin/opkg'))
+				cmd = 'opkg install curl 2>&1';
 			else
-				return { result: false, error: 'No package manager' };
-			return { result: ret === 0 };
+				return { result: false, error: 'No package manager found' };
+			let pipe = popen(cmd, 'r');
+			let output = pipe.read('all');
+			let rc = pipe.close();
+			return { result: rc === 0, error: rc !== 0 ? trim(output) : null };
 		}
 	},
 
 	curl_remove: {
 		call: function(req) {
-			let ret;
-			if (access('/usr/bin/apk'))
-				ret = system('apk del curl');
-			else if (access('/bin/opkg'))
-				ret = system('opkg remove curl');
+			let cmd;
+			if (access('/usr/bin/apk') || access('/sbin/apk') || access('/usr/sbin/apk'))
+				cmd = 'apk del curl 2>&1';
+			else if (access('/bin/opkg') || access('/usr/bin/opkg'))
+				cmd = 'opkg remove curl 2>&1';
 			else
-				return { result: false, error: 'No package manager' };
-			return { result: ret === 0 };
+				return { result: false, error: 'No package manager found' };
+			let pipe = popen(cmd, 'r');
+			let output = pipe.read('all');
+			let rc = pipe.close();
+			return { result: rc === 0, error: rc !== 0 ? trim(output) : null };
 		}
 	}
 };

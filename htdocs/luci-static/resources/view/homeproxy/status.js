@@ -360,7 +360,7 @@ const callByeDPIRemove = rpc.declare({
 	expect: { '': {} }
 });
 
-function buildByeDPICard(byedpi) {
+function buildByeDPICard(byedpi, isMainNode) {
 	let installed = byedpi?.installed || false;
 	let version   = byedpi?.version   || null;
 	const running    = byedpi?.running    || false;
@@ -428,7 +428,8 @@ function buildByeDPICard(byedpi) {
 	const removeBtn = E('button', {
 		class: 'btn cbi-button cbi-button-negative',
 		style: 'margin-left:4px',
-		disabled: !installed || null,
+		disabled: !installed || isMainNode || null,
+		title: isMainNode ? _('Cannot remove: ByeDPI is selected as Main Node. Change Main Node first.') : '',
 		click: async function() {
 			removeBtn.disabled  = true;
 			installBtn.disabled = true;
@@ -884,7 +885,7 @@ return view.extend({
 		s.anonymous = true;
 
 		o = s.option(form.DummyValue, '_byedpi_card');
-		o.default = buildByeDPICard(byedpiStatus);
+		o.default = buildByeDPICard(byedpiStatus, uci.get('homeproxy', 'config', 'main_node') === 'byedpi-out');
 
 		s = m.section(form.NamedSection, 'config', 'homeproxy');
 		s.anonymous = true;

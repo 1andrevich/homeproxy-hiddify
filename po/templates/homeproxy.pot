@@ -3410,7 +3410,7 @@ msgid "Enable ByeDPI"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Run ciadpi as a local SOCKS5 proxy that applies DPI bypass techniques (fragmentation, fake packets, OOB). Useful for unblocking throttled services (e.g. YouTube) without a VPN. Install ByeDPI on the Status page first. Traffic is only routed through ByeDPI if routing rules send it to the <code>byedpi-out</code> outbound."
+msgid "A free way to unblock throttled sites (e.g. YouTube) without a VPN subscription. Works by confusing your ISP's traffic analysis — your traffic is NOT encrypted or hidden, your ISP can still see which sites you visit. Results depend on your ISP and may require trying different strategies in the ByeDPI tab. ByeDPI will be installed automatically on first enable."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
@@ -3418,19 +3418,11 @@ msgid "ByeDPI (local DPI bypass)"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "ByeDPI port"
-msgstr ""
-
-#: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Local SOCKS5 port ciadpi listens on. Sing-box routes traffic to this port."
-msgstr ""
-
-#: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "UDP over TCP"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Wrap UDP traffic in TCP when routing to ciadpi. Requires sing-box/hiddify-core SOCKS5 UoT support."
+msgid "Wrap UDP traffic in TCP when routing to ciadpi."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
@@ -3438,7 +3430,7 @@ msgid "Strategy preset"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Grouped by technique. Numbers match community references (e.g. \"try strategy 11\"). Based on <a href=\"https://github.com/hufrea/byedpi\" target=\"_blank\">hufrea/byedpi</a> docs and community testing. See also <a href=\"https://github.com/fatyzzz/Byedpi-Setup\" target=\"_blank\">fatyzzz/Byedpi-Setup</a>."
+msgid "Grouped by technique. Based on <a href=\"https://github.com/hufrea/byedpi\" target=\"_blank\">hufrea/byedpi</a> and community testing. See also <a href=\"https://github.com/fatyzzz/Byedpi-Setup\" target=\"_blank\">fatyzzz/Byedpi-Setup</a>."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
@@ -3446,7 +3438,7 @@ msgid "— select a preset —"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Disorder — recommended for Linux"
+msgid "Disorder — reorders TCP segments"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
@@ -3454,7 +3446,7 @@ msgid "Fake TTL"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Fake MD5 — best on Linux"
+msgid "Fake MD5"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
@@ -3558,7 +3550,7 @@ msgid "Block QUIC (UDP port 443)"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "<strong>Disclaimer:</strong> This nftables rule drops all outgoing UDP port 443 packets to external addresses, forcing browsers and apps to fall back to TCP/TLS where ciadpi can apply DPI bypass. Side effects: may break services that require QUIC, and affects all LAN clients. Only enable if TCP-based bypass is insufficient."
+msgid "This nftables rule drops all outgoing UDP port 443 packets to external addresses, forcing browsers and apps to fall back to TCP/TLS where ByeDPI can apply DPI bypass. Side effects: may break services that require QUIC, and affects all LAN clients. Enable if your strategy works but some sites still do not load."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js
@@ -3587,4 +3579,16 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "Local SOCKS5 DPI bypass proxy by <a href=\"https://github.com/hufrea/byedpi\" target=\"_blank\">hufrea</a>. Packages by <a href=\"https://github.com/1andrevich/ByeDPI-OpenWrt\" target=\"_blank\">1andrevich/ByeDPI-OpenWrt</a>. Configure in the Client → ByeDPI tab."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "No package manager found. Install ciadpi manually from the Status page."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "ByeDPI (ciadpi) is not installed. Install it now?"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Cannot remove: ByeDPI is selected as Main Node. Change Main Node first."
 msgstr ""

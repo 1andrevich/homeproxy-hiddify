@@ -157,14 +157,15 @@ start_service() {
 	fw4 reload >"/dev/null" 2>&1
 
 	# ByeDPI
-	local byedpi_enabled byedpi_port byedpi_cmd_opts byedpi_block_quic
+	local byedpi_enabled byedpi_cmd_opts byedpi_block_quic
 	config_get_bool byedpi_enabled "config" "byedpi_enabled" "0"
 	if [ "$byedpi_enabled" = "1" ] && [ -x "/usr/bin/ciadpi" ]; then
-		config_get byedpi_port "config" "byedpi_port" "5335"
 		config_get byedpi_cmd_opts "config" "byedpi_cmd_opts" "--disorder 1"
 
+		/etc/init.d/ciadpi stop 2>/dev/null; /etc/init.d/ciadpi disable 2>/dev/null; true
+
 		procd_open_instance "byedpi"
-		procd_set_param command /usr/bin/ciadpi -i 127.0.0.1 -p "$byedpi_port"
+		procd_set_param command /usr/bin/ciadpi -i 127.0.0.1 -p 5335
 		for _arg in $byedpi_cmd_opts; do
 			procd_append_param command "$_arg"
 		done
