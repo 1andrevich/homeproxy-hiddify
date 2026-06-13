@@ -22,6 +22,27 @@ function hasKernelModule(kmod) {
 const HP_DIR = '/etc/homeproxy';
 const RUN_DIR = '/var/run/homeproxy';
 
+function get_active_core() {
+	if (access('/usr/bin/hiddify-core'))
+		return { path: '/usr/bin/hiddify-core', type: 'hiddify', proc_name: 'hiddify-core' };
+	if (access('/usr/bin/sing-box'))
+		return { path: '/usr/bin/sing-box', type: 'singbox', proc_name: 'sing-box' };
+	let custom_path = null;
+	let custom_type = null;
+	let fd = popen('uci get homeproxy.config.custom_core_path 2>/dev/null');
+	if (fd) { custom_path = trim(fd.read('all')); fd.close(); }
+	fd = popen('uci get homeproxy.config.custom_core_type 2>/dev/null');
+	if (fd) { custom_type = trim(fd.read('all')); fd.close(); }
+	if (length(custom_path) > 0 && access(custom_path))
+		return {
+			path:      custom_path,
+			type:      length(custom_type) > 0 ? custom_type : 'singbox',
+			proc_name: custom_type === 'hiddify' ? 'hiddify-core' : 'sing-box',
+			custom:    true
+		};
+	return null;
+}
+
 const methods = {
 	acllist_read: {
 		args: { type: 'type' },
@@ -217,13 +238,12 @@ const methods = {
 		call: function() {
 			let features = {};
 
-				let core_binary = null;
-				if (access('/usr/bin/hiddify-core')) {
-					core_binary = '/usr/bin/hiddify-core';
-					features.core_type = 'hiddify';
-				} else if (access('/usr/bin/sing-box')) {
-					core_binary = '/usr/bin/sing-box';
-					features.core_type = 'singbox';
+				const core = get_active_core();
+				const core_binary = core ? core.path : null;
+				if (core) {
+					features.core_type = core.type;
+					if (core.custom)
+						features.core_custom = true;
 				}
 
 				if (core_binary) {
@@ -253,6 +273,35 @@ const methods = {
 				if (access('/usr/bin/sing-box'))     push(features.available_cores, 'singbox');
 
 				return features;
+		}
+	},
+
+	detect_custom_core: {
+		args: { path: 'path' },
+		call: function(req) {
+			const path = req.args?.path;
+			if (!path || length(path) === 0)
+				return { result: false, error: 'No path provided' };
+			if (!access(path))
+				return { result: false, error: 'File not found: ' + path };
+			let out = '';
+			let fd = popen(shellquote(path) + ' version 2>&1');
+			if (fd) { out = trim(fd.read('all')); fd.close(); }
+			if (length(out) === 0)
+				return { result: false, error: 'Binary produced no output' };
+			let core_type = null;
+			if (match(out, /hiddify/))
+				core_type = 'hiddify';
+			else if (match(out, /sing.box|singbox/))
+				core_type = 'singbox';
+			if (!core_type)
+				return { result: false, error: 'Unknown binary type. Output: ' + substr(out, 0, 120) };
+			const verMatch = match(out, / version v?(\S+)/);
+			const version = verMatch ? verMatch[1] : null;
+			system('uci set homeproxy.config.custom_core_path=' + shellquote(path));
+			system('uci set homeproxy.config.custom_core_type=' + shellquote(core_type));
+			system('uci commit homeproxy');
+			return { result: true, type: core_type, version: version };
 		}
 	},
 
@@ -440,10 +489,9 @@ const methods = {
 
 	diag_core_check: {
 		call: function() {
-			const is_hiddify = !!access('/usr/bin/hiddify-core');
-			const binary = is_hiddify ? '/usr/bin/hiddify-core' :
-			               (access('/usr/bin/sing-box') ? '/usr/bin/sing-box' : null);
-			const proc_name = is_hiddify ? 'hiddify-core' : 'sing-box';
+			const core = get_active_core();
+			const binary = core ? core.path : null;
+			const proc_name = core ? core.proc_name : 'sing-box';
 
 			const result = {
 				hiddify_installed: !!access('/usr/bin/hiddify-core'),
@@ -486,9 +534,8 @@ const methods = {
 
 	diag_config_check: {
 		call: function() {
-			const is_hiddify = !!access('/usr/bin/hiddify-core');
-			const binary = is_hiddify ? '/usr/bin/hiddify-core' :
-			               (access('/usr/bin/sing-box') ? '/usr/bin/sing-box' : null);
+			const core = get_active_core();
+			const binary = core ? core.path : null;
 			const config_path = RUN_DIR + '/hiddify-c.json';
 
 			if (!binary)
@@ -632,10 +679,9 @@ const methods = {
 			add('');
 
 			add('## Core Binary');
-			const is_hiddify = !!access('/usr/bin/hiddify-core');
-			const binary = is_hiddify ? '/usr/bin/hiddify-core' :
-			               (access('/usr/bin/sing-box') ? '/usr/bin/sing-box' : null);
-			const proc_name = is_hiddify ? 'hiddify-core' : 'sing-box';
+			const core = get_active_core();
+			const binary = core ? core.path : null;
+			const proc_name = core ? core.proc_name : 'sing-box';
 			if (binary) {
 				fd = popen(binary + ' version 2>&1');
 				if (fd) { add(trim(fd.read('all'))); fd.close(); }
@@ -740,6 +786,137 @@ const methods = {
 			}
 
 			return { report: join('\n', lines) };
+		}
+	},
+
+	byedpi_status: {
+		call: function(req) {
+			const installed = !!access('/usr/bin/ciadpi');
+			let version = null;
+			if (installed) {
+				if (access('/usr/bin/apk')) {
+					const fd = popen('apk info byedpi 2>/dev/null | head -1');
+					if (fd) {
+						const out = trim(fd.read('all'));
+						fd.close();
+						const m = match(out, /byedpi-([0-9][0-9.]*)/);
+						if (m) version = m[1];
+					}
+				} else if (access('/bin/opkg')) {
+					const fd = popen('opkg status byedpi 2>/dev/null');
+					if (fd) {
+						const out = fd.read('all');
+						fd.close();
+						const m = match(out, /Version: ([0-9][0-9.]*)/);
+						if (m) version = m[1];
+					}
+				}
+			}
+			let running = false;
+			const fd2 = popen('pgrep -x ciadpi 2>/dev/null');
+			if (fd2) {
+				running = length(trim(fd2.read('all'))) > 0;
+				fd2.close();
+			}
+			let pkg_manager = null;
+			if (access('/usr/bin/apk')) pkg_manager = 'apk';
+			else if (access('/bin/opkg')) pkg_manager = 'opkg';
+			let arch = null;
+			const afd = popen("awk -F\\' '/DISTRIB_ARCH/ {print $2}' /etc/openwrt_release 2>/dev/null");
+			if (afd) { arch = trim(afd.read('all')); afd.close(); }
+			return { installed, version, running, pkg_manager, arch };
+		}
+	},
+
+	byedpi_prepare_install: {
+		call: function(req) {
+			let pkg_manager = null;
+			if (access('/usr/bin/apk')) pkg_manager = 'apk';
+			else if (access('/bin/opkg')) pkg_manager = 'opkg';
+			if (!pkg_manager)
+				return { error: 'No supported package manager (apk/opkg)' };
+
+			let arch = null;
+			const afd = popen("awk -F\\' '/DISTRIB_ARCH/ {print $2}' /etc/openwrt_release 2>/dev/null");
+			if (afd) { arch = trim(afd.read('all')); afd.close(); }
+			if (!length(arch))
+				return { error: 'Cannot detect architecture' };
+
+			const token_fd = popen('uci get homeproxy.config.github_token 2>/dev/null');
+			let token = null;
+			if (token_fd) { token = trim(token_fd.read('all')); token_fd.close(); }
+			const auth = length(token) ? `--header="Authorization: token ${token}"` : '';
+
+			const api_fd = popen(`wget -qO- ${auth} "https://api.github.com/repos/1andrevich/ByeDPI-OpenWrt/releases/latest" 2>/dev/null`);
+			if (!api_fd)
+				return { error: 'Failed to fetch release info' };
+			const api_out = api_fd.read('all');
+			api_fd.close();
+
+			const tag_m = match(api_out, /"tag_name"\s*:\s*"([^"]+)"/);
+			if (!tag_m)
+				return { error: 'Cannot parse release tag' };
+			const tag = tag_m[1];
+			const version = replace(tag, /^v/, '');
+
+			const ext = (pkg_manager === 'apk') ? 'apk' : 'ipk';
+			const dl_url = `https://github.com/1andrevich/ByeDPI-OpenWrt/releases/download/${tag}/byedpi_${version}_${arch}.${ext}`;
+			const tmp_path = `/tmp/byedpi_${version}_${arch}.${ext}`;
+
+			return { dl_url, tmp_path, pkg_manager, version };
+		}
+	},
+
+	byedpi_install_pkg: {
+		args: { tmp_path: 'tmp_path', pkg_manager: 'pkg_manager' },
+		call: function(req) {
+			const tmp_path = req.args?.tmp_path;
+			const pkg_manager = req.args?.pkg_manager;
+			if (!tmp_path || !pkg_manager)
+				return { result: false, error: 'Missing arguments' };
+			if (!access(tmp_path))
+				return { result: false, error: 'Package file not found' };
+			let ret;
+			if (pkg_manager === 'apk')
+				ret = system(`apk add --allow-untrusted ${shellquote(tmp_path)}`);
+			else
+				ret = system(`opkg install ${shellquote(tmp_path)}`);
+			system(`rm -f ${shellquote(tmp_path)}`);
+			return { result: ret === 0 };
+		}
+	},
+
+	byedpi_remove: {
+		call: function(req) {
+			let ret;
+			if (access('/usr/bin/apk'))
+				ret = system('apk del byedpi');
+			else if (access('/bin/opkg'))
+				ret = system('opkg remove byedpi');
+			else
+				return { result: false, error: 'No package manager' };
+			return { result: ret === 0 };
+		}
+	},
+
+	byedpi_strategy_test: {
+		args: { cmd_opts: 'cmd_opts', port: 'port' },
+		call: function(req) {
+			if (!access('/usr/bin/ciadpi'))
+				return { result: false, error: 'ciadpi not installed' };
+			const cmd_opts = req.args?.cmd_opts || '--disorder 1';
+			const test_port = strToInt(req.args?.port) || 15335;
+			system(`pkill -f 'ciadpi.*${test_port}' 2>/dev/null; true`);
+			system(`/usr/bin/ciadpi -i 127.0.0.1 -p ${test_port} ${cmd_opts} &`);
+			system('sleep 1');
+			let running = false;
+			const fd = popen(`pgrep -f 'ciadpi.*${test_port}' 2>/dev/null`);
+			if (fd) {
+				running = length(trim(fd.read('all'))) > 0;
+				fd.close();
+			}
+			system(`pkill -f 'ciadpi.*${test_port}' 2>/dev/null; true`);
+			return { result: running, error: running ? null : 'ciadpi did not start — check arguments' };
 		}
 	}
 };

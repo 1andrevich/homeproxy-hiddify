@@ -141,6 +141,8 @@ return view.extend({
 		o.value('urltest', _('URLTest'));
 		for (let i in proxy_nodes)
 			o.value(i, proxy_nodes[i]);
+		if (uci.get('homeproxy', 'config', 'byedpi_enabled') === '1')
+			o.value('byedpi-out', _('ByeDPI (local DPI bypass)'));
 		o.default = 'nil';
 		o.depends({'routing_mode': /^((?!custom).)+$/});
 		o.rmempty = false;
@@ -184,6 +186,8 @@ return view.extend({
 		o.value('urltest', _('URLTest'));
 		for (let i in proxy_nodes)
 			o.value(i, proxy_nodes[i]);
+		if (uci.get('homeproxy', 'config', 'byedpi_enabled') === '1')
+			o.value('byedpi-out', _('ByeDPI (local DPI bypass)'));
 		o.default = 'nil';
 		o.depends({'routing_mode': /^((?!custom|proxy_banned_ru).)+$/, 'proxy_mode': /^((?!redirect$).)+$/});
 		o.rmempty = false;
@@ -1755,6 +1759,185 @@ return view.extend({
 		}
 		/* Direct domain list end */
 		/* ACL settings end */
+
+		/* ByeDPI settings start */
+		s.tab('byedpi', _('ByeDPI'));
+
+		o = s.taboption('byedpi', form.Flag, 'byedpi_enabled', _('Enable ByeDPI'),
+			_('Run ciadpi as a local SOCKS5 proxy that applies DPI bypass techniques (fragmentation, fake packets, OOB). ' +
+			  'Useful for unblocking throttled services (e.g. YouTube) without a VPN. ' +
+			  'Install ByeDPI on the Status page first. ' +
+			  'Traffic is only routed through ByeDPI if routing rules send it to the <code>byedpi-out</code> outbound.'));
+		o.default = o.disabled;
+		o.rmempty = false;
+
+		o = s.taboption('byedpi', form.Value, 'byedpi_port', _('ByeDPI port'),
+			_('Local SOCKS5 port ciadpi listens on. Sing-box routes traffic to this port.'));
+		o.datatype = 'port';
+		o.placeholder = '5335';
+		o.depends('byedpi_enabled', '1');
+
+		o = s.taboption('byedpi', form.Flag, 'byedpi_udp_over_tcp', _('UDP over TCP'),
+			_('Wrap UDP traffic in TCP when routing to ciadpi. Requires sing-box/hiddify-core SOCKS5 UoT support.'));
+		o.default = o.enabled;
+		o.rmempty = false;
+		o.depends('byedpi_enabled', '1');
+
+		(function() {
+			const BYEDPI_PRESETS = [
+				/* Disorder — most effective on Linux */
+				{ name: '1 — Disorder Basic',              args: '--disorder 1' },
+				{ name: '2 — Disorder at SNI',             args: '--disorder 1+s' },
+				{ name: '3 — Disorder TLS+HTTP',           args: '--proto tls,http --disorder 1' },
+				{ name: '4 — Split + Disorder',            args: '--split 1 --disorder 3' },
+				{ name: '5 — Disorder + Auto TLS Record',  args: '--disorder 1 --auto=torst --tlsrec 1+s' },
+				/* Fake packet — TTL variations */
+				{ name: '6 — Fake TTL=6',                  args: '--fake -1 --ttl 6' },
+				{ name: '7 — Fake TTL=8',                  args: '--fake -1 --ttl 8' },
+				{ name: '8 — Fake TTL=10',                 args: '--fake -1 --ttl 10' },
+				{ name: '9 — Fake TTL=12',                 args: '--fake -1 --ttl 12' },
+				{ name: '10 — Fake TTL=15',                args: '--fake -1 --ttl 15' },
+				/* Fake packet — MD5 (best on Linux) */
+				{ name: '11 — Fake MD5 (Linux best)',      args: '--fake -1 --md5sig' },
+				{ name: '12 — Disorder + Fake MD5',        args: '--disorder 1 --fake -1 --md5sig' },
+				{ name: '13 — Fake MD5 TLS+HTTP',          args: '--proto tls,http --fake -1 --md5sig' },
+				{ name: '14 — Fake MD5 + Auto Reset',      args: '--fake -1 --md5sig --auto=torst --disorder 1' },
+				/* TLS Record split */
+				{ name: '15 — TLS Record Split',           args: '--tlsrec 1+s' },
+				{ name: '16 — TLS Record + Auto',          args: '--auto=torst --tlsrec 1+s' },
+				{ name: '17 — TLS Record + Timeout',       args: '--auto=torst --timeout 3 --tlsrec 1+s' },
+				{ name: '18 — Disorder + TLS Record',      args: '--disorder 1 --tlsrec 1+s' },
+				/* OOB */
+				{ name: '19 — OOB at SNI',                 args: '--oob 1+s' },
+				{ name: '20 — OOB at SNI+3',               args: '--oob 3+s' },
+				{ name: '21 — DisoOB at SNI',              args: '--disoob 1+s' },
+				{ name: '22 — DisoOB + Fake MD5',          args: '--disoob 1+s --fake -1 --md5sig' },
+				/* Split */
+				{ name: '23 — Split at SNI',               args: '--split 1+s' },
+				{ name: '24 — Split at SNI Middle',        args: '--split 0+sm' },
+				{ name: '25 — Split at 2',                 args: '--split 2' },
+				{ name: '26 — Split + OOB',                args: '--split 1+s --oob 2+s' },
+				/* HTTP modification */
+				{ name: '27 — HTTP Host Case Mix',         args: '--proto http --mod-http hcsmix' },
+				{ name: '28 — HTTP Host Double Mix',       args: '--proto http --mod-http hcsmix,dcsmix' },
+				{ name: '29 — HTTP Full Mix',              args: '--proto http --mod-http hcsmix,dcsmix,rmspace' },
+				{ name: '30 — HTTP Mix + Disorder',        args: '--proto tls,http --mod-http hcsmix --disorder 1' },
+				/* Auto-mode */
+				{ name: '31 — Auto SSL Error Fallback',    args: '--fake -1 --ttl 8 --auto=ssl_err --fake -1 --ttl 5' },
+				{ name: '32 — Auto Reset Fallback',        args: '--fake -1 --md5sig --auto=torst --disorder 1' },
+				/* Fake SNI / TLS modification */
+				{ name: '33 — Random SNI Fake',            args: '--fake -1 --fake-sni "????.net"' },
+				{ name: '34 — Random TLS Fake',            args: '--fake -1 --fake-tls-mod rand' },
+				{ name: '35 — Original TLS Fake',          args: '--fake -1 --fake-tls-mod orig' },
+				/* Aggressive combos */
+				{ name: '36 — Aggressive Split',           args: '--split 1+s --disorder 3+s' },
+				{ name: '37 — Aggressive OOB + MD5',       args: '--oob 1+s --disorder 1 --fake -1 --md5sig' },
+				{ name: '38 — Aggressive DisoOB',          args: '--disoob 1+s --disorder 3+s' },
+				{ name: '39 — Aggressive Combo',           args: '--split 1+s --oob 2+s --disorder 3+s' },
+				{ name: '40 — TLS+HTTP Disorder + Record', args: '--proto tls,http --disorder 1 --tlsrec 1+s' },
+				/* UDP */
+				{ name: '41 — UDP Fake',                   args: '--proto udp --udp-fake 5' },
+				{ name: '42 — TLS+UDP Fake MD5',           args: '--proto tls,udp --fake -1 --md5sig --udp-fake 5' },
+				/* Full TLS bypass */
+				{ name: '43 — Full TLS Bypass',            args: '--proto tls --fake -1 --md5sig --tlsrec 1+s' }
+			];
+
+			const callByeDPITest = rpc.declare({
+				object: 'luci.homeproxy',
+				method: 'byedpi_strategy_test',
+				params: ['cmd_opts', 'port'],
+				expect: { '': {} }
+			});
+
+			/* Preset selector — populates cmd_opts field, not stored in UCI */
+			o = s.taboption('byedpi', form.ListValue, 'byedpi_preset',
+				_('Strategy preset'),
+				_('Select a preset to fill in the command options below. ' +
+				  'Based on <a href="https://github.com/hufrea/byedpi" target="_blank">hufrea/byedpi</a> documentation and community testing. ' +
+				  'See also <a href="https://github.com/fatyzzz/Byedpi-Setup" target="_blank">fatyzzz/Byedpi-Setup</a>.'));
+			o.value('', _('— Select a preset to populate options —'));
+			for (let i = 0; i < BYEDPI_PRESETS.length; i++)
+				o.value(String(i), BYEDPI_PRESETS[i].name);
+			o.depends('byedpi_enabled', '1');
+			o.onchange = function(ev, section_id, value) {
+				const idx = parseInt(value);
+				if (!isNaN(idx) && BYEDPI_PRESETS[idx]) {
+					const el = document.querySelector('[name="cbid.homeproxy.config.byedpi_cmd_opts"]');
+					if (el) {
+						el.value = BYEDPI_PRESETS[idx].args;
+						el.dispatchEvent(new Event('change'));
+					}
+				}
+			};
+
+			/* Command options — the actual value used by ciadpi */
+			o = s.taboption('byedpi', form.Value, 'byedpi_cmd_opts',
+				_('Command options'),
+				_('Arguments passed to ciadpi after <code>-i 127.0.0.1 -p &lt;port&gt;</code>. ' +
+				  'Select a preset above or enter custom options. See ciadpi <code>--help</code> for flag reference.'));
+			o.placeholder = '--disorder 1';
+			o.depends('byedpi_enabled', '1');
+
+			/* Strategy tester */
+			o = s.taboption('byedpi', form.DummyValue, '_byedpi_tester');
+			o.depends('byedpi_enabled', '1');
+			o.rawhtml = true;
+			o.cfgvalue = function(section_id) {
+				const msgId = 'byedpi_test_msg';
+				return `<div class="cbi-value-field">
+					<button class="btn cbi-button cbi-button-action" id="byedpi_test_btn"
+						onclick="(function(){
+							var btn = document.getElementById('byedpi_test_btn');
+							var msg = document.getElementById('${msgId}');
+							var opts = (document.querySelector('[name=\\"cbid.homeproxy.config.byedpi_cmd_opts\\"]') || {}).value || '';
+							btn.disabled = true;
+							msg.style.color = 'gray';
+							msg.textContent = '${_('Testing...')}';
+						})()"
+					>${_('Test strategy')}</button>
+					<span id="${msgId}" style="margin-left:8px; font-size:0.9em; color:gray"></span>
+				</div>`;
+			};
+			/* Wire up test button with proper async handler after render */
+			o.write = function() {};
+			const _prevRender = o.render;
+			o.render = function() {
+				return Promise.resolve(_prevRender.apply(this, arguments)).then((node) => {
+					const btn = node.querySelector('#byedpi_test_btn');
+					const msg = node.querySelector('#byedpi_test_msg');
+					if (!btn) return node;
+					btn.onclick = ui.createHandlerFn(this, () => {
+						const el = document.querySelector('[name="cbid.homeproxy.config.byedpi_cmd_opts"]');
+						const opts = el ? el.value.trim() : '';
+						btn.disabled = true;
+						msg.style.color = 'gray';
+						msg.textContent = _('Starting ciadpi...');
+						return L.resolveDefault(callByeDPITest(opts, 15335), {}).then((ret) => {
+							btn.disabled = false;
+							if (ret.result) {
+								msg.style.color = 'green';
+								msg.textContent = _('ciadpi started successfully — arguments are valid');
+							} else {
+								msg.style.color = 'red';
+								msg.textContent = ret.error || _('Test failed');
+							}
+						});
+					});
+					return node;
+				});
+			};
+		})();
+
+		o = s.taboption('byedpi', form.Flag, 'byedpi_block_quic',
+			_('Block QUIC (UDP port 443)') + ' ⚠️',
+			_('<strong>Disclaimer:</strong> This nftables rule drops all outgoing UDP port 443 packets to external addresses, ' +
+			  'forcing browsers and apps to fall back to TCP/TLS where ciadpi can apply DPI bypass. ' +
+			  'Side effects: may break services that require QUIC, and affects all LAN clients. ' +
+			  'Only enable if TCP-based bypass is insufficient.'));
+		o.default = o.disabled;
+		o.rmempty = false;
+		o.depends('byedpi_enabled', '1');
+		/* ByeDPI settings end */
 
 		return m.render();
 	}

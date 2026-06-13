@@ -317,6 +317,136 @@ function getRuntimeLog(o, name, _option_index, section_id, _in_table) {
 
 const CORE_MGMT = '/usr/share/homeproxy/scripts/core_mgmt.uc';
 
+const callByeDPIStatus = rpc.declare({
+	object: 'luci.homeproxy',
+	method: 'byedpi_status',
+	expect: { '': {} }
+});
+
+const callByeDPIPrepareInstall = rpc.declare({
+	object: 'luci.homeproxy',
+	method: 'byedpi_prepare_install',
+	expect: { '': {} }
+});
+
+const callByeDPIInstallPkg = rpc.declare({
+	object: 'luci.homeproxy',
+	method: 'byedpi_install_pkg',
+	params: ['tmp_path', 'pkg_manager'],
+	expect: { '': {} }
+});
+
+const callByeDPIRemove = rpc.declare({
+	object: 'luci.homeproxy',
+	method: 'byedpi_remove',
+	expect: { '': {} }
+});
+
+function buildByeDPICard(byedpi) {
+	let installed = byedpi?.installed || false;
+	let version   = byedpi?.version   || null;
+	const running    = byedpi?.running    || false;
+	const pkgMgr     = byedpi?.pkg_manager || null;
+	const canInstall = !!pkgMgr;
+
+	const statusEl = E('strong', {
+		style: installed ? 'color:green' : 'color:gray'
+	}, installed ? (version ? 'v' + version : _('Installed')) : _('Not installed'));
+
+	const runEl = E('span', {
+		style: 'margin-left:6px; font-size:0.9em; color:' + (running ? 'green' : 'gray')
+	}, running ? _('running') : _('stopped'));
+
+	const msgEl = E('span', { style: 'margin-left:8px; font-size:0.9em' }, '');
+	const setMsg = (txt, color) => { msgEl.textContent = txt; msgEl.style.color = color || 'gray'; };
+
+	const installBtn = E('button', {
+		class: 'btn cbi-button cbi-button-action',
+		style: 'margin-left:4px',
+		disabled: !canInstall || null,
+		title: canInstall ? '' : _('No supported package manager detected'),
+		click: async function() {
+			const prevInstalled = installed;
+			const prevVersion   = version;
+			installBtn.disabled = true;
+			removeBtn.disabled  = true;
+			statusEl.textContent = _('Installing...');
+			statusEl.style.color = 'gray';
+
+			const fail = (msg) => {
+				installed = prevInstalled;
+				version   = prevVersion;
+				statusEl.textContent = installed ? (version ? 'v' + version : _('Installed')) : _('Not installed');
+				statusEl.style.color = installed ? 'green' : 'gray';
+				installBtn.disabled = false;
+				removeBtn.disabled  = !installed;
+				setMsg(msg, 'red');
+			};
+
+			setMsg(_('Checking requirements...'), 'gray');
+			const prep = await L.resolveDefault(callByeDPIPrepareInstall(), {});
+			if (prep.error) return fail(prep.error);
+
+			setMsg(_('Downloading...'), 'gray');
+			const dl = await L.resolveDefault(callCoreDownload(prep.dl_url, prep.tmp_path), {});
+			if (!dl.result) return fail(dl.error || _('Download failed'));
+
+			setMsg(_('Installing package...'), 'gray');
+			const inst = await L.resolveDefault(callByeDPIInstallPkg(prep.tmp_path, prep.pkg_manager), {});
+			if (!inst.result) return fail(inst.error || _('Installation failed'));
+
+			const fresh = await L.resolveDefault(callByeDPIStatus(), {});
+			installed = fresh.installed || false;
+			version   = fresh.version   || null;
+			statusEl.textContent = installed ? (version ? 'v' + version : _('Installed')) : _('Unknown');
+			statusEl.style.color = installed ? 'green' : 'gray';
+			installBtn.textContent = _('Update');
+			installBtn.disabled = false;
+			removeBtn.disabled  = false;
+			setMsg(_('Installed successfully'), 'green');
+		}
+	}, [ installed ? _('Update') : _('Install') ]);
+
+	const removeBtn = E('button', {
+		class: 'btn cbi-button cbi-button-negative',
+		style: 'margin-left:4px',
+		disabled: !installed || null,
+		click: async function() {
+			removeBtn.disabled  = true;
+			installBtn.disabled = true;
+			setMsg(_('Removing...'), 'gray');
+			const ret = await L.resolveDefault(callByeDPIRemove(), {});
+			installBtn.disabled = false;
+			if (ret.result) {
+				installed = false;
+				version   = null;
+				statusEl.textContent = _('Not installed');
+				statusEl.style.color = 'gray';
+				installBtn.textContent = _('Install');
+				setMsg(_('Removed successfully'), 'green');
+			} else {
+				removeBtn.disabled = false;
+				setMsg(ret.error || _('Removal failed'), 'red');
+			}
+		}
+	}, [ _('Remove') ]);
+
+	return E('div', { style: 'margin-bottom:12px; padding:8px 10px; border:1px solid #ddd; border-radius:4px' }, [
+		E('div', { style: 'display:flex; align-items:center; flex-wrap:wrap; gap:6px' }, [
+			E('strong', {}, 'ciadpi (ByeDPI)'),
+			statusEl,
+			runEl,
+			installBtn,
+			removeBtn,
+			msgEl
+		]),
+		E('div', { style: 'margin-top:4px; font-size:0.9em; color:#666' },
+			_('Local SOCKS5 DPI bypass proxy by <a href="https://github.com/hufrea/byedpi" target="_blank">hufrea</a>. ' +
+			  'Packages by <a href="https://github.com/1andrevich/ByeDPI-OpenWrt" target="_blank">1andrevich/ByeDPI-OpenWrt</a>. ' +
+			  'Configure in the Client → ByeDPI tab.'))
+	]);
+}
+
 function callCoreInfo() {
 	return fs.exec_direct('/usr/bin/ucode', [CORE_MGMT, 'info'], 'json');
 }
@@ -482,11 +612,12 @@ return view.extend({
 		return Promise.all([
 			hp.getBuiltinFeatures(),
 			L.resolveDefault(callCoreInfo(), {}),
-			uci.load('homeproxy')
+			uci.load('homeproxy'),
+			L.resolveDefault(callByeDPIStatus(), {})
 		]);
 	},
 
-	render([features, coreInfo]) {
+	render([features, coreInfo, _uci, byedpiStatus]) {
 		const routingMode = uci.get('homeproxy', 'config', 'routing_mode') || '';
 		const isRuMode = routingMode === 'proxy_banned_ru';
 		let m, s, o;
@@ -531,9 +662,56 @@ return view.extend({
 		const coreName = features.core_type === 'hiddify' ? 'hiddify-core' :
 		                 features.core_type === 'singbox' ? 'sing-box' : null;
 		const coreVer = features.version ? ' v' + features.version : '';
-		o.default = coreName
-			? E('strong', { 'style': 'color:green' }, coreName + coreVer)
-			: E('strong', { 'style': 'color:red' }, _('No core installed'));
+		const coreCustomSuffix = features.core_custom ? ' (custom)' : '';
+
+		if (!features.core_type) {
+			const callDetectCustomCore = rpc.declare({
+				object: 'luci.homeproxy',
+				method: 'detect_custom_core',
+				params: ['path'],
+				expect: { '': {} }
+			});
+
+			const savedPath = uci.get('homeproxy', 'config', 'custom_core_path') || '';
+			const pathInput = E('input', {
+				'type': 'text',
+				'class': 'cbi-input-text',
+				'value': savedPath,
+				'placeholder': '/path/to/hiddify-core',
+				'style': 'width:260px; margin-right:4px'
+			});
+			const detectMsg = E('span', { 'style': 'margin-left:8px; font-size:0.9em; color:gray' }, '');
+			const detectBtn = E('button', {
+				'class': 'btn cbi-button cbi-button-action',
+				'click': async function() {
+					const path = pathInput.value.trim();
+					if (!path) return;
+					detectBtn.disabled = true;
+					detectMsg.textContent = _('Detecting...');
+					detectMsg.style.color = 'gray';
+					const ret = await L.resolveDefault(callDetectCustomCore(path), {});
+					detectBtn.disabled = false;
+					if (ret.result) {
+						const typeName = ret.type === 'hiddify' ? 'hiddify-core' : 'sing-box';
+						detectMsg.textContent = _('Detected') + ': ' + typeName + (ret.version ? ' v' + ret.version : '') + ' — ' + _('reload page to apply');
+						detectMsg.style.color = 'green';
+					} else {
+						detectMsg.textContent = ret.error || _('Detection failed');
+						detectMsg.style.color = 'red';
+					}
+				}
+			}, [ _('Detect') ]);
+
+			o.default = E('div', {}, [
+				E('strong', { 'style': 'color:red' }, _('No core installed')),
+				E('details', { 'style': 'margin-top:6px' }, [
+					E('summary', { 'style': 'cursor:pointer; color:#666; font-size:0.9em' }, _('I have a custom core path')),
+					E('div', { 'style': 'margin-top:6px' }, [ pathInput, detectBtn, detectMsg ])
+				])
+			]);
+		} else {
+			o.default = E('strong', { 'style': 'color:green' }, coreName + coreVer + coreCustomSuffix);
+		}
 
 		if (!isRuMode) {
 			o = s.option(form.DummyValue, '_china_ip4_version', _('China IPv4 list version'));
@@ -554,22 +732,24 @@ return view.extend({
 		}
 
 
-		o = s.option(form.Value, 'github_token', _('GitHub token'));
-		o.password = true;
-		o.renderWidget = function() {
-			let node = form.Value.prototype.renderWidget.apply(this, arguments);
+		if (!isRuMode) {
+			o = s.option(form.Value, 'github_token', _('GitHub token'));
+			o.password = true;
+			o.renderWidget = function() {
+				let node = form.Value.prototype.renderWidget.apply(this, arguments);
 
-			(node.querySelector('.control-group') || node).appendChild(E('button', {
-				'class': 'cbi-button cbi-button-apply',
-				'title': _('Save'),
-				'click': ui.createHandlerFn(this, () => {
-					return this.map.save(null, true).then(() => {
-						ui.changes.apply(true);
-					});
-				}, this.option)
-			}, [ _('Save') ]));
+				(node.querySelector('.control-group') || node).appendChild(E('button', {
+					'class': 'cbi-button cbi-button-apply',
+					'title': _('Save'),
+					'click': ui.createHandlerFn(this, () => {
+						return this.map.save(null, true).then(() => {
+							ui.changes.apply(true);
+						});
+					}, this.option)
+				}, [ _('Save') ]));
 
-			return node;
+				return node;
+			}
 		}
 
 		s = m.section(form.NamedSection, 'config', 'homeproxy', _('Core management'));
@@ -601,6 +781,12 @@ return view.extend({
 
 		o = s.option(form.DummyValue, '_core_singbox');
 		o.default = buildCoreCard('singbox', coreInfo);
+
+		s = m.section(form.NamedSection, 'config', 'homeproxy', _('ByeDPI'));
+		s.anonymous = true;
+
+		o = s.option(form.DummyValue, '_byedpi_card');
+		o.default = buildByeDPICard(byedpiStatus);
 
 		s = m.section(form.NamedSection, 'config', 'homeproxy');
 		s.anonymous = true;

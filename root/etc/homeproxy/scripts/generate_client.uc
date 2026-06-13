@@ -54,11 +54,20 @@ const dns_port = uci.get(uciconfig, uciinfra, 'dns_port') || '5333';
 
 const ntp_server = uci.get(uciconfig, uciinfra, 'ntp_server') || 'time.apple.com';
 
-/* Detect active core: hiddify-core takes priority over sing-box */
-const is_hiddify = !!access('/usr/bin/hiddify-core');
-const is_singbox = !is_hiddify && !!access('/usr/bin/sing-box');
+/* Detect active core: standard paths first, then fall back to UCI custom path */
+let is_hiddify = !!access('/usr/bin/hiddify-core');
+let is_singbox = !is_hiddify && !!access('/usr/bin/sing-box');
+if (!is_hiddify && !is_singbox) {
+	const custom_path = uci.get(uciconfig, ucimain, 'custom_core_path');
+	const custom_type = uci.get(uciconfig, ucimain, 'custom_core_type');
+	if (custom_path && access(custom_path)) {
+		is_hiddify = custom_type === 'hiddify';
+		is_singbox = !is_hiddify;
+	}
+}
 
 const ipv6_support = uci.get(uciconfig, ucimain, 'ipv6_support') || '0';
+const byedpi_enabled = uci.get(uciconfig, ucimain, 'byedpi_enabled');
 
 let main_node, main_udp_node, dedicated_udp_node, default_outbound, default_outbound_dns,
     domain_strategy, sniff_override, dns_server, china_dns_server, russia_dns_server,
@@ -445,6 +454,9 @@ function get_outbound(cfg) {
 		case 'direct-out':
 		case 'main-out':
 			return cfg;
+		case 'byedpi-out':
+			/* Fall back to direct if ByeDPI is disabled so the config stays valid */
+			return (byedpi_enabled === '1') ? 'byedpi-out' : 'direct-out';
 		default:
 			const node = uci.get(uciconfig, cfg, 'node');
 			if (isEmpty(node))
@@ -1504,6 +1516,20 @@ if (!isEmpty(main_node)) {
 	});
 }
 /* Routing rules end */
+
+/* ByeDPI outbound */
+if (byedpi_enabled === '1') {
+	const byedpi_port = strToInt(uci.get(uciconfig, ucimain, 'byedpi_port')) || 5335;
+	const byedpi_uot = uci.get(uciconfig, ucimain, 'byedpi_udp_over_tcp') !== '0';
+	push(config.outbounds, {
+		type: 'socks',
+		tag: 'byedpi-out',
+		server: '127.0.0.1',
+		server_port: byedpi_port,
+		udp_over_tcp: byedpi_uot || null
+	});
+}
+/* ByeDPI outbound end */
 
 /* Experimental start */
 config.experimental = {

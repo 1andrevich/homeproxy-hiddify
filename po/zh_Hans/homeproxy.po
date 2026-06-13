@@ -3788,6 +3788,12 @@ msgstr "版本"
 msgid "sing-box"
 msgstr "sing-box"
 
+msgid "hiddify-core with sing-box syntax compatibility. Supports Hiddify App protocols and advanced features. Best compatibility with Hiddify Manager protocols."
+msgstr "具有 sing-box 语法兼容性的 hiddify-core。支持 Hiddify App 协议和高级功能。与 Hiddify Manager 协议兼容性最佳。"
+
+msgid "Extended sing-box with additional protocols including AmneziaWG and TrustTunnel support. Created by shtorm-7."
+msgstr "扩展版 sing-box，支持 AmneziaWG 和 TrustTunnel 等额外协议。由 shtorm-7 创建。"
+
 #: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
 msgid "Download"
 msgstr "下载"

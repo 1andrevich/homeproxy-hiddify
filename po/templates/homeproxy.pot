@@ -148,6 +148,12 @@ msgstr ""
 msgid "No active node"
 msgstr ""
 
+msgid "hiddify-core with sing-box syntax compatibility. Supports Hiddify App protocols and advanced features. Best compatibility with Hiddify Manager protocols."
+msgstr ""
+
+msgid "Extended sing-box with additional protocols including AmneziaWG and TrustTunnel support. Created by shtorm-7."
+msgstr ""
+
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "Already at the latest version."
 msgstr ""

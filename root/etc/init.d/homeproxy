@@ -156,6 +156,29 @@ start_service() {
 	utpl -S "$HP_DIR/scripts/firewall_post.ut" > "$RUN_DIR/fw4_post.nft"
 	fw4 reload >"/dev/null" 2>&1
 
+	# ByeDPI
+	local byedpi_enabled byedpi_port byedpi_cmd_opts byedpi_block_quic
+	config_get_bool byedpi_enabled "config" "byedpi_enabled" "0"
+	if [ "$byedpi_enabled" = "1" ] && [ -x "/usr/bin/ciadpi" ]; then
+		config_get byedpi_port "config" "byedpi_port" "5335"
+		config_get byedpi_cmd_opts "config" "byedpi_cmd_opts" "--disorder 1"
+
+		procd_open_instance "byedpi"
+		procd_set_param command /usr/bin/ciadpi -i 127.0.0.1 -p "$byedpi_port"
+		for _arg in $byedpi_cmd_opts; do
+			procd_append_param command "$_arg"
+		done
+		procd_set_param respawn
+		procd_close_instance
+
+		config_get_bool byedpi_block_quic "config" "byedpi_block_quic" "0"
+		if [ "$byedpi_block_quic" = "1" ]; then
+			nft 'add chain inet fw4 homeproxy_quic { type filter hook prerouting priority -150; policy accept; }' 2>/dev/null || true
+			nft 'add rule inet fw4 homeproxy_quic ip daddr { 127.0.0.0/8, 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16 } return' 2>/dev/null || true
+			nft 'add rule inet fw4 homeproxy_quic udp dport 443 drop' 2>/dev/null || true
+		fi
+	fi
+
 	log "$(basename $PROG) started."
 }
 
@@ -183,7 +206,8 @@ stop_service() {
 		 "homeproxy_mangle_prerouting" "homeproxy_mangle_output" \
 		 "homeproxy_mangle_tproxy" "homeproxy_mangle_tproxy_port" \
 		 "homeproxy_mangle_tproxy_lanac" "homeproxy_mangle_mark" \
-		 "homeproxy_mangle_tun" "homeproxy_mangle_tun_mark"; do
+		 "homeproxy_mangle_tun" "homeproxy_mangle_tun_mark" \
+		 "homeproxy_quic"; do
 		nft flush chain inet fw4 "$i"
 		nft delete chain inet fw4 "$i"
 	done 2>"/dev/null"
