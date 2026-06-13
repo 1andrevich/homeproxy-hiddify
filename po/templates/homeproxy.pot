@@ -3400,3 +3400,191 @@ msgstr ""
 msgid "Force torrent traffic (BitTorrent protocol + common ports) to bypass the proxy."
 msgstr ""
 
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "ByeDPI"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Enable ByeDPI"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Run ciadpi as a local SOCKS5 proxy that applies DPI bypass techniques (fragmentation, fake packets, OOB). Useful for unblocking throttled services (e.g. YouTube) without a VPN. Install ByeDPI on the Status page first. Traffic is only routed through ByeDPI if routing rules send it to the <code>byedpi-out</code> outbound."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "ByeDPI (local DPI bypass)"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "ByeDPI port"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Local SOCKS5 port ciadpi listens on. Sing-box routes traffic to this port."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "UDP over TCP"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Wrap UDP traffic in TCP when routing to ciadpi. Requires sing-box/hiddify-core SOCKS5 UoT support."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Strategy preset"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Grouped by technique. Numbers match community references (e.g. \"try strategy 11\"). Based on <a href=\"https://github.com/hufrea/byedpi\" target=\"_blank\">hufrea/byedpi</a> docs and community testing. See also <a href=\"https://github.com/fatyzzz/Byedpi-Setup\" target=\"_blank\">fatyzzz/Byedpi-Setup</a>."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "— select a preset —"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Disorder — recommended for Linux"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Fake TTL"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Fake MD5 — best on Linux"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "TLS Record Split"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "OOB"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Split"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "HTTP Modification"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Auto-mode"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Fake SNI / TLS Modification"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Aggressive"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Full Combo"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Command options"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Arguments passed to ciadpi after <code>-i 127.0.0.1 -p &lt;port&gt;</code>. Select a preset above or enter custom options. See ciadpi <code>--help</code> for full flag reference."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Test current strategy"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Starts ciadpi with the current options on a temporary port and tests it. With curl installed: makes a real HTTP request through ciadpi to verify DPI bypass. Without curl: only confirms arguments are valid and ciadpi starts."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Testing..."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "✓ HTTP request succeeded through ciadpi"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "✓ ciadpi started (install curl for full test)"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Test failed"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Test"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Test all strategies"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Runs all 43 presets one by one and shows which ones work. Requires curl (install on Status page). ~5-7 min total."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Test all 43 strategies sequentially?\n\nEach test takes ~5-10 seconds (~5-7 min total).\nLAN clients are not affected during testing.\n\nRequires curl. Install it on the Status page first."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Preparing..."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Done"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "passed"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "click Apply next to any working strategy"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Block QUIC (UDP port 443)"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "<strong>Disclaimer:</strong> This nftables rule drops all outgoing UDP port 443 packets to external addresses, forcing browsers and apps to fall back to TCP/TLS where ciadpi can apply DPI bypass. Side effects: may break services that require QUIC, and affects all LAN clients. Only enable if TCP-based bypass is insufficient."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Installed"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "running"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "stopped"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Reinstall"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "ByeDPI strategy tester"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Enables real HTTP-based ByeDPI strategy testing. Required for the \"Test all strategies\" feature in Client → ByeDPI tab."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Local SOCKS5 DPI bypass proxy by <a href=\"https://github.com/hufrea/byedpi\" target=\"_blank\">hufrea</a>. Packages by <a href=\"https://github.com/1andrevich/ByeDPI-OpenWrt\" target=\"_blank\">1andrevich/ByeDPI-OpenWrt</a>. Configure in the Client → ByeDPI tab."
+msgstr ""

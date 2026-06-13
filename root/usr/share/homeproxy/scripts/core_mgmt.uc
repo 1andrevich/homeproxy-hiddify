@@ -191,11 +191,12 @@ if (action === 'info') {
 			exit_code = system(
 				'{ wget -qO /tmp/homeproxy-hiddify.pub https://github.com/1andrevich/homeproxy-hiddify/releases/latest/download/homeproxy-hiddify.pub' +
 				' && cp /tmp/homeproxy-hiddify.pub /etc/apk/keys/' +
-				` && apk add --no-cache --allow-untrusted ${shellquote(tmp_path)}; } >/dev/null 2>&1` +
+				` && apk add --no-cache ${shellquote(tmp_path)}; } >/dev/null 2>&1` +
 				`; RC=$?; rm -f ${shellquote(tmp_path)} /tmp/homeproxy-hiddify.pub; exit $RC`,
 				120000
 			);
 		} else if (pkg_manager === 'apk') {
+			/* sing-box-extended has no signing key — allow-untrusted is unavoidable */
 			exit_code = system(
 				`{ apk add --no-cache --allow-untrusted ${shellquote(tmp_path)}; } >/dev/null 2>&1` +
 				`; RC=$?; rm -f ${shellquote(tmp_path)}; exit $RC`,

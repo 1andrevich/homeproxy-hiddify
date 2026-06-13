@@ -877,10 +877,12 @@ const methods = {
 			if (!access(tmp_path))
 				return { result: false, error: 'Package file not found' };
 			let ret;
-			if (pkg_manager === 'apk')
-				ret = system(`apk add --allow-untrusted ${shellquote(tmp_path)}`);
-			else
+			if (pkg_manager === 'apk') {
+				system('wget -qO /tmp/homeproxy-hiddify.pub https://github.com/1andrevich/homeproxy-hiddify/releases/latest/download/homeproxy-hiddify.pub 2>/dev/null && cp /tmp/homeproxy-hiddify.pub /etc/apk/keys/ 2>/dev/null; rm -f /tmp/homeproxy-hiddify.pub');
+				ret = system(`apk add ${shellquote(tmp_path)}`);
+			} else {
 				ret = system(`opkg install ${shellquote(tmp_path)}`);
+			}
 			system(`rm -f ${shellquote(tmp_path)}`);
 			return { result: ret === 0 };
 		}
@@ -900,23 +902,106 @@ const methods = {
 	},
 
 	byedpi_strategy_test: {
-		args: { cmd_opts: 'cmd_opts', port: 'port' },
+		args: { cmd_opts: 'cmd_opts', port: 'port', test_url: 'test_url' },
 		call: function(req) {
 			if (!access('/usr/bin/ciadpi'))
 				return { result: false, error: 'ciadpi not installed' };
 			const cmd_opts = req.args?.cmd_opts || '--disorder 1';
 			const test_port = strToInt(req.args?.port) || 15335;
+			const test_url = req.args?.test_url || 'https://www.youtube.com';
+			const has_curl = !!access('/usr/bin/curl');
+
+			/* Detect redirect mode: homeproxy_output_redir intercepts router-originated
+			 * TCP via the OUTPUT chain. Flush it while testing so curl traffic from ciadpi
+			 * goes direct; restore immediately after. LAN clients are unaffected (they
+			 * go through dstnat → homeproxy_redirect_lanac, a separate path). */
+			let out_chain_nfproto = null;
+			const cfd2 = popen('nft list chain inet fw4 homeproxy_output_redir 2>/dev/null');
+			if (cfd2) {
+				const out = cfd2.read('all');
+				cfd2.close();
+				if (length(trim(out)) > 0) {
+					out_chain_nfproto = (index(out, 'ipv6') >= 0) ? '{ ipv4, ipv6 }' : 'ipv4';
+					system('nft flush chain inet fw4 homeproxy_output_redir 2>/dev/null; true');
+				}
+			}
+
 			system(`pkill -f 'ciadpi.*${test_port}' 2>/dev/null; true`);
 			system(`/usr/bin/ciadpi -i 127.0.0.1 -p ${test_port} ${cmd_opts} &`);
-			system('sleep 1');
+			system('sleep 0.5');
+
 			let running = false;
-			const fd = popen(`pgrep -f 'ciadpi.*${test_port}' 2>/dev/null`);
-			if (fd) {
-				running = length(trim(fd.read('all'))) > 0;
-				fd.close();
+			const pfd = popen(`pgrep -f 'ciadpi.*${test_port}' 2>/dev/null`);
+			if (pfd) { running = length(trim(pfd.read('all'))) > 0; pfd.close(); }
+
+			if (!running) {
+				if (out_chain_nfproto != null)
+					system(`nft add rule inet fw4 homeproxy_output_redir meta nfproto ${out_chain_nfproto} meta l4proto tcp jump homeproxy_redirect 2>/dev/null; true`);
+				return { result: false, error: 'ciadpi did not start — check arguments', method: 'startup' };
 			}
+
+			let result = false;
+			let method = 'startup';
+
+			if (has_curl) {
+				method = 'curl';
+				const cfd = popen(
+					`curl -s --socks5-hostname 127.0.0.1:${test_port} -o /dev/null -w "%{http_code}" --connect-timeout 3 --max-time 8 ${shellquote(test_url)} 2>/dev/null`
+				);
+				if (cfd) {
+					const code = trim(cfd.read('all'));
+					cfd.close();
+					result = (code === '200' || code === '301' || code === '302');
+				}
+			} else {
+				result = true; /* args valid, no curl for real test */
+			}
+
 			system(`pkill -f 'ciadpi.*${test_port}' 2>/dev/null; true`);
-			return { result: running, error: running ? null : 'ciadpi did not start — check arguments' };
+			if (out_chain_nfproto != null)
+				system(`nft add rule inet fw4 homeproxy_output_redir meta nfproto ${out_chain_nfproto} meta l4proto tcp jump homeproxy_redirect 2>/dev/null; true`);
+			return {
+				result,
+				method,
+				error: (!result && method === 'startup') ? 'ciadpi did not start' :
+				       (!result && method === 'curl')    ? 'no response through proxy' : null
+			};
+		}
+	},
+
+	curl_status: {
+		call: function(req) {
+			const installed = !!access('/usr/bin/curl');
+			let pkg_manager = null;
+			if (access('/usr/bin/apk')) pkg_manager = 'apk';
+			else if (access('/bin/opkg')) pkg_manager = 'opkg';
+			return { installed, pkg_manager };
+		}
+	},
+
+	curl_install: {
+		call: function(req) {
+			let ret;
+			if (access('/usr/bin/apk'))
+				ret = system('apk add curl');
+			else if (access('/bin/opkg'))
+				ret = system('opkg install curl');
+			else
+				return { result: false, error: 'No package manager' };
+			return { result: ret === 0 };
+		}
+	},
+
+	curl_remove: {
+		call: function(req) {
+			let ret;
+			if (access('/usr/bin/apk'))
+				ret = system('apk del curl');
+			else if (access('/bin/opkg'))
+				ret = system('opkg remove curl');
+			else
+				return { result: false, error: 'No package manager' };
+			return { result: ret === 0 };
 		}
 	}
 };

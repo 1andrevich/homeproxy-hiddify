@@ -317,6 +317,24 @@ function getRuntimeLog(o, name, _option_index, section_id, _in_table) {
 
 const CORE_MGMT = '/usr/share/homeproxy/scripts/core_mgmt.uc';
 
+const callCurlStatus = rpc.declare({
+	object: 'luci.homeproxy',
+	method: 'curl_status',
+	expect: { '': {} }
+});
+
+const callCurlInstall = rpc.declare({
+	object: 'luci.homeproxy',
+	method: 'curl_install',
+	expect: { '': {} }
+});
+
+const callCurlRemove = rpc.declare({
+	object: 'luci.homeproxy',
+	method: 'curl_remove',
+	expect: { '': {} }
+});
+
 const callByeDPIStatus = rpc.declare({
 	object: 'luci.homeproxy',
 	method: 'byedpi_status',
@@ -444,6 +462,82 @@ function buildByeDPICard(byedpi) {
 			_('Local SOCKS5 DPI bypass proxy by <a href="https://github.com/hufrea/byedpi" target="_blank">hufrea</a>. ' +
 			  'Packages by <a href="https://github.com/1andrevich/ByeDPI-OpenWrt" target="_blank">1andrevich/ByeDPI-OpenWrt</a>. ' +
 			  'Configure in the Client → ByeDPI tab.'))
+	]);
+}
+
+function buildCurlCard(curl) {
+	let installed = curl?.installed || false;
+	const pkgMgr  = curl?.pkg_manager || null;
+	const canInstall = !!pkgMgr;
+
+	const statusEl = E('strong', {
+		style: installed ? 'color:green' : 'color:gray'
+	}, installed ? _('Installed') : _('Not installed'));
+
+	const msgEl = E('span', { style: 'margin-left:8px; font-size:0.9em' }, '');
+	const setMsg = (txt, color) => { msgEl.textContent = txt; msgEl.style.color = color || 'gray'; };
+
+	const installBtn = E('button', {
+		class: 'btn cbi-button cbi-button-action',
+		style: 'margin-left:4px',
+		disabled: !canInstall || null,
+		title: canInstall ? '' : _('No supported package manager detected'),
+		click: async function() {
+			installBtn.disabled = true;
+			removeBtn.disabled  = true;
+			statusEl.textContent = _('Installing...');
+			statusEl.style.color = 'gray';
+			setMsg('', 'gray');
+			const ret = await L.resolveDefault(callCurlInstall(), {});
+			if (ret.result) {
+				installed = true;
+				statusEl.textContent = _('Installed');
+				statusEl.style.color = 'green';
+				installBtn.textContent = _('Reinstall');
+				removeBtn.disabled  = false;
+				setMsg(_('Installed successfully'), 'green');
+			} else {
+				statusEl.textContent = _('Not installed');
+				statusEl.style.color = 'gray';
+				installBtn.disabled = false;
+				setMsg(ret.error || _('Installation failed'), 'red');
+			}
+		}
+	}, [ _('Install') ]);
+
+	const removeBtn = E('button', {
+		class: 'btn cbi-button cbi-button-negative',
+		style: 'margin-left:4px',
+		disabled: !installed || null,
+		click: async function() {
+			removeBtn.disabled  = true;
+			installBtn.disabled = true;
+			setMsg(_('Removing...'), 'gray');
+			const ret = await L.resolveDefault(callCurlRemove(), {});
+			installBtn.disabled = false;
+			if (ret.result) {
+				installed = false;
+				statusEl.textContent = _('Not installed');
+				statusEl.style.color = 'gray';
+				installBtn.textContent = _('Install');
+				setMsg(_('Removed successfully'), 'green');
+			} else {
+				removeBtn.disabled = false;
+				setMsg(ret.error || _('Removal failed'), 'red');
+			}
+		}
+	}, [ _('Remove') ]);
+
+	return E('div', { style: 'margin-bottom:12px; padding:8px 10px; border:1px solid #ddd; border-radius:4px' }, [
+		E('div', { style: 'display:flex; align-items:center; flex-wrap:wrap; gap:6px' }, [
+			E('strong', {}, 'curl'),
+			statusEl,
+			installBtn,
+			removeBtn,
+			msgEl
+		]),
+		E('div', { style: 'margin-top:4px; font-size:0.9em; color:#666' },
+			_('Enables real HTTP-based ByeDPI strategy testing. Required for the "Test all strategies" feature in Client → ByeDPI tab.'))
 	]);
 }
 
@@ -613,11 +707,12 @@ return view.extend({
 			hp.getBuiltinFeatures(),
 			L.resolveDefault(callCoreInfo(), {}),
 			uci.load('homeproxy'),
-			L.resolveDefault(callByeDPIStatus(), {})
+			L.resolveDefault(callByeDPIStatus(), {}),
+			L.resolveDefault(callCurlStatus(), {})
 		]);
 	},
 
-	render([features, coreInfo, _uci, byedpiStatus]) {
+	render([features, coreInfo, _uci, byedpiStatus, curlStatus]) {
 		const routingMode = uci.get('homeproxy', 'config', 'routing_mode') || '';
 		const isRuMode = routingMode === 'proxy_banned_ru';
 		let m, s, o;
@@ -731,6 +826,9 @@ return view.extend({
 			o.rawhtml = true;
 		}
 
+
+		o = s.option(form.DummyValue, '_curl_card', _('ByeDPI strategy tester'));
+		o.default = buildCurlCard(curlStatus);
 
 		if (!isRuMode) {
 			o = s.option(form.Value, 'github_token', _('GitHub token'));
