@@ -79,6 +79,12 @@ let self_mark, redirect_port,
     tproxy_port, tproxy_mark,
     tun_name, tun_mark;
 
+/* ByeDPI runs as root (needed for TCP_MD5SIG etc.) but under a dedicated group, so its
+ * egress can be excluded from the redirect by socket group (skgid) to break the proxy
+ * loop — ciadpi has no fwmark option, and root traffic can't be told apart by skuid. */
+const byedpi_enabled = uci.get(cfgname, 'config', 'byedpi_enabled') || '0';
+const byedpi_gid = uci.get(cfgname, 'infra', 'byedpi_gid') || '8181';
+
 if (match(proxy_mode, /redirect/)) {
 	self_mark = uci.get(cfgname, 'infra', 'self_mark') || '100';
 	redirect_port = uci.get(cfgname, 'infra', 'redirect_port') || '5331';
@@ -371,6 +377,9 @@ chain homeproxy_redirect {
 
 chain homeproxy_output_redir {
 	type nat hook output priority filter -105; policy accept
+	{% if (byedpi_enabled === '1'): %}
+	meta skgid {{ byedpi_gid }} counter return
+	{% endif %}
 	meta nfproto { {{ (ipv6_support === '1') ? 'ipv4, ipv6' : 'ipv4' }} } meta l4proto tcp jump homeproxy_redirect
 }
 {% endif %}
@@ -495,6 +504,9 @@ chain homeproxy_mangle_prerouting {
 }
 
 chain homeproxy_mangle_output {
+	{% if (byedpi_enabled === '1'): %}
+	meta skgid {{ byedpi_gid }} counter return
+	{% endif %}
 	meta mark {{ self_mark }} counter return
 
 	ip daddr @homeproxy_wan_proxy_addr_v4 counter goto homeproxy_mangle_mark

@@ -2208,7 +2208,7 @@ return view.extend({
 		ss.addremove = false;
 
 		o = ss.option(form.Flag, 'byedpi_udp_over_tcp', _('UDP over TCP'),
-			_('Wrap UDP traffic in TCP when routing to ciadpi.'));
+			_('Wrap UDP traffic in TCP when routing to ByeDPI.'));
 		o.default = o.enabled;
 		o.rmempty = false;
 
@@ -2299,60 +2299,84 @@ return view.extend({
 				expect: { '': {} }
 			});
 
+			/* Reference to the Command-options option, set when it's created below.
+			 * The preset dropdown drives this field through LuCI's own widget API. */
+			let cmdOptsOpt = null;
+
 			function applyPreset(idx) {
-				if (BYEDPI_PRESETS[idx]) {
+				if (!BYEDPI_PRESETS[idx])
+					return;
+				const val = BYEDPI_PRESETS[idx].args;
+				const widget = cmdOptsOpt ? cmdOptsOpt.getUIElement('config') : null;
+				if (widget) {
+					widget.setValue(val);
+					widget.node.dispatchEvent(new Event('change', { bubbles: true }));
+				} else {
+					/* fallback if the widget isn't registered yet */
 					const el = document.querySelector('[name*=".byedpi_cmd_opts"]');
 					if (el) {
-						el.value = BYEDPI_PRESETS[idx].args;
-						el.dispatchEvent(new Event('change'));
+						el.value = val;
+						el.dispatchEvent(new Event('change', { bubbles: true }));
 					}
 				}
 			}
 
-			/* Preset selector with optgroup categories */
-			o = ss.option(form.ListValue, 'byedpi_preset',
-				_('Strategy preset'),
-				_('Grouped by technique. Based on <a href="https://github.com/hufrea/byedpi" target="_blank">hufrea/byedpi</a> and community testing. See also <a href="https://github.com/fatyzzz/Byedpi-Setup" target="_blank">fatyzzz/Byedpi-Setup</a>.'));
-			o.value('', _('— select a preset —'));
-			for (let i = 0; i < BYEDPI_PRESETS.length; i++)
-				o.value(String(i), BYEDPI_PRESETS[i].name);
-			o.renderWidget = function(section_id, option_index, cfgvalue) {
+			/* Preset selector — DummyValue so LuCI never tracks or resets it.
+			 * It's a picker that fills byedpi_cmd_opts, not a stored value. On every
+			 * render it pre-selects whichever preset matches the current options, so it
+			 * reflects truth and survives section re-renders. */
+			o = ss.option(form.DummyValue, '_byedpi_preset', _('Strategy preset'));
+			o.render = function(option_index, section_id) {
+				const cur = (uci.get('homeproxy', 'config', 'byedpi_cmd_opts') || '').trim();
+				let curIdx = -1;
+				for (let i = 0; i < BYEDPI_PRESETS.length; i++)
+					if (BYEDPI_PRESETS[i].args === cur) { curIdx = i; break; }
+
 				const sel = E('select', {
-					'id':    this.cbid(section_id),
-					'name':  this.cbid(section_id),
 					'class': 'cbi-input-select',
 					'style': 'max-width:100%'
 				});
-				sel.appendChild(E('option', { value: '' }, _('— select a preset —')));
+				sel.appendChild(E('option', {
+					value: '',
+					selected: curIdx < 0 ? '' : null
+				}, curIdx < 0 ? _('— custom / select a preset —') : _('— select a preset —')));
 				for (let g of BYEDPI_GROUPS) {
 					const grp = E('optgroup', { label: g.label });
 					for (let i = g.range[0]; i <= g.range[1]; i++) {
 						grp.appendChild(E('option', {
-							value:    String(i),
-							selected: cfgvalue === String(i) ? '' : null
+							value: String(i),
+							selected: i === curIdx ? '' : null
 						}, BYEDPI_PRESETS[i].name));
 					}
 					sel.appendChild(grp);
 				}
 				sel.addEventListener('change', function() {
-					applyPreset(parseInt(sel.value));
+					if (sel.value !== '')
+						applyPreset(parseInt(sel.value));
 				});
-				return sel;
+				return E('div', { 'class': 'cbi-value' }, [
+					E('label', { 'class': 'cbi-value-title' }, _('Strategy preset')),
+					E('div', { 'class': 'cbi-value-field' }, [
+						sel,
+						E('div', { 'class': 'cbi-value-description' },
+							_('Grouped by technique. Based on <a href="https://github.com/hufrea/byedpi" target="_blank">hufrea/byedpi</a> and community testing. See also <a href="https://github.com/fatyzzz/Byedpi-Setup" target="_blank">fatyzzz/Byedpi-Setup</a>.'))
+					])
+				]);
 			};
+			o.write = function() {};
 
-			/* Command options — the actual value used by ciadpi */
 			o = ss.option(form.Value, 'byedpi_cmd_opts',
 				_('Command options'),
-				_('Arguments passed to ciadpi after <code>-i 127.0.0.1 -p &lt;port&gt;</code>. ' +
-				  'Select a preset above or enter custom options. See ciadpi <code>--help</code> for full flag reference.'));
+				_('Arguments passed to ByeDPI. Select a preset above or enter custom options. See <code>ciadpi --help</code> for full flag reference.'));
 			o.placeholder = '--disorder 1';
+			cmdOptsOpt = o;
 
 			/* Strategy tester */
 			o = ss.option(form.DummyValue, '_byedpi_tester',
 				_('Test current strategy'),
-				_('Starts ciadpi with the current options on a temporary port and tests it. ' +
-				  'With curl installed: makes a real HTTP request through ciadpi to verify DPI bypass. ' +
-				  'Without curl: only confirms arguments are valid and ciadpi starts.'));
+				_('Starts ByeDPI with the current options on a temporary port and tests it. ' +
+				  'With curl installed: makes a real HTTP request through ByeDPI to verify DPI bypass. ' +
+				  'Without curl: only confirms arguments are valid and ByeDPI starts.'));
 			o.render = function(option_index, section_id) {
 				const msgEl = E('span', { style: 'margin-left:8px; font-size:0.9em; color:gray' }, '');
 				const btn = E('button', {
@@ -2363,13 +2387,13 @@ return view.extend({
 						btn.disabled = true;
 						msgEl.style.color = 'gray';
 						msgEl.textContent = _('Testing...');
-						return L.resolveDefault(callByeDPITest(opts, 15335), {}).then((ret) => {
+						return L.resolveDefault(callByeDPITest(opts, '15335'), {}).then((ret) => {
 							btn.disabled = false;
 							if (ret.result) {
 								msgEl.style.color = 'green';
 								msgEl.textContent = ret.method === 'curl'
-									? _('✓ HTTP request succeeded through ciadpi')
-									: _('✓ ciadpi started (install curl for full test)');
+									? _('✓ HTTP request succeeded through ByeDPI')
+									: _('✓ ByeDPI started (install curl for full test)');
 							} else {
 								msgEl.style.color = 'red';
 								msgEl.textContent = ret.error || _('Test failed');
@@ -2450,7 +2474,7 @@ return view.extend({
 										': ' + BYEDPI_PRESETS[idx].name;
 									statusCell.textContent = '⏳';
 									return L.resolveDefault(
-										callByeDPITest(BYEDPI_PRESETS[idx].args, 15335), {}
+										callByeDPITest(BYEDPI_PRESETS[idx].args, '15335'), {}
 									).then(function(ret) {
 										if (ret.result) {
 											statusCell.textContent = '✓';

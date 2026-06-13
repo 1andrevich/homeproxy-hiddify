@@ -658,6 +658,7 @@ return view.extend({
 		so.value('urltest', _('Separate URLTest'));
 		for (let i in proxy_nodes)
 			so.value(i, proxy_nodes[i]);
+		so.value('byedpi-out', _('ByeDPI'));
 		so.rmempty = false;
 		so.editable = true;
 

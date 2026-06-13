@@ -550,7 +550,9 @@ config.dns = {
 
 if (!isEmpty(main_node)) {
 	if (routing_mode === 'proxy_banned_ru') {
-		/* Russia mode: direct-default routing, russia-dns for all, secure-dns for proxy lists */
+		/* Russia mode: direct-default routing, russia-dns for all, secure-dns for proxy lists.
+		 * secure-dns (Cloudflare DoH) is routed through main-out — including when main-out is
+		 * ByeDPI: ByeDPI's desync carries the DoH connection, so DNS stays un-poisoned. */
 		push(config.dns.servers, {
 			tag: 'russia-dns',
 			detour: self_mark ? 'direct-out' : null,
@@ -990,6 +992,20 @@ if (!isEmpty(main_node)) {
 			idle_timeout: (strToInt(main_urltest_interval) > 1800) ? `${main_urltest_interval * 2}s` : null,
 		});
 		urltest_nodes = main_urltest_nodes;
+	} else if (main_node === 'byedpi-out') {
+		/* ByeDPI as main node: route through the local ByeDPI socks proxy.
+		 * byedpi-out is a synthetic tag, not a real node section, so build the
+		 * socks outbound here. Fall back to direct if ByeDPI is disabled. */
+		if (byedpi_enabled === '1')
+			push(config.outbounds, {
+				type: 'socks',
+				tag: 'main-out',
+				server: '127.0.0.1',
+				server_port: 5335,
+				udp_over_tcp: (uci.get(uciconfig, ucimain, 'byedpi_udp_over_tcp') !== '0') || null
+			});
+		else
+			push(config.outbounds, { type: 'direct', tag: 'main-out' });
 	} else {
 		const main_node_cfg = uci.get_all(uciconfig, main_node) || {};
 		if (main_node_cfg.type in ['wireguard', 'amneziawg']) {
@@ -1015,6 +1031,18 @@ if (!isEmpty(main_node)) {
 			idle_timeout: (strToInt(main_udp_urltest_interval) > 1800) ? `${main_udp_urltest_interval * 2}s` : null,
 		});
 		urltest_nodes = [...urltest_nodes, ...filter(main_udp_urltest_nodes, (l) => !~index(urltest_nodes, l))];
+	} else if (dedicated_udp_node && main_udp_node === 'byedpi-out') {
+		/* ByeDPI as dedicated UDP node — same synthetic-tag handling as above */
+		if (byedpi_enabled === '1')
+			push(config.outbounds, {
+				type: 'socks',
+				tag: 'main-udp-out',
+				server: '127.0.0.1',
+				server_port: 5335,
+				udp_over_tcp: (uci.get(uciconfig, ucimain, 'byedpi_udp_over_tcp') !== '0') || null
+			});
+		else
+			push(config.outbounds, { type: 'direct', tag: 'main-udp-out' });
 	} else if (dedicated_udp_node) {
 		const main_udp_node_cfg = uci.get_all(uciconfig, main_udp_node) || {};
 		if (main_udp_node_cfg.type in ['wireguard', 'amneziawg']) {
@@ -1335,11 +1363,19 @@ if (!isEmpty(main_node)) {
 
 		for (let cfg in ru_rules) {
 
-			/* 'main-out' means route directly through the main proxy without a separate outbound */
-			const effective_outbound = (cfg.node === 'main-out') ? 'main-out' : ('hp-ru-' + cfg.source + '-out');
+			/* 'main-out' routes through the main proxy; 'byedpi-out' through the shared ByeDPI
+			 * socks outbound (already created when ByeDPI is enabled). Both reuse an existing
+			 * outbound, so no per-source outbound is generated. */
+			let effective_outbound;
+			if (cfg.node === 'main-out')
+				effective_outbound = 'main-out';
+			else if (cfg.node === 'byedpi-out')
+				effective_outbound = (byedpi_enabled === '1') ? 'byedpi-out' : 'direct-out';
+			else
+				effective_outbound = 'hp-ru-' + cfg.source + '-out';
 
-			if (cfg.node === 'main-out') {
-				/* no new outbound needed */
+			if (cfg.node === 'main-out' || cfg.node === 'byedpi-out') {
+				/* no new outbound needed — main-out / byedpi-out already exist */
 			} else if (!has_outbound(effective_outbound)) {
 				if (cfg.node === 'urltest') {
 					const ut_nodes = filter(cfg.urltest_nodes || [], (k) => uci.get_all(uciconfig, k) != null);

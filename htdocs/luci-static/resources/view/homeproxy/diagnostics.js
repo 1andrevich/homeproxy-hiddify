@@ -124,9 +124,11 @@ function buildCoreSection(view) {
 			dom.content(resultsEl, [
 				row(_('Hiddify-core'),    statusBadge(ret.hiddify_installed, ret.hiddify_installed ? _('installed') : _('not found'))),
 				row(_('sing-box'),        statusBadge(ret.singbox_installed,  ret.singbox_installed  ? _('installed') : _('not found'))),
+				row(_('ByeDPI'),          statusBadge(ret.byedpi_installed,   ret.byedpi_installed   ? _('installed') : _('not found'))),
 				ret.binary ? row(_('Active binary'), E('code', {}, ret.binary)) : null,
 				ret.version ? row(_('Version'), E('span', { 'class': 'diag-pre', 'style': 'max-height:5em' }, ret.version)) : null,
 				row(_('Running'),         statusBadge(ret.running, ret.running ? _('yes') + (ret.pid ? ' (PID ' + ret.pid + ')' : '') : _('no'))),
+				ret.byedpi_installed ? row(_('ByeDPI running'), statusBadge(ret.byedpi_running, ret.byedpi_running ? _('yes') + (ret.byedpi_pid ? ' (PID ' + ret.byedpi_pid + ')' : '') : _('no'))) : null,
 				row(_('Listening ports'), E('div', {}, portLines))
 			].filter(Boolean));
 		});

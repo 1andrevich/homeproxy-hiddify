@@ -500,8 +500,22 @@ const methods = {
 				version:           null,
 				running:           false,
 				pid:               null,
+				byedpi_installed:  !!access('/usr/bin/ciadpi'),
+				byedpi_running:    false,
+				byedpi_pid:        null,
 				listen_ports:      []
 			};
+
+			/* ByeDPI (ciadpi) runs independently of the core, so detect it regardless.
+			 * Use pidof, not `pgrep -x` — BusyBox pgrep -x matches argv0 (/usr/bin/ciadpi),
+			 * not the bare name, so it misses the process. */
+			let bfd = popen('pidof ciadpi 2>/dev/null');
+			if (bfd) {
+				const bpid = trim(bfd.read('all'));
+				bfd.close();
+				result.byedpi_running = length(bpid) > 0;
+				result.byedpi_pid = length(bpid) > 0 ? bpid : null;
+			}
 
 			if (!binary)
 				return result;
@@ -521,7 +535,7 @@ const methods = {
 			if (fd) {
 				const ports = [];
 				for (let line = fd.read('line'); length(line); line = fd.read('line')) {
-					if (match(line, /hiddify|sing.box/))
+					if (match(line, /hiddify|sing.box|ciadpi/))
 						push(ports, trim(line));
 				}
 				fd.close();
@@ -692,6 +706,16 @@ const methods = {
 			}
 			add('');
 
+			add('## ByeDPI (ciadpi)');
+			if (access('/usr/bin/ciadpi')) {
+				add('Installed: yes');
+				fd = popen('pgrep -x ciadpi 2>/dev/null');
+				if (fd) { const bpid = trim(fd.read('all')); fd.close(); add('PID: ' + (length(bpid) > 0 ? bpid : 'not running')); }
+			} else {
+				add('Installed: no');
+			}
+			add('');
+
 			add('## Config Stats');
 			const config_path = RUN_DIR + '/hiddify-c.json';
 			const stat = lstat(config_path);
@@ -729,7 +753,7 @@ const methods = {
 			fd = popen('netstat -tlnup 2>/dev/null');
 			if (fd) {
 				for (let line = fd.read('line'); length(line); line = fd.read('line')) {
-					if (match(line, /hiddify|sing.box/))
+					if (match(line, /hiddify|sing.box|ciadpi/))
 						add(trim(line));
 				}
 				fd.close();
@@ -813,7 +837,7 @@ const methods = {
 				}
 			}
 			let running = false;
-			const fd2 = popen('pgrep -x ciadpi 2>/dev/null');
+			const fd2 = popen('pidof ciadpi 2>/dev/null');
 			if (fd2) {
 				running = length(trim(fd2.read('all'))) > 0;
 				fd2.close();
@@ -911,7 +935,7 @@ const methods = {
 			if (!access('/usr/bin/ciadpi'))
 				return { result: false, error: 'ciadpi not installed' };
 			const cmd_opts = req.args?.cmd_opts || '--disorder 1';
-			const test_port = strToInt(req.args?.port) || 15335;
+			const test_port = req.args?.port || 15335;
 			const test_url = req.args?.test_url || 'https://www.youtube.com';
 			const has_curl = !!access('/usr/bin/curl');
 

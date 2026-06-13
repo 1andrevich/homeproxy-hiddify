@@ -1,0 +1,15 @@
+# Router files MUST use LF line endings. CRLF breaks nft (firewall ruleset is
+# rejected wholesale), POSIX shell (init.d), and can confuse ucode parsing.
+# Force LF on checkout regardless of the developer's core.autocrlf setting.
+
+*.ut    text eol=lf
+*.uc    text eol=lf
+*.nft   text eol=lf
+*.sh    text eol=lf
+*.js    text eol=lf
+*.json  text eol=lf
+
+# Extensionless router scripts
+root/etc/init.d/*               text eol=lf
+root/usr/share/rpcd/ucode/*     text eol=lf
+root/etc/uci-defaults/*         text eol=lf
