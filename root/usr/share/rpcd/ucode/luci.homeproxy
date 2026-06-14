@@ -930,14 +930,24 @@ const methods = {
 	},
 
 	byedpi_strategy_test: {
-		args: { cmd_opts: 'cmd_opts', port: 'port', test_url: 'test_url' },
+		args: { cmd_opts: 'cmd_opts', port: 'port' },
 		call: function(req) {
 			if (!access('/usr/bin/ciadpi'))
 				return { result: false, error: 'ciadpi not installed' };
 			const cmd_opts = req.args?.cmd_opts || '--disorder 1';
 			const test_port = req.args?.port || 15335;
-			const test_url = req.args?.test_url || 'https://www.youtube.com';
 			const has_curl = !!access('/usr/bin/curl');
+
+			/* Test panel: 2 far servers (youtube, telegram) that fixed fake-TTL strategies
+			 * survive (fake dies in transit) + 2 near Cloudflare/Ookla edges (discord,
+			 * speedtest) where the fake reaches the server and corrupts the handshake. The
+			 * far/near spread exposes destination-sensitivity instead of hiding it. */
+			const hosts = [
+				{ tag: 'yt', label: 'YouTube',       url: 'https://www.youtube.com' },
+				{ tag: 'tg', label: 'Telegram',      url: 'https://telegram.org' },
+				{ tag: 'dc', label: 'Discord',       url: 'https://discord.com' },
+				{ tag: 'st', label: 'Speedtest.net', url: 'https://www.speedtest.net' }
+			];
 
 			/* Detect redirect mode: homeproxy_output_redir intercepts router-originated
 			 * TCP via the OUTPUT chain. Flush it while testing so curl traffic from ciadpi
@@ -954,6 +964,28 @@ const methods = {
 				}
 			}
 
+			/* The flush also wiped the ByeDPI skgid exclusion (if present) — capture the gid
+			 * so we can rebuild it on restore, or the live ByeDPI egress would loop afterwards. */
+			let byedpi_gid = null;
+			const efd = popen('uci get homeproxy.config.byedpi_enabled 2>/dev/null');
+			if (efd) {
+				if (trim(efd.read('all')) === '1') {
+					byedpi_gid = '8181';
+					const gfd = popen('uci get homeproxy.infra.byedpi_gid 2>/dev/null');
+					if (gfd) { const g = trim(gfd.read('all')); if (length(g)) byedpi_gid = g; gfd.close(); }
+				}
+				efd.close();
+			}
+			/* Restore command (no nested function — those can crash rpcd call bodies). Rebuilds
+			 * the skgid exclusion first (if ByeDPI is on), then the redirect jump. */
+			let restore_cmd = 'true';
+			if (out_chain_nfproto != null) {
+				restore_cmd = '';
+				if (byedpi_gid != null)
+					restore_cmd += `nft add rule inet fw4 homeproxy_output_redir meta skgid ${byedpi_gid} counter return 2>/dev/null; `;
+				restore_cmd += `nft add rule inet fw4 homeproxy_output_redir meta nfproto ${out_chain_nfproto} meta l4proto tcp jump homeproxy_redirect 2>/dev/null; true`;
+			}
+
 			system(`pkill -f 'ciadpi.*${test_port}' 2>/dev/null; true`);
 			system(`/usr/bin/ciadpi -i 127.0.0.1 -p ${test_port} ${cmd_opts} &`);
 			system('sleep 0.5');
@@ -963,36 +995,61 @@ const methods = {
 			if (pfd) { running = length(trim(pfd.read('all'))) > 0; pfd.close(); }
 
 			if (!running) {
-				if (out_chain_nfproto != null)
-					system(`nft add rule inet fw4 homeproxy_output_redir meta nfproto ${out_chain_nfproto} meta l4proto tcp jump homeproxy_redirect 2>/dev/null; true`);
+				system(restore_cmd);
 				return { result: false, error: 'ciadpi did not start — check arguments', method: 'startup' };
 			}
 
-			let result = false;
-			let method = 'startup';
-
-			if (has_curl) {
-				method = 'curl';
-				const cfd = popen(
-					`curl -s --socks5-hostname 127.0.0.1:${test_port} -o /dev/null -w "%{http_code}" --connect-timeout 3 --max-time 8 ${shellquote(test_url)} 2>/dev/null`
-				);
-				if (cfd) {
-					const code = trim(cfd.read('all'));
-					cfd.close();
-					result = (code === '200' || code === '301' || code === '302');
-				}
-			} else {
-				result = true; /* args valid, no curl for real test */
+			if (!has_curl) {
+				system(`pkill -f 'ciadpi.*${test_port}' 2>/dev/null; true`);
+				system(restore_cmd);
+				return { result: true, method: 'startup', results: [] };
 			}
 
+			/* Probe every host in parallel through the one ciadpi instance. Each background
+			 * job writes "<http_code> <curl_exit>" so we can tell a corrupted handshake (tls)
+			 * from a host that's simply down/unresolvable (dns) — the latter isn't the
+			 * strategy's fault. */
+			const tmp = `/tmp/byedpi_test_${test_port}`;
+			system(`rm -rf ${tmp}; mkdir -p ${tmp} 2>/dev/null; true`);
+			let cmd = '';
+			for (let i = 0; i < length(hosts); i++)
+				cmd += `( code=$(curl -s --socks5-hostname 127.0.0.1:${test_port} -o /dev/null -w '%{http_code}' --connect-timeout 4 --max-time 8 ${shellquote(hosts[i].url)} 2>/dev/null); echo "$code $?" > ${tmp}/${i} ) & `;
+			cmd += 'wait';
+			system(cmd);
+
+			let results = [];
+			let passed = 0;
+			for (let i = 0; i < length(hosts); i++) {
+				const raw = trim(readfile(`${tmp}/${i}`) || '');
+				const parts = split(raw, ' ');
+				const code = parts[0] || '000';
+				const rc = parts[1] || '';
+				const ok = (code === '200' || code === '301' || code === '302');
+				if (ok) passed++;
+				push(results, {
+					tag:   hosts[i].tag,
+					label: hosts[i].label,
+					host:  hosts[i].url,
+					code:  code,
+					ok:    ok,
+					reason: ok ? null :
+					        (rc === '6')  ? 'dns' :
+					        (rc === '7')  ? 'refused' :
+					        (rc === '28') ? 'timeout' :
+					        (rc in ['35', '51', '53', '56', '58', '59', '60']) ? 'tls' : 'fail'
+				});
+			}
+			system(`rm -rf ${tmp} 2>/dev/null; true`);
+
 			system(`pkill -f 'ciadpi.*${test_port}' 2>/dev/null; true`);
-			if (out_chain_nfproto != null)
-				system(`nft add rule inet fw4 homeproxy_output_redir meta nfproto ${out_chain_nfproto} meta l4proto tcp jump homeproxy_redirect 2>/dev/null; true`);
+			system(restore_cmd);
+
 			return {
-				result,
-				method,
-				error: (!result && method === 'startup') ? 'ciadpi did not start' :
-				       (!result && method === 'curl')    ? 'no response through proxy' : null
+				result: passed === length(hosts),
+				passed: passed,
+				total:  length(hosts),
+				method: 'curl',
+				results: results
 			};
 		}
 	},

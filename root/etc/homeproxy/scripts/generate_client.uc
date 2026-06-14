@@ -569,8 +569,14 @@ config.dns = {
 if (!isEmpty(main_node)) {
 	if (routing_mode === 'proxy_banned_ru') {
 		/* Russia mode: direct-default routing, russia-dns for all, secure-dns for proxy lists.
-		 * secure-dns (Cloudflare DoH) is routed through main-out — including when main-out is
-		 * ByeDPI: ByeDPI's desync carries the DoH connection, so DNS stays un-poisoned. */
+		 *
+		 * secure-dns goes through main-out for real proxy nodes — tunneling the query hides
+		 * it from the ISP and reaches resolvers the ISP might block. But ByeDPI is a DPI-desync,
+		 * not a tunnel: routing DNS through it fails every way (DoH/DoT TLS handshake gets
+		 * corrupted by the desync; udp:// can't do socks UDP-over-TCP), and it adds no privacy
+		 * since ByeDPI egresses direct anyway. So for ByeDPI, secure-dns goes direct — DoH/DoT
+		 * is already encrypted/un-poisonable, it just must not pass through the desync. */
+		const secure_dns_detour = (main_node === 'byedpi-out') ? 'direct-out' : 'main-out';
 		push(config.dns.servers, {
 			tag: 'russia-dns',
 			detour: self_mark ? 'direct-out' : null,
@@ -582,7 +588,7 @@ if (!isEmpty(main_node)) {
 				server: 'russia-dns',
 				strategy: (ipv6_support !== '1') ? 'ipv4_only' : null
 			},
-			detour: 'main-out',
+			detour: secure_dns_detour,
 			...parse_dnsserver(secure_dns_server, 'tcp')
 		});
 		config.dns.final = 'russia-dns';
@@ -1364,8 +1370,11 @@ if (!isEmpty(main_node)) {
 		uci.foreach(uciconfig, ucirurule, (cfg) => { if (cfg.enabled === '1') push(ru_rules, cfg); });
 		ru_rules = sort(ru_rules, (a, b) => ru_source_priority(a.source) - ru_source_priority(b.source));
 
-		/* Use direct-out for rule set downloads if any main node path uses WireGuard/AmneziaWG,
-		 * since those endpoints are not ready at sing-box startup */
+		/* Use direct-out for rule set downloads when the main path isn't startup-safe:
+		 * WireGuard/AmneziaWG endpoints aren't ready yet, and ByeDPI resolves hostnames
+		 * through sing-box's own DNS inbound — which isn't serving during rule-set init, so
+		 * downloading github through it deadlocks (socks5 code 4 "host unreachable") and
+		 * FATALs the whole service. Direct download lets sing-box resolve via russia-dns. */
 		const main_node_type = uci.get(uciconfig, main_node, 'type') || '';
 		let main_has_wg = (main_node_type in ['wireguard', 'amneziawg']);
 		if (!main_has_wg && main_node === 'urltest') {
@@ -1377,7 +1386,7 @@ if (!isEmpty(main_node)) {
 				}
 			}
 		}
-		const ruleset_detour = main_has_wg ? 'direct-out' : 'main-out';
+		const ruleset_detour = (main_has_wg || main_node === 'byedpi-out') ? 'direct-out' : 'main-out';
 
 		for (let cfg in ru_rules) {
 

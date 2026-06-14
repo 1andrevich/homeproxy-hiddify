@@ -2374,9 +2374,11 @@ return view.extend({
 			/* Strategy tester */
 			o = ss.option(form.DummyValue, '_byedpi_tester',
 				_('Test current strategy'),
-				_('Starts ByeDPI with the current options on a temporary port and tests it. ' +
-				  'With curl installed: makes a real HTTP request through ByeDPI to verify DPI bypass. ' +
-				  'Without curl: only confirms arguments are valid and ByeDPI starts.'));
+				_('Starts ByeDPI with the current options on a temporary port and probes 4 sites — ' +
+				  '<b>YouTube</b> and <b>Telegram</b> (far servers), <b>Discord</b> and <b>Speedtest.net</b> ' +
+				  '(near Cloudflare/Ookla edges). A strategy that passes the far ones but fails the near ones ' +
+				  'is destination-sensitive (typical of fixed <code>--fake --ttl</code>). ' +
+				  'Requires curl; without it, only confirms ByeDPI starts.'));
 			o.render = function(option_index, section_id) {
 				const msgEl = E('span', { style: 'margin-left:8px; font-size:0.9em; color:gray' }, '');
 				const btn = E('button', {
@@ -2389,11 +2391,22 @@ return view.extend({
 						msgEl.textContent = _('Testing...');
 						return L.resolveDefault(callByeDPITest(opts, '15335'), {}).then((ret) => {
 							btn.disabled = false;
-							if (ret.result) {
+							if (ret.results && ret.results.length) {
+								const frag = [];
+								ret.results.forEach((r, i) => {
+									if (i) frag.push(document.createTextNode(' · '));
+									frag.push(E('span', {
+										style: 'font-weight:bold; color:' + (r.ok ? 'green' : '#cc3300'),
+										title: r.host + ' → ' + (r.ok ? r.code : (r.reason || 'fail'))
+									}, (r.label || r.tag) + (r.ok ? ' ✓' : ' ✗')));
+								});
+								frag.push(E('span', { style: 'color:gray; margin-left:6px' },
+									'(' + ret.passed + '/' + ret.total + ')'));
+								while (msgEl.firstChild) msgEl.removeChild(msgEl.firstChild);
+								frag.forEach((n) => msgEl.appendChild(n));
+							} else if (ret.result) {
 								msgEl.style.color = 'green';
-								msgEl.textContent = ret.method === 'curl'
-									? _('✓ HTTP request succeeded through ByeDPI')
-									: _('✓ ByeDPI started (install curl for full test)');
+								msgEl.textContent = _('✓ ByeDPI started (install curl for full test)');
 							} else {
 								msgEl.style.color = 'red';
 								msgEl.textContent = ret.error || _('Test failed');
@@ -2423,8 +2436,8 @@ return view.extend({
 					'class': 'btn cbi-button cbi-button-action',
 					'disabled': true,
 					'click': ui.createHandlerFn(this, function() {
-						if (!confirm(_('Test all 43 strategies sequentially?\n\n' +
-						              'Each test takes ~5-10 seconds (~5-7 min total).\n' +
+						if (!confirm(_('Test all 43 strategies?\n\n' +
+						              'Each is probed against 4 sites (2 far, 2 near) — ~6 min total.\n' +
 						              'LAN clients are not affected during testing.')))
 							return;
 
@@ -2437,12 +2450,9 @@ return view.extend({
 
 						const rows = [];
 						for (let i = 0; i < BYEDPI_PRESETS.length; i++) {
-							const statusCell = E('td', {
-								style: 'width:22px; text-align:center; font-size:1em; color:gray'
+							const dotsCell = E('td', {
+								style: 'white-space:nowrap; padding:2px 8px; font-size:0.95em; color:gray'
 							}, '–');
-							const errorCell = E('td', {
-								style: 'padding:2px 8px; color:#888; font-size:0.8em; font-style:italic'
-							}, '');
 							const applyBtn = E('button', {
 								'class': 'btn cbi-button cbi-button-save',
 								style: 'padding:1px 8px; font-size:0.8em; visibility:hidden',
@@ -2452,39 +2462,46 @@ return view.extend({
 							}, [ _('Apply') ]);
 
 							tableEl.appendChild(E('tr', { style: 'border-bottom:1px solid #f0f0f0' }, [
-								statusCell,
+								dotsCell,
 								E('td', { style: 'padding:2px 8px; color:#555; white-space:nowrap' },
 									BYEDPI_PRESETS[i].name),
 								E('td', { style: 'padding:2px 8px; color:#888; font-family:monospace; font-size:0.85em; word-break:break-all' },
 									BYEDPI_PRESETS[i].args),
-								errorCell,
 								E('td', { style: 'padding:2px 4px; white-space:nowrap' }, [ applyBtn ])
 							]));
-							rows.push({ statusCell, errorCell, applyBtn });
+							rows.push({ dotsCell, applyBtn });
 						}
 
-						let passed = 0;
+						let fullPass = 0, partial = 0;
 						let chain = Promise.resolve();
 						for (let i = 0; i < BYEDPI_PRESETS.length; i++) {
 							chain = chain.then((function(idx) {
 								return function() {
-									const { statusCell, errorCell, applyBtn } = rows[idx];
+									const { dotsCell, applyBtn } = rows[idx];
 									progressEl.textContent =
 										(idx + 1) + ' / ' + BYEDPI_PRESETS.length +
 										': ' + BYEDPI_PRESETS[idx].name;
-									statusCell.textContent = '⏳';
+									dotsCell.textContent = '⏳';
 									return L.resolveDefault(
 										callByeDPITest(BYEDPI_PRESETS[idx].args, '15335'), {}
 									).then(function(ret) {
-										if (ret.result) {
-											statusCell.textContent = '✓';
-											statusCell.style.color = 'green';
-											applyBtn.style.visibility = '';
-											passed++;
+										if (ret.results && ret.results.length) {
+											const frag = [];
+											ret.results.forEach(function(r) {
+												frag.push(E('span', {
+													style: 'font-weight:bold; margin-right:4px; color:' + (r.ok ? 'green' : '#cc3300'),
+													title: (r.label || r.tag) + ' (' + r.host + ') → ' + (r.ok ? r.code : (r.reason || 'fail'))
+												}, r.ok ? '●' : '○'));
+											});
+											frag.push(E('span', { style: 'color:#888; margin-left:2px' },
+												ret.passed + '/' + ret.total));
+											while (dotsCell.firstChild) dotsCell.removeChild(dotsCell.firstChild);
+											frag.forEach(function(n) { dotsCell.appendChild(n); });
+											if (ret.passed === ret.total) { fullPass++; applyBtn.style.visibility = ''; }
+											else if (ret.passed > 0) { partial++; applyBtn.style.visibility = ''; }
 										} else {
-											statusCell.textContent = '✗';
-											statusCell.style.color = '#cc3300';
-											errorCell.textContent = ret.error || '';
+											dotsCell.textContent = ret.result ? '✓' : '✗';
+											dotsCell.style.color = ret.result ? 'green' : '#cc3300';
 										}
 									});
 								};
@@ -2492,18 +2509,20 @@ return view.extend({
 						}
 
 						return chain.then(function() {
-							progressEl.style.color = passed > 0 ? 'green' : '#cc3300';
+							progressEl.style.color = fullPass > 0 ? 'green' : (partial > 0 ? '#c80' : '#cc3300');
 							progressEl.textContent =
-								_('Done') + ': ' + passed + ' / ' +
-								BYEDPI_PRESETS.length + ' ' + _('passed') +
-								(passed > 0 ? ' — ' + _('click Apply next to any working strategy') : '');
+								_('Done') + ': ' + fullPass + ' / ' + BYEDPI_PRESETS.length +
+								' ' + _('work on all sites') +
+								(partial > 0 ? ', ' + partial + ' ' + _('partial') : '') +
+								((fullPass + partial) > 0 ? ' — ' + _('click Apply next to a strategy (prefer all-green)') : '');
 							btn.disabled = false;
 						});
 					})
 				}, [ _('Test all strategies') ]);
 
 				const hintEl = E('div', { style: 'font-size:0.85em; color:#666; margin-bottom:6px' },
-					_('Runs all 43 presets one by one and shows which ones work. ~5-7 min total.'));
+					_('Probes each preset against 4 sites (YouTube/Telegram far, Discord/Speedtest near). ' +
+					  '● = pass, ○ = fail; hover a dot for the site and result. All-green = works everywhere. ~6 min total.'));
 
 				L.resolveDefault(callCurlStatus(), {}).then(function(status) {
 					if (status.installed) {
