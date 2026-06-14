@@ -223,8 +223,15 @@ if (action === 'info') {
 	}
 
 } else if (action === 'download_pkg') {
-	const url      = ARGV[1];
-	const tmp_path = ARGV[2];
+	/* UI calls (url, tmp_path). Also tolerate an optional leading core arg
+	 * (download_pkg <core> <url> <tmp_path>) so callers that mirror the
+	 * prepare_install/install_pkg core-first signature don't silently fail. */
+	let url      = ARGV[1];
+	let tmp_path = ARGV[2];
+	if (ARGV[3] && (ARGV[1] in ['hiddify', 'singbox'])) {
+		url      = ARGV[2];
+		tmp_path = ARGV[3];
+	}
 	if (!url || !tmp_path) {
 		result = { result: false, error: 'missing arguments' };
 	} else {
@@ -266,12 +273,15 @@ if (action === 'info') {
 	}
 
 } else if (action === 'install_kmods') {
-	const pkg_manager = ARGV[1];
+	const pkg_manager = ARGV[1] || detect_pkg_manager();
+	let exit_code = 1;
 	if (pkg_manager === 'apk')
-		system('apk add --no-cache kmod-nft-tproxy kmod-tun >/dev/null 2>&1', 60000);
+		exit_code = system('apk add --no-cache kmod-nft-tproxy kmod-tun >/dev/null 2>&1', 60000);
 	else if (pkg_manager === 'opkg')
-		system('opkg install kmod-nft-tproxy kmod-tun >/dev/null 2>&1', 60000);
-	result = { result: true };
+		exit_code = system('opkg install kmod-nft-tproxy kmod-tun >/dev/null 2>&1', 60000);
+	result = (exit_code === 0)
+		? { result: true }
+		: { result: false, error: `kmod install failed (pkg_manager=${pkg_manager || 'none'})` };
 
 } else if (action === 'remove') {
 	const core = ARGV[1];

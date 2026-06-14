@@ -424,7 +424,7 @@ function generate_outbound(node) {
 		extra_headers: (node.type === 'naive') ? (node.naive_extra_headers ? json(node.naive_extra_headers) : null) : null,
 		udp_over_tcp: (node.type === 'naive') ? strToBool(node.naive_udp_over_tcp) :
 		              (node.type === 'ssh') ? (node.ssh_udp_over_tcp !== '0' ? true : null) :
-		              ((node.udp_over_tcp === '1') ? {
+		              ((is_hiddify && node.udp_over_tcp === '1') ? {
 			enabled: true,
 			version: strToInt(node.udp_over_tcp_version)
 		} : null),
@@ -1396,14 +1396,14 @@ if (!isEmpty(main_node)) {
 			 * socks outbound (already created when ByeDPI is enabled). Both reuse an existing
 			 * outbound, so no per-source outbound is generated. */
 			let effective_outbound;
-			if (cfg.node === 'main-out')
+			if (cfg.node === 'main-out' || isEmpty(cfg.node))
 				effective_outbound = 'main-out';
 			else if (cfg.node === 'byedpi-out')
 				effective_outbound = (byedpi_enabled === '1') ? 'byedpi-out' : 'direct-out';
 			else
 				effective_outbound = 'hp-ru-' + cfg.source + '-out';
 
-			if (cfg.node === 'main-out' || cfg.node === 'byedpi-out') {
+			if (cfg.node === 'main-out' || isEmpty(cfg.node) || cfg.node === 'byedpi-out') {
 				/* no new outbound needed — main-out / byedpi-out already exist */
 			} else if (!has_outbound(effective_outbound)) {
 				if (cfg.node === 'urltest') {
