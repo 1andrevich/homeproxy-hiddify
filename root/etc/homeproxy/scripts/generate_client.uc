@@ -54,10 +54,24 @@ const dns_port = uci.get(uciconfig, uciinfra, 'dns_port') || '5333';
 
 const ntp_server = uci.get(uciconfig, uciinfra, 'ntp_server') || 'time.apple.com';
 
-/* Detect active core: standard paths first, then fall back to UCI custom path */
-let is_hiddify = !!access('/usr/bin/hiddify-core');
-let is_singbox = !is_hiddify && !!access('/usr/bin/sing-box');
-if (!is_hiddify && !is_singbox) {
+/* Detect active core. Must match the core init.d actually runs, or the generated dialect
+ * won't fit it. Mirror init.d's precedence: honor preferred_core when that core is
+ * installed, otherwise auto-pick (hiddify-core first, then sing-box). Falls back to a
+ * UCI custom path when neither standard binary is present. */
+const preferred_core = uci.get(uciconfig, ucimain, 'preferred_core') || 'auto';
+const have_hiddify = !!access('/usr/bin/hiddify-core');
+const have_singbox = !!access('/usr/bin/sing-box');
+
+let is_hiddify = false, is_singbox = false;
+if (preferred_core === 'hiddify' && have_hiddify)
+	is_hiddify = true;
+else if (preferred_core === 'singbox' && have_singbox)
+	is_singbox = true;
+else if (have_hiddify)
+	is_hiddify = true;
+else if (have_singbox)
+	is_singbox = true;
+else {
 	const custom_path = uci.get(uciconfig, ucimain, 'custom_core_path');
 	const custom_type = uci.get(uciconfig, ucimain, 'custom_core_type');
 	if (custom_path && access(custom_path)) {
@@ -360,7 +374,11 @@ function generate_outbound(node) {
 			size: node.tls_fragment_size,
 			sleep: node.tls_fragment_sleep
 		} : null,
-		tls: (node.tls === '1') ? {
+		/* ShadowTLS-wrapped Shadowsocks: TLS lives on the separate shadowtls transport
+		 * outbound, so the shadowsocks outbound must not carry tls. hiddify-core's lenient
+		 * decoder ignores the stray field, but sing-box-extended strict-rejects it
+		 * ("unknown field tls"). Suppress it for sing-box only — hiddify-core output unchanged. */
+		tls: (node.tls === '1' && !(is_singbox && node.type === 'shadowsocks')) ? {
 			enabled: true,
 			server_name: node.tls_sni,
 			insecure: strToBool(node.tls_insecure),
