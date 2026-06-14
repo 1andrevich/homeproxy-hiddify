@@ -59,9 +59,9 @@ function renderStatus(isRunning, features) {
 	let spanTemp = '<em><span style="color:%s"><strong>%s (%s) %s</strong></span></em>';
 	let renderHTML;
 	if (isRunning)
-		renderHTML = spanTemp.format('green', _('HomeProxy-hiddify Server'), coreStr, _('RUNNING'));
+		renderHTML = spanTemp.format('green', _('Re:HomeProxy Server'), coreStr, _('RUNNING'));
 	else
-		renderHTML = spanTemp.format('red', _('HomeProxy-hiddify Server'), coreStr, _('NOT RUNNING'));
+		renderHTML = spanTemp.format('red', _('Re:HomeProxy Server'), coreStr, _('NOT RUNNING'));
 
 	return renderHTML;
 }
@@ -130,8 +130,8 @@ return view.extend({
 		let m, s, o;
 		let features = data[1];
 
-		m = new form.Map('homeproxy', _('HomeProxy-hiddify Server'),
-			_('The modern multi-core ImmortalWrt proxy platform.'));
+		m = new form.Map('homeproxy', _('Re:HomeProxy Server'),
+			_('The modern multi-core proxy platform. Fork of ImmortalWrt.'));
 
 		s = m.section(form.TypedSection);
 		s.render = function() {

@@ -98,7 +98,7 @@ default_prerm' > "$TEMP_DIR/pre-deinstall"
 	apk mkpkg \
 		--info "name:$PKG_NAME" \
 		--info "version:$PKG_VERSION" \
-		--info "description:The modern ImmortalWrt hiddify-core based proxy platform" \
+		--info "description:Re:HomeProxy - modern multi-core proxy platform. Fork of ImmortalWrt HomeProxy" \
 		--info "arch:noarch" \
 		--info "origin:$PKG_NAME" \
 		--info "url:https://github.com/1andrevich/homeproxy-hiddify" \
@@ -108,6 +108,7 @@ default_prerm' > "$TEMP_DIR/pre-deinstall"
 		--script "pre-deinstall:$TEMP_DIR/pre-deinstall" \
 		--info "depends:libc firewall4 ucode-mod-digest" \
 		--info "provides:luci-app-homeproxy" \
+		--info "provides:luci-app-homeproxy-hiddify" \
 		${APK_SIGN_KEY:+--sign-key "$APK_SIGN_KEY"} \
 		--files "$TEMP_PKG_DIR" \
 		--output "$TEMP_DIR/${PKG_NAME}_${PKG_VERSION}.apk"
@@ -155,9 +156,9 @@ PYEOF
 		Package: $PKG_NAME
 		Version: $PKG_VERSION
 		Depends: $IPK_DEPS
-		Provides: luci-app-homeproxy
-		Conflicts: luci-app-homeproxy
-		Replaces: luci-app-homeproxy
+		Provides: luci-app-homeproxy luci-app-homeproxy-hiddify
+		Conflicts: luci-app-homeproxy luci-app-homeproxy-hiddify
+		Replaces: luci-app-homeproxy luci-app-homeproxy-hiddify
 		Source: https://github.com/1andrevich/homeproxy-hiddify
 		SourceName: $PKG_NAME
 		Section: luci
@@ -165,7 +166,7 @@ PYEOF
 		Maintainer: 1andrevich <1andrevich.recede274@passmail.net>
 		Architecture: all
 		Installed-Size: TO-BE-FILLED-BY-IPKG-BUILD
-		Description:  The modern ImmortalWrt hiddify-core based proxy platform
+		Description:  Re:HomeProxy - modern multi-core proxy platform. Fork of ImmortalWrt HomeProxy
 	EOF
 	chmod 0644 "$TEMP_PKG_DIR/CONTROL/control"
 
@@ -222,7 +223,7 @@ if [ "$PKG_MGR" == "apk" ]; then
 	apk mkpkg \
 		--info "name:$I18N_PKG_NAME" \
 		--info "version:$PKG_VERSION" \
-		--info "description:Russian translation for luci-app-homeproxy-hiddify" \
+		--info "description:Russian translation for luci-app-re-homeproxy" \
 		--info "arch:noarch" \
 		--info "origin:$I18N_PKG_NAME" \
 		--info "url:https://github.com/1andrevich/homeproxy-hiddify" \
@@ -245,7 +246,7 @@ else
 		Maintainer: 1andrevich <1andrevich.recede274@passmail.net>
 		Architecture: all
 		Installed-Size: TO-BE-FILLED-BY-IPKG-BUILD
-		Description:  Russian translation for luci-app-homeproxy-hiddify
+		Description:  Russian translation for luci-app-re-homeproxy
 	EOF
 	chmod 0644 "$I18N_TEMP_PKG_DIR/CONTROL/control"
 
@@ -279,7 +280,7 @@ if [ "$PKG_MGR" == "apk" ]; then
 	apk mkpkg \
 		--info "name:$I18N_ZH_PKG_NAME" \
 		--info "version:$PKG_VERSION" \
-		--info "description:Chinese Simplified translation for luci-app-homeproxy-hiddify" \
+		--info "description:Chinese Simplified translation for luci-app-re-homeproxy" \
 		--info "arch:noarch" \
 		--info "origin:$I18N_ZH_PKG_NAME" \
 		--info "url:https://github.com/1andrevich/homeproxy-hiddify" \
@@ -302,7 +303,7 @@ else
 		Maintainer: 1andrevich <1andrevich.recede274@passmail.net>
 		Architecture: all
 		Installed-Size: TO-BE-FILLED-BY-IPKG-BUILD
-		Description:  Chinese Simplified translation for luci-app-homeproxy-hiddify
+		Description:  Chinese Simplified translation for luci-app-re-homeproxy
 	EOF
 	chmod 0644 "$I18N_ZH_TEMP_PKG_DIR/CONTROL/control"
 
@@ -336,7 +337,7 @@ if [ "$PKG_MGR" == "apk" ]; then
 	apk mkpkg \
 		--info "name:$I18N_FA_PKG_NAME" \
 		--info "version:$PKG_VERSION" \
-		--info "description:Farsi (Persian) translation for luci-app-homeproxy-hiddify" \
+		--info "description:Farsi (Persian) translation for luci-app-re-homeproxy" \
 		--info "arch:noarch" \
 		--info "origin:$I18N_FA_PKG_NAME" \
 		--info "url:https://github.com/1andrevich/homeproxy-hiddify" \
@@ -359,7 +360,7 @@ else
 		Maintainer: 1andrevich <1andrevich.recede274@passmail.net>
 		Architecture: all
 		Installed-Size: TO-BE-FILLED-BY-IPKG-BUILD
-		Description:  Farsi (Persian) translation for luci-app-homeproxy-hiddify
+		Description:  Farsi (Persian) translation for luci-app-re-homeproxy
 	EOF
 	chmod 0644 "$I18N_FA_TEMP_PKG_DIR/CONTROL/control"
 

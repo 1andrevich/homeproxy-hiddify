@@ -2,7 +2,7 @@
 
 # Supported Protocols
 
-HomeProxy-hiddify uses [hiddify-core](https://github.com/hiddify/hiddify-core) as its proxy engine — a fork of [sing-box](https://sing-box.sagernet.org) with additional protocols and features not available upstream. The protocols shown in the node editor depend on how hiddify-core was compiled on your device.
+Re:HomeProxy runs on a choice of cores: [hiddify-core](https://github.com/hiddify/hiddify-core) (default) or [sing-box-extended](https://github.com/shtorm-7/sing-box-extended) — both forks of [sing-box](https://sing-box.sagernet.org) with additional protocols and features not available upstream. The protocols shown in the node editor depend on **which core you installed** and how it was compiled on your device. You choose and install the core on the **Core Management** page (Services → Re:HomeProxy → Status).
 
 ---
 
@@ -141,6 +141,15 @@ NaïveProxy requires a compatible server (e.g., Caddy with the `forwardproxy` pl
 
 ### WireGuard
 Modern VPN protocol with a minimal codebase and strong cryptography (Curve25519, ChaCha20-Poly1305). Very fast and battery-efficient. Can be used as an outbound to tunnel all proxy traffic through a WireGuard VPN endpoint (e.g., a VPS or a service like Cloudflare WARP).
+
+---
+
+## Requires the sing-box-extended core
+
+These node types are available when you install **sing-box-extended** instead of hiddify-core (pick your core on the **Core Management** page). hiddify-core does **not** support them.
+
+### AmneziaWG
+An obfuscated variant of WireGuard. It adds junk packets and randomised handshake headers (the `Jc`, `Jmin`, `Jmax`, `S1`, `S2`, `H1`–`H4`, `I1`–`I5` parameters) so that DPI systems which detect and block plain WireGuard no longer recognise the traffic. Set the obfuscation parameters to match your AmneziaWG server (or a Cloudflare WARP endpoint running AmneziaWG). Same fast Curve25519 / ChaCha20-Poly1305 cryptography as WireGuard, but the packets no longer look like WireGuard on the wire.
 
 ---
 

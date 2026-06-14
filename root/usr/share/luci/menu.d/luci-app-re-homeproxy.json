@@ -1,12 +1,12 @@
 {
 	"admin/services/homeproxy": {
-		"title": "HomeProxy-Hiddify",
+		"title": "Re:HomeProxy",
 		"order": 10,
 		"action": {
 			"type": "firstchild"
 		},
 		"depends": {
-			"acl": [ "luci-app-homeproxy-hiddify" ],
+			"acl": [ "luci-app-re-homeproxy" ],
 			"uci": { "homeproxy": true }
 		}
 	},

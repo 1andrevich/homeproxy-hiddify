@@ -1,5 +1,5 @@
 {
-	"luci-app-homeproxy-hiddify": {
+	"luci-app-re-homeproxy": {
 		"description": "Grant access to homeproxy configuration",
 		"read": {
 			"file": {

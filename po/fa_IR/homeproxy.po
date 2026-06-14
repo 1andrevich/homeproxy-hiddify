@@ -2736,8 +2736,8 @@ msgstr "حداقل نسخه‌ی TLS که قابل قبول است."
 msgid "The modern ImmortalWrt proxy platform for ARM64/AMD64."
 msgstr "پلتفرم مدرن پروکسی ImmortalWrt برای ARM64/AMD64."
 
-msgid "The modern multi-core ImmortalWrt proxy platform."
-msgstr "پلتفرم پروکسی چندهسته‌ای مدرن ImmortalWrt."
+msgid "The modern multi-core proxy platform. Fork of ImmortalWrt."
+msgstr "پلتفرم پروکسی چندهسته‌ای مدرن. فورک ImmortalWrt."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:454
 #: htdocs/luci-static/resources/view/homeproxy/server.js:875
@@ -3731,8 +3731,8 @@ msgstr "نسخه"
 msgid "sing-box"
 msgstr "sing-box"
 
-msgid "hiddify-core with sing-box syntax compatibility. Supports Hiddify App protocols and advanced features. Best compatibility with Hiddify Manager protocols."
-msgstr "hiddify-core با سازگاری نحو sing-box. از پروتکل‌های Hiddify App و قابلیت‌های پیشرفته پشتیبانی می‌کند. بهترین سازگاری با پروتکل‌های Hiddify Manager."
+msgid "hiddify-core with sing-box syntax compatibility. Supports Hiddify App protocols and advanced features. Best compatibility with Hiddify Manager protocols. Does not support AmneziaWG."
+msgstr "hiddify-core با سازگاری نحو sing-box. از پروتکل‌های Hiddify App و قابلیت‌های پیشرفته پشتیبانی می‌کند. بهترین سازگاری با پروتکل‌های Hiddify Manager. از AmneziaWG پشتیبانی نمی‌کند."
 
 msgid "Extended sing-box with additional protocols including AmneziaWG and TrustTunnel support. Created by shtorm-7."
 msgstr "sing-box گسترش‌یافته با پروتکل‌های اضافی شامل پشتیبانی از AmneziaWG و TrustTunnel. ساخته شده توسط shtorm-7."

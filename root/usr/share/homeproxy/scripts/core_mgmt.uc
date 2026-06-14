@@ -35,6 +35,28 @@ function free_kb(path) {
 	return v || 0;
 }
 
+function free_ram_kb() {
+	const m = match(readfile('/proc/meminfo') || '', /MemAvailable:\s+([0-9]+)/);
+	return m ? int(m[1]) : 0;
+}
+
+/* Does the overlay filesystem transparently compress? jffs2/ubifs do (~3x on a Go binary),
+ * ext4/f2fs do not. This decides how much flash the FULL binary actually occupies. */
+function overlay_compresses() {
+	const fd = popen("mount 2>/dev/null | awk '$3==\"/overlay\"{print $5; exit}'");
+	let t = '';
+	if (fd) { t = trim(fd.read('all')); fd.close(); }
+	return (t in ['jffs2', 'ubifs']);
+}
+
+/* Footprint thresholds (KB). The UPX/compact build is already compressed (~20 MB on ANY fs)
+ * but decompresses the whole binary into RAM at every launch (trades flash for RAM). The full
+ * Go binary is ~76 MB raw → ~76 MB on ext4/f2fs, but only ~26 MB on a compressing overlay. */
+const FULL_OVERLAY_RAW_KB  = 81920;   /* ~80 MB free for the full binary on an uncompressed overlay */
+const FULL_OVERLAY_COMP_KB = 32768;   /* ~32 MB on a compressing overlay (binary stores ~3x smaller) */
+const COMPACT_OVERLAY_KB   = 25600;   /* ~25 MB for the compact (UPX) build — fs-independent */
+const COMPACT_RAM_KB       = 98304;   /* ~96 MB free RAM to decompress + run the compact build */
+
 const action = ARGV[0];
 let result;
 
@@ -45,6 +67,7 @@ if (action === 'info') {
 	const tmp_free_kb = free_kb('/tmp');
 	let overlay_free_kb = free_kb('/overlay');
 	if (!overlay_free_kb) overlay_free_kb = free_kb('/');
+	const ram_free_kb = free_ram_kb();
 
 	const hiddify_installed = !!access('/usr/bin/hiddify-core');
 	let hiddify_version = null;
@@ -71,7 +94,7 @@ if (action === 'info') {
 	}
 
 	result = {
-		pkg_manager, arch, tmp_free_kb, overlay_free_kb,
+		pkg_manager, arch, tmp_free_kb, overlay_free_kb, ram_free_kb,
 		hiddify: { installed: hiddify_installed, version: hiddify_version },
 		singbox: { installed: singbox_installed, version: singbox_version, extended: singbox_extended }
 	};
@@ -107,6 +130,7 @@ if (action === 'info') {
 
 } else if (action === 'prepare_install') {
 	const core = ARGV[1];
+	const variant = ARGV[2] || '';   /* 'upx' = the compressed hiddify-core build (small flash, decompresses into RAM at launch) */
 	if (!(core in ['hiddify', 'singbox'])) {
 		result = { error: 'illegal core' };
 	} else {
@@ -124,43 +148,72 @@ if (action === 'info') {
 				} else {
 					let overlay_free_kb = free_kb('/overlay');
 					if (!overlay_free_kb) overlay_free_kb = free_kb('/');
-					if (overlay_free_kb < 30720) {
-						result = { error: `not enough overlay space: ${overlay_free_kb} KB free, need 30 MB` };
-					} else {
-						const ext = pkg_manager === 'apk' ? '.apk' : '.ipk';
-						if (core === 'hiddify') {
-							result = {
-								pkg_manager,
-								arch,
-								dl_url: `https://github.com/1andrevich/hiddify-core/releases/latest/download/hiddify-core_${arch}${ext}`,
-								tmp_path: `/tmp/hiddify-core${ext}`
-							};
+					const ram_free_kb = free_ram_kb();
+					const ext = pkg_manager === 'apk' ? '.apk' : '.ipk';
+					/* full-binary footprint depends on whether the overlay compresses */
+					const full_need = overlay_compresses() ? FULL_OVERLAY_COMP_KB : FULL_OVERLAY_RAW_KB;
+
+					if (core === 'hiddify') {
+						/* Auto-pick the build from free overlay (+ free RAM for the compact one).
+						 * ARGV[2] ('standard'|'upx') is an advanced override; size-checked either way.
+						 * This is the guardrail for the "full binary truncates on a small overlay →
+						 * SIGBUS" trap: never offer a build the device can't actually hold/run. */
+						let chosen = variant;
+						let note = null;
+						if (chosen !== 'standard' && chosen !== 'upx') {
+							if (overlay_free_kb >= full_need)
+								chosen = 'standard';
+							else if (overlay_free_kb >= COMPACT_OVERLAY_KB && ram_free_kb >= COMPACT_RAM_KB) {
+								chosen = 'upx';
+								note = 'Limited storage — installing the compact build (decompresses into RAM at launch).';
+							} else
+								chosen = null;
+						}
+
+						if (!chosen) {
+							result = (overlay_free_kb >= COMPACT_OVERLAY_KB)
+								? { error: `Device too constrained: ${overlay_free_kb} KB free overlay (full build needs ~${full_need}) and only ${ram_free_kb} KB free RAM (compact build needs ~${COMPACT_RAM_KB}). Use sing-box-extended instead.` }
+								: { error: `Not enough storage: ${overlay_free_kb} KB free overlay, need at least ~${COMPACT_OVERLAY_KB} KB (~25 MB).` };
 						} else {
-							const api_fd = popen('wget -qO- --timeout=10 https://api.github.com/repos/shtorm-7/sing-box-extended/releases/latest 2>/dev/null');
-							if (!api_fd) {
-								result = { error: 'failed to contact GitHub API' };
+							const need = (chosen === 'upx') ? COMPACT_OVERLAY_KB : full_need;
+							if (overlay_free_kb < need) {
+								result = { error: `Not enough overlay space for the ${chosen === 'upx' ? 'compact' : 'full'} build: ${overlay_free_kb} KB free, need ~${need} KB.` };
 							} else {
-								const api_raw = trim(api_fd.read('all')); api_fd.close();
-								let api_data;
-								try { api_data = json(api_raw); } catch(e) { api_data = null; }
-								if (!api_data?.tag_name) {
-									result = { error: 'could not determine latest version from GitHub' };
-								} else {
-									let dl_url = null;
-									for (let asset in (api_data?.assets || [])) {
-										const n = asset?.name || '';
-										if (!match(n, /openwrt/)) continue;
-										if (length(split(n, arch)) < 2) continue;
-										if (ext === '.apk' && !match(n, /\.apk$/)) continue;
-										if (ext === '.ipk' && !match(n, /\.ipk$/)) continue;
-										dl_url = asset?.browser_download_url;
-										break;
-									}
-									if (!dl_url)
-										result = { error: `no package found for arch ${arch} in latest release` };
-									else
-										result = { pkg_manager, arch, dl_url, tmp_path: `/tmp/sing-box-extended${ext}` };
+								const hp_path = (chosen === 'upx') ? 'download/upx' : 'latest/download';
+								result = {
+									pkg_manager, arch, variant: chosen, note,
+									dl_url: `https://github.com/1andrevich/hiddify-core/releases/${hp_path}/hiddify-core_${arch}${ext}`,
+									tmp_path: `/tmp/hiddify-core${ext}`
+								};
+							}
+						}
+					} else if (overlay_free_kb < full_need) {
+						result = { error: `Not enough overlay space: ${overlay_free_kb} KB free, sing-box-extended needs ~${full_need} KB.` };
+					} else {
+						const api_fd = popen('wget -qO- --timeout=10 https://api.github.com/repos/shtorm-7/sing-box-extended/releases/latest 2>/dev/null');
+						if (!api_fd) {
+							result = { error: 'failed to contact GitHub API' };
+						} else {
+							const api_raw = trim(api_fd.read('all')); api_fd.close();
+							let api_data;
+							try { api_data = json(api_raw); } catch(e) { api_data = null; }
+							if (!api_data?.tag_name) {
+								result = { error: 'could not determine latest version from GitHub' };
+							} else {
+								let dl_url = null;
+								for (let asset in (api_data?.assets || [])) {
+									const n = asset?.name || '';
+									if (!match(n, /openwrt/)) continue;
+									if (length(split(n, arch)) < 2) continue;
+									if (ext === '.apk' && !match(n, /\.apk$/)) continue;
+									if (ext === '.ipk' && !match(n, /\.ipk$/)) continue;
+									dl_url = asset?.browser_download_url;
+									break;
 								}
+								if (!dl_url)
+									result = { error: `no package found for arch ${arch} in latest release` };
+								else
+									result = { pkg_manager, arch, dl_url, tmp_path: `/tmp/sing-box-extended${ext}` };
 							}
 						}
 					}

@@ -31,6 +31,17 @@ log() {
 start_service() {
 	mkdir -p "$RUN_DIR"
 
+	# Self-heal a missing/empty config: /etc/config/homeproxy is a conffile, so a manual
+	# delete (or a wiped overlay) leaves the service with nothing and it won't regenerate.
+	# Restore defaults from the packaged backup. Only when there are no homeproxy sections,
+	# so a populated (even if odd) user config is never overwritten.
+	if ! grep -q "config homeproxy" "/etc/config/$CONF" 2>/dev/null; then
+		if [ -f "/usr/share/homeproxy/homeproxy.default" ]; then
+			cp "/usr/share/homeproxy/homeproxy.default" "/etc/config/$CONF"
+			log "config /etc/config/$CONF was missing/empty — restored defaults."
+		fi
+	fi
+
 	config_load "$CONF"
 
 	local preferred_core

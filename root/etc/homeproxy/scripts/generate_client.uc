@@ -374,11 +374,13 @@ function generate_outbound(node) {
 			size: node.tls_fragment_size,
 			sleep: node.tls_fragment_sleep
 		} : null,
-		/* ShadowTLS-wrapped Shadowsocks: TLS lives on the separate shadowtls transport
-		 * outbound, so the shadowsocks outbound must not carry tls. hiddify-core's lenient
-		 * decoder ignores the stray field, but sing-box-extended strict-rejects it
-		 * ("unknown field tls"). Suppress it for sing-box only — hiddify-core output unchanged. */
-		tls: (node.tls === '1' && !(is_singbox && node.type === 'shadowsocks')) ? {
+		/* Shadowsocks has no top-level tls field in ANY sing-box-based core — for a
+		 * ShadowTLS-wrapped Shadowsocks the TLS lives on the separate shadowtls transport
+		 * outbound (detour). Both sing-box-extended AND hiddify-core 4.1.0 (HiddifyCli)
+		 * strict-reject a stray tls here ("unknown field tls" → FATAL), so suppress it for
+		 * shadowsocks unconditionally (the earlier is_singbox-only gate was wrong — hiddify
+		 * is not lenient). */
+		tls: (node.tls === '1' && node.type !== 'shadowsocks') ? {
 			enabled: true,
 			server_name: node.tls_sni,
 			insecure: strToBool(node.tls_insecure),

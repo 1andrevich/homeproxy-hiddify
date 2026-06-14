@@ -272,7 +272,7 @@ function buildNftSection(view) {
 			}
 
 			dom.content(resultsEl, [
-				row(_('HomeProxy chains'), statusBadge(ret.nft_present,
+				row(_('Re:HomeProxy chains'), statusBadge(ret.nft_present,
 				    ret.nft_present ? _('found') : _('not found — firewall rules may be missing'))),
 				ret.nft_rules ? E('div', {}, [
 					E('div', { 'class': 'diag-label' }, _('Matched lines in fw4')),
@@ -386,7 +386,7 @@ return view.extend({
 		});
 
 		return E('div', { 'class': 'cbi-map' }, [
-			E('h2', {}, _('HomeProxy Diagnostics')),
+			E('h2', {}, _('Re:HomeProxy Diagnostics')),
 			E('div', { 'class': 'cbi-section', 'style': 'padding-bottom:.5em' }, [
 				E('button', {
 					'class': 'btn cbi-button cbi-button-action important',

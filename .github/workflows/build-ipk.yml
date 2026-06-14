@@ -110,8 +110,8 @@ jobs:
           pushd .github
           fakeroot bash build-ipk.sh apk "${{ github.event_name }}"
           fakeroot bash build-ipk.sh ipk "${{ github.event_name }}"
-          echo "APK_ASSET_NAME=$(ls luci-app-homeproxy-hiddify_*_all.apk)" >> $GITHUB_ENV
-          echo "IPK_ASSET_NAME=$(ls luci-app-homeproxy-hiddify_*_all.ipk)" >> $GITHUB_ENV
+          echo "APK_ASSET_NAME=$(ls luci-app-re-homeproxy_*_all.apk)" >> $GITHUB_ENV
+          echo "IPK_ASSET_NAME=$(ls luci-app-re-homeproxy_*_all.ipk)" >> $GITHUB_ENV
           echo "I18N_APK_ASSET_NAME=$(ls luci-i18n-homeproxy-ru_*_all.apk)" >> $GITHUB_ENV
           echo "I18N_IPK_ASSET_NAME=$(ls luci-i18n-homeproxy-ru_*_all.ipk)" >> $GITHUB_ENV
           echo "I18N_ZH_APK_ASSET_NAME=$(ls luci-i18n-homeproxy-zh-cn_*_all.apk)" >> $GITHUB_ENV

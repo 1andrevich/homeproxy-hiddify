@@ -83,9 +83,9 @@ function renderStatus(isRunning, features) {
 	let spanTemp = '<em><span style="color:%s"><strong>%s (%s) %s</strong></span></em>';
 	let renderHTML;
 	if (isRunning)
-		renderHTML = spanTemp.format('green', _('HomeProxy-hiddify'), coreStr, _('RUNNING'));
+		renderHTML = spanTemp.format('green', _('Re:HomeProxy'), coreStr, _('RUNNING'));
 	else
-		renderHTML = spanTemp.format('red', _('HomeProxy-hiddify'), coreStr, _('NOT RUNNING'));
+		renderHTML = spanTemp.format('red', _('Re:HomeProxy'), coreStr, _('NOT RUNNING'));
 
 	return renderHTML;
 }
@@ -130,8 +130,8 @@ return view.extend({
 					String.format('[%s]', nodeaddr) : nodeaddr) + ':' + nodeport));
 		});
 
-		m = new form.Map('homeproxy', _('HomeProxy-hiddify'),
-			_('The modern multi-core ImmortalWrt proxy platform.'));
+		m = new form.Map('homeproxy', _('Re:HomeProxy'),
+			_('The modern multi-core proxy platform. Fork of ImmortalWrt.'));
 
 		s = m.section(form.TypedSection);
 		s.render = function () {
@@ -712,7 +712,10 @@ return view.extend({
 
 		so = ss.option(form.ListValue, 'node', _('Node'),
 			_('Outbound node'));
-		so.value('main-out', _('Same as main node') + ' 🔗');
+		/* "Same as main node" exists in every mode EXCEPT custom routing and custom JSON */
+		const _rmode = uci.get('homeproxy', 'config', 'routing_mode');
+		if (_rmode !== 'custom' && _rmode !== 'custom_json')
+			so.value('main-out', _('Same as main node') + ' 🔗');
 		so.value('urltest', _('URLTest'));
 		for (let i in proxy_nodes)
 			so.value(i, proxy_nodes[i]);

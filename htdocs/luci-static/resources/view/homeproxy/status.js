@@ -550,8 +550,8 @@ function callCoreCheckRemote(core) {
 	return fs.exec_direct('/usr/bin/ucode', [CORE_MGMT, 'check_remote', core], 'json');
 }
 
-function callCorePrepare(core) {
-	return fs.exec_direct('/usr/bin/ucode', [CORE_MGMT, 'prepare_install', core], 'json');
+function callCorePrepare(core, variant) {
+	return fs.exec_direct('/usr/bin/ucode', [CORE_MGMT, 'prepare_install', core, variant || ''], 'json');
 }
 
 function callCoreDownload(url, tmpPath) {
@@ -578,7 +578,7 @@ function buildCoreCard(core, coreInfo) {
 	const canInstall = !!pkgMgr;
 
 	const desc = isHiddify
-		? _('hiddify-core with sing-box syntax compatibility. Supports Hiddify App protocols and advanced features. Best compatibility with Hiddify Manager protocols.')
+		? _('hiddify-core with sing-box syntax compatibility. Supports Hiddify App protocols and advanced features. Best compatibility with Hiddify Manager protocols. Does not support AmneziaWG.')
 		: _('Extended sing-box with additional protocols including AmneziaWG and TrustTunnel support. Created by shtorm-7.');
 
 	let installed = coreData.installed || false;
@@ -611,55 +611,60 @@ function buildCoreCard(core, coreInfo) {
 		}
 	}, [ _('Check update') ]);
 
+	/* One smart Install: the backend auto-picks the build that fits this device's flash
+	 * (and RAM for the compact one) — the user never sees "UPX" or has to choose. */
+	const doInstall = async () => {
+		const prevInstalled = installed;
+		const prevVersion   = version;
+		installBtn.disabled = true;
+		removeBtn.disabled  = true;
+		statusEl.textContent = _('Installing...');
+		statusEl.style.color = 'gray';
+
+		const fail = (msg) => {
+			installed = prevInstalled;
+			version   = prevVersion;
+			statusEl.textContent = installed ? 'v' + (version || '?') : _('Not installed');
+			statusEl.style.color = installed ? 'green' : 'gray';
+			installBtn.disabled = false;
+			removeBtn.disabled  = !installed;
+			setMsg(msg, 'red');
+		};
+
+		setMsg(_('Checking requirements...'), 'gray');
+		const prep = await L.resolveDefault(callCorePrepare(core, ''), {});
+		if (prep.error) return fail(prep.error);
+
+		const compact = (prep.variant === 'upx');
+		setMsg(prep.note || _('Downloading...'), prep.note ? 'darkorange' : 'gray');
+		const dl = await L.resolveDefault(callCoreDownload(prep.dl_url, prep.tmp_path), {});
+		if (!dl.result) return fail(dl.error || _('Download failed'));
+
+		setMsg(_('Installing package...'), 'gray');
+		const inst = await L.resolveDefault(callCoreInstallPkg(core, prep.tmp_path, prep.pkg_manager), {});
+		if (!inst.result) return fail(inst.error || _('Installation failed'));
+
+		setMsg(_('Installing kernel modules...'), 'gray');
+		await L.resolveDefault(callCoreInstallKmods(prep.pkg_manager), {});
+
+		const fresh = await L.resolveDefault(callCoreInfo(), {});
+		const fd = (isHiddify ? fresh.hiddify : fresh.singbox) || {};
+		installed = fd.installed || false;
+		version   = fd.version   || null;
+		statusEl.textContent = installed ? 'v' + version : _('Unknown');
+		statusEl.style.color = installed ? 'green' : 'gray';
+		installBtn.textContent = _('Update');
+		installBtn.disabled = false;
+		removeBtn.disabled  = false;
+		setMsg(compact ? _('Installed successfully (compact build)') : _('Installed successfully'), 'green');
+	};
+
 	const installBtn = E('button', {
 		class: 'btn cbi-button cbi-button-action',
 		style: 'margin-left:4px',
 		disabled: !canInstall || null,
 		title: canInstall ? '' : _('No supported package manager detected'),
-		click: async function() {
-			const prevInstalled = installed;
-			const prevVersion   = version;
-			installBtn.disabled = true;
-			removeBtn.disabled  = true;
-			statusEl.textContent = _('Installing...');
-			statusEl.style.color = 'gray';
-
-			const fail = (msg) => {
-				installed = prevInstalled;
-				version   = prevVersion;
-				statusEl.textContent = installed ? 'v' + (version || '?') : _('Not installed');
-				statusEl.style.color = installed ? 'green' : 'gray';
-				installBtn.disabled = false;
-				removeBtn.disabled  = !installed;
-				setMsg(msg, 'red');
-			};
-
-			setMsg(_('Checking requirements...'), 'gray');
-			const prep = await L.resolveDefault(callCorePrepare(core), {});
-			if (prep.error) return fail(prep.error);
-
-			setMsg(_('Downloading...'), 'gray');
-			const dl = await L.resolveDefault(callCoreDownload(prep.dl_url, prep.tmp_path), {});
-			if (!dl.result) return fail(dl.error || _('Download failed'));
-
-			setMsg(_('Installing package...'), 'gray');
-			const inst = await L.resolveDefault(callCoreInstallPkg(core, prep.tmp_path, prep.pkg_manager), {});
-			if (!inst.result) return fail(inst.error || _('Installation failed'));
-
-			setMsg(_('Installing kernel modules...'), 'gray');
-			await L.resolveDefault(callCoreInstallKmods(prep.pkg_manager), {});
-
-			const fresh = await L.resolveDefault(callCoreInfo(), {});
-			const fd = (isHiddify ? fresh.hiddify : fresh.singbox) || {};
-			installed = fd.installed || false;
-			version   = fd.version   || null;
-			statusEl.textContent = installed ? 'v' + version : _('Unknown');
-			statusEl.style.color = installed ? 'green' : 'gray';
-			installBtn.textContent = _('Update');
-			installBtn.disabled = false;
-			removeBtn.disabled  = false;
-			setMsg(_('Installed successfully'), 'green');
-		}
+		click: function() { return doInstall(); }
 	}, [ installed ? _('Update') : _('Install') ]);
 
 	const removeBtn = E('button', {
@@ -891,7 +896,7 @@ return view.extend({
 		s.anonymous = true;
 
 		o = s.option(form.DummyValue, '_homeproxy_logview');
-		o.render = L.bind(getRuntimeLog, this, o, _('HomeProxy'));
+		o.render = L.bind(getRuntimeLog, this, o, _('Re:HomeProxy'));
 
 		o = s.option(form.DummyValue, '_hiddify-c_logview');
 		o.render = L.bind(getRuntimeLog, this, o, _('core client'));

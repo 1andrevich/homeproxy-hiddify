@@ -23,10 +23,23 @@ const HP_DIR = '/etc/homeproxy';
 const RUN_DIR = '/var/run/homeproxy';
 
 function get_active_core() {
-	if (access('/usr/bin/hiddify-core'))
-		return { path: '/usr/bin/hiddify-core', type: 'hiddify', proc_name: 'hiddify-core' };
-	if (access('/usr/bin/sing-box'))
-		return { path: '/usr/bin/sing-box', type: 'singbox', proc_name: 'sing-box' };
+	/* Mirror init.d / generate_client.uc precedence: honor preferred_core when that core
+	 * is installed, else auto (hiddify-core first, then sing-box). Otherwise file presence
+	 * alone would report the wrong core when both are installed. */
+	let preferred = null;
+	let pfd = popen('uci get homeproxy.config.preferred_core 2>/dev/null');
+	if (pfd) { preferred = trim(pfd.read('all')); pfd.close(); }
+
+	const have_hiddify = access('/usr/bin/hiddify-core');
+	const have_singbox = access('/usr/bin/sing-box');
+	const HID = { path: '/usr/bin/hiddify-core', type: 'hiddify', proc_name: 'hiddify-core' };
+	const SB  = { path: '/usr/bin/sing-box',     type: 'singbox', proc_name: 'sing-box' };
+
+	if (preferred === 'hiddify' && have_hiddify) return HID;
+	if (preferred === 'singbox' && have_singbox) return SB;
+	if (have_hiddify) return HID;
+	if (have_singbox) return SB;
+
 	let custom_path = null;
 	let custom_type = null;
 	let fd = popen('uci get homeproxy.config.custom_core_path 2>/dev/null');
@@ -559,13 +572,9 @@ const methods = {
 			if (!stat)
 				return { valid: false, check_output: 'Config not found: ' + config_path, stats: {} };
 
-			let check_output = '';
-			let fd = popen(binary + ' check -c ' + shellquote(config_path) + ' 2>&1');
-			if (fd) { check_output = trim(fd.read('all')); fd.close(); }
-
-			const valid = (system(binary + ' check -c ' + shellquote(config_path) + ' >/dev/null 2>&1') === 0);
-
+			/* JSON parse first — it's the validity signal for cores without a `check` command */
 			let stats = { outbounds: 0, rules: 0, inbounds: 0, dns_servers: 0 };
+			let parse_ok = false;
 			const content = readfile(config_path);
 			if (content) {
 				try {
@@ -574,7 +583,22 @@ const methods = {
 					stats.rules        = length((cfg.route || {}).rules || []);
 					stats.inbounds     = length(cfg.inbounds || []);
 					stats.dns_servers  = length(((cfg.dns || {}).servers) || []);
+					parse_ok = true;
 				} catch(e) {}
+			}
+
+			let valid, check_output;
+			if (core.type === 'singbox') {
+				/* sing-box has a real config validator */
+				let fd = popen(binary + ' check -c ' + shellquote(config_path) + ' 2>&1');
+				if (fd) { check_output = trim(fd.read('all')); fd.close(); }
+				valid = (system(binary + ' check -c ' + shellquote(config_path) + ' >/dev/null 2>&1') === 0);
+			} else {
+				/* hiddify-core (HiddifyCli) has no `check` subcommand — fall back to JSON parse */
+				valid = parse_ok;
+				check_output = parse_ok
+					? 'Config parses (JSON OK). Deep validation unavailable — hiddify-core has no "check" command.'
+					: 'Config is not valid JSON.';
 			}
 
 			return {
