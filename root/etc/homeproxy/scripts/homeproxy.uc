@@ -92,7 +92,12 @@ export function strToInt(str) {
 };
 
 export function strToTime(str) {
-	return !isEmpty(str) ? (str + 's') : null;
+	if (isEmpty(str))
+		return null;
+	str = '' + str;
+	/* A subscription may already deliver a unit-bearing duration (e.g. sing-box
+	 * "10s", "1m30s"); only append 's' to a bare number so we never emit "10ss". */
+	return match(str, /[a-zA-Z]$/) ? str : (str + 's');
 };
 
 export function removeBlankAttrs(res) {
