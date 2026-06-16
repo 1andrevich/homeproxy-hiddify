@@ -26,6 +26,12 @@ const callServiceList = rpc.declare({
 	expect: { '': {} }
 });
 
+const callActiveNode = rpc.declare({
+	object: 'luci.homeproxy',
+	method: 'clash_active_node',
+	expect: { '': {} }
+});
+
 const callReadDomainList = rpc.declare({
 	object: 'luci.homeproxy',
 	method: 'acllist_read',
@@ -172,6 +178,31 @@ return view.extend({
 		o.default = 'nil';
 		o.depends({'routing_mode': /^((?!custom).)+$/});
 		o.rmempty = false;
+
+		/* Live: which node URLTest currently has selected. Only shown in URLTest mode
+		 * (depends on main_node='urltest'); hidden when a specific node is the main node. */
+		o = s.taboption('routing', form.DummyValue, '_active_urltest_node', _('Active URLTest node'));
+		o.depends('main_node', 'urltest');
+		o.cfgvalue = function() {
+			const el = E('span', { 'style': 'color:gray' }, '—');
+			poll.add(L.bind(function() {
+				return L.resolveDefault(callActiveNode(), {}).then(function(ret) {
+					if (ret && !ret.error && ret.node) {
+						const m = ret.node.match(/^cfg-(.+)-out$/);
+						const name = (m && proxy_nodes[m[1]]) ? proxy_nodes[m[1]] : ret.node;
+						const type = ret.type ? ' (' + ret.type + ')' : '';
+						const delay = (ret.delay && ret.delay !== 65535) ? ' — ' + ret.delay + ' ms' : '';
+						el.textContent = name + type + delay;
+						el.style.color = 'green';
+					} else {
+						el.textContent = _('No active node');
+						el.style.color = 'gray';
+					}
+				});
+			}));
+			return el;
+		};
+
 		o = s.taboption('routing', form.DummyValue, '_urltest_info', _('URLTest'),
 			_('Automatically picks the fastest node by periodically measuring latency. Traffic is always sent through the lowest-latency node in the pool.'));
 		o.depends('main_node', 'urltest');
@@ -509,6 +540,10 @@ return view.extend({
 
 			this.value('default-dns', _('Default DNS (issued by WAN)'));
 			this.value('system-dns', _('System DNS'));
+			if (uci.get(data[0], 'config', 'routing_mode') === 'proxy_banned_ru') {
+				this.value('russia-dns', _('Russia DNS server') + ' 🔓');
+				this.value('secure-dns', _('Secure DNS server') + ' 🔒');
+			}
 			uci.sections(data[0], 'dns_server', (res) => {
 				if (res.enabled === '1')
 					this.value(res['.name'], res.label);
@@ -731,6 +766,10 @@ return view.extend({
 			this.value('', _('Default'));
 			this.value('default-dns', _('Default DNS (issued by WAN)'));
 			this.value('system-dns', _('System DNS'));
+			if (uci.get(data[0], 'config', 'routing_mode') === 'proxy_banned_ru') {
+				this.value('russia-dns', _('Russia DNS server') + ' 🔓');
+				this.value('secure-dns', _('Secure DNS server') + ' 🔒');
+			}
 			uci.sections(data[0], 'dns_server', (res) => {
 				if (res.enabled === '1')
 					this.value(res['.name'], res.label);
@@ -762,6 +801,8 @@ return view.extend({
 			delete this.vallist;
 
 			this.value('', _('Direct'));
+			if (uci.get(data[0], 'config', 'routing_mode') === 'proxy_banned_ru')
+				this.value('main-out', _('Same as main node') + ' 🔗');
 			uci.sections(data[0], 'routing_node', (res) => {
 				if (res['.name'] !== section_id && res.enabled === '1')
 					this.value(res['.name'], res.label);
@@ -1002,6 +1043,11 @@ return view.extend({
 			delete this.vallist;
 
 			this.value('direct-out', _('Direct'));
+			if (uci.get(data[0], 'config', 'routing_mode') === 'proxy_banned_ru') {
+				this.value('main-out', _('Same as main node') + ' 🔗');
+				if (uci.get(data[0], 'config', 'byedpi_enabled') === '1')
+					this.value('byedpi-out', _('ByeDPI'));
+			}
 			uci.sections(data[0], 'routing_node', (res) => {
 				if (res.enabled === '1')
 					this.value(res['.name'], res.label);
@@ -1206,6 +1252,10 @@ return view.extend({
 
 			this.value('default-dns', _('Default DNS (issued by WAN)'));
 			this.value('system-dns', _('System DNS'));
+			if (uci.get(data[0], 'config', 'routing_mode') === 'proxy_banned_ru') {
+				this.value('russia-dns', _('Russia DNS server') + ' 🔓');
+				this.value('secure-dns', _('Secure DNS server') + ' 🔒');
+			}
 			uci.sections(data[0], 'dns_server', (res) => {
 				if (res.enabled === '1')
 					this.value(res['.name'], res.label);
@@ -1480,6 +1530,10 @@ return view.extend({
 
 			this.value('default-dns', _('Default DNS (issued by WAN)'));
 			this.value('system-dns', _('System DNS'));
+			if (uci.get(data[0], 'config', 'routing_mode') === 'proxy_banned_ru') {
+				this.value('russia-dns', _('Russia DNS server') + ' 🔓');
+				this.value('secure-dns', _('Secure DNS server') + ' 🔒');
+			}
 			uci.sections(data[0], 'dns_server', (res) => {
 				if (res.enabled === '1')
 					this.value(res['.name'], res.label);
@@ -1721,20 +1775,6 @@ return view.extend({
 		o = s.taboption('control', form.SectionValue, '_control', form.NamedSection, 'control', 'homeproxy');
 		ss = o.subsection;
 
-		/* Interface control start */
-		ss.tab('interface', _('Interface Control'));
-
-		so = ss.taboption('interface', widgets.DeviceSelect, 'listen_interfaces', _('Listen interfaces'),
-			_('Only process traffic from specific interfaces. Leave empty for all.'));
-		so.multiple = true;
-		so.noaliases = true;
-
-		so = ss.taboption('interface', widgets.DeviceSelect, 'bind_interface', _('Bind interface'),
-			_('Bind outbound traffic to specific interface. Leave empty to auto detect.'));
-		so.multiple = false;
-		so.noaliases = true;
-		/* Interface control end */
-
 		/* LAN IP policy start */
 		ss.tab('lan_ip_policy', _('LAN IP Policy'));
 
@@ -1861,6 +1901,20 @@ return view.extend({
 			return true;
 		}
 		/* Direct domain list end */
+
+		/* Interface control start (placed last so it's the last Access Control tab) */
+		ss.tab('interface', _('Interface Control'));
+
+		so = ss.taboption('interface', widgets.DeviceSelect, 'listen_interfaces', _('Listen interfaces'),
+			_('Only process traffic from specific interfaces. Leave empty for all.'));
+		so.multiple = true;
+		so.noaliases = true;
+
+		so = ss.taboption('interface', widgets.DeviceSelect, 'bind_interface', _('Bind interface'),
+			_('Bind outbound traffic to specific interface. Leave empty to auto detect.'));
+		so.multiple = false;
+		so.noaliases = true;
+		/* Interface control end */
 		/* ACL settings end */
 
 		/* ByeDPI settings are on the Node Settings page */

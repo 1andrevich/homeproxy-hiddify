@@ -189,7 +189,14 @@ start_service() {
 
 		procd_open_instance "byedpi"
 		procd_set_param command /usr/bin/ciadpi -i 127.0.0.1 -p 5335
-		for _arg in $byedpi_cmd_opts; do
+		# Quote-aware split so an argument value containing spaces survives intact —
+		# e.g. an inline hostlist  -H:"host1 host2 host3"  must stay a single argument,
+		# not be torn into separate tokens by plain word-splitting. eval re-parses the
+		# quoting; the string is the admin's own root-owned UCI option, so this is
+		# argument parsing, not a trust boundary. The leading -- protects against an
+		# option-like first token.
+		eval "set -- $byedpi_cmd_opts"
+		for _arg in "$@"; do
 			procd_append_param command "$_arg"
 		done
 		procd_set_param group "byedpi"

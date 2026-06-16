@@ -500,6 +500,10 @@ function get_resolver(cfg) {
 	switch (cfg) {
 	case 'default-dns':
 	case 'system-dns':
+	/* Built-in proxy_banned_ru resolvers — already emitted with these literal tags,
+	 * so a custom DNS rule may target them directly (don't prefix as a cfg-*-dns). */
+	case 'russia-dns':
+	case 'secure-dns':
 		return cfg;
 	default:
 		return 'cfg-' + cfg + '-dns';
@@ -1115,6 +1119,10 @@ if (!isEmpty(main_node)) {
 				adv_urltest_nodes = [...adv_urltest_nodes, ...filter(existing_urltest_nodes, (l) => !~index(adv_urltest_nodes, l))];
 			} else {
 				const outbound = uci.get_all(uciconfig, cfg.node) || {};
+				/* Skip a routing node whose target proxy node is empty or dangling —
+				 * otherwise push_outbound() appends a null outbound and the next line
+				 * dereferences it, crashing config generation (no file is written). */
+				if (isEmpty(outbound)) return;
 				if (outbound.type in ['wireguard', 'amneziawg']) {
 					push(config.endpoints, generate_endpoint(outbound));
 					config.endpoints[length(config.endpoints)-1].bind_interface = cfg.bind_interface;
@@ -1163,6 +1171,10 @@ if (!isEmpty(main_node)) {
 			urltest_nodes = [...urltest_nodes, ...filter(existing_urltest_nodes, (l) => !~index(urltest_nodes, l))];
 		} else {
 			const outbound = uci.get_all(uciconfig, cfg.node) || {};
+			/* Skip a routing node whose target proxy node is empty or dangling —
+			 * otherwise push_outbound() appends a null outbound and the next line
+			 * dereferences it, crashing config generation (no file is written). */
+			if (isEmpty(outbound)) return;
 			if (outbound.type in ['wireguard', 'amneziawg']) {
 				push(config.endpoints, generate_endpoint(outbound));
 				config.endpoints[length(config.endpoints)-1].bind_interface = cfg.bind_interface;

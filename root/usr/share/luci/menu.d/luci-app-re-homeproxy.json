@@ -35,7 +35,7 @@
 		}
 	},
 	"admin/services/homeproxy/status": {
-		"title": "Service Status",
+		"title": "Core & Tools",
 		"order": 20,
 		"action": {
 			"type": "view",

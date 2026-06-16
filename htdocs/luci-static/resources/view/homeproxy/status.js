@@ -725,37 +725,6 @@ return view.extend({
 
 		m = new form.Map('homeproxy');
 
-		s = m.section(form.NamedSection, 'config', 'homeproxy', _('Connection check'));
-		s.anonymous = true;
-
-		o = s.option(form.DummyValue, '_check_baidu', _('BaiDu'));
-		o.cfgvalue = L.bind(getConnStat, this, o, 'baidu');
-
-		o = s.option(form.DummyValue, '_check_google', _('Google'));
-		o.cfgvalue = L.bind(getConnStat, this, o, 'google');
-
-		o = s.option(form.DummyValue, '_check_youtube', _('YouTube'));
-		o.cfgvalue = L.bind(getConnStat, this, o, 'youtube');
-
-		o = s.option(form.DummyValue, '_check_yandex', _('Yandex'));
-		o.cfgvalue = L.bind(getConnStat, this, o, 'yandex');
-
-		o = s.option(form.DummyValue, '_check_speedtest', _('Speedtest'));
-		o.cfgvalue = L.bind(getConnStat, this, o, 'speedtest');
-
-		if (features.core_type === 'hiddify') {
-			o = s.option(form.DummyValue, '_check_direct_ip', _('Direct IP'));
-			o.cfgvalue = L.bind(getIPInfo, this, o, 'direct');
-
-			o = s.option(form.DummyValue, '_check_proxy_ip', _('Proxy IP'));
-			o.cfgvalue = L.bind(getIPInfo, this, o, 'proxy');
-		}
-
-		if (features.core_type === 'singbox') {
-			o = s.option(form.DummyValue, '_active_node', _('Active Node'));
-			o.cfgvalue = L.bind(getActiveNode, this, o);
-		}
-
 		s = m.section(form.NamedSection, 'config', 'homeproxy', _('Resources management'));
 		s.anonymous = true;
 
@@ -833,9 +802,6 @@ return view.extend({
 		}
 
 
-		o = s.option(form.DummyValue, '_curl_card', _('ByeDPI strategy tester'));
-		o.default = buildCurlCard(curlStatus);
-
 		if (!isRuMode) {
 			o = s.option(form.Value, 'github_token', _('GitHub token'));
 			o.password = true;
@@ -891,6 +857,9 @@ return view.extend({
 
 		o = s.option(form.DummyValue, '_byedpi_card');
 		o.default = buildByeDPICard(byedpiStatus, uci.get('homeproxy', 'config', 'main_node') === 'byedpi-out');
+
+		o = s.option(form.DummyValue, '_curl_card', _('ByeDPI strategy tester'));
+		o.default = buildCurlCard(curlStatus);
 
 		s = m.section(form.NamedSection, 'config', 'homeproxy');
 		s.anonymous = true;

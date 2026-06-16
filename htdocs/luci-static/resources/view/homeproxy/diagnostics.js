@@ -6,7 +6,10 @@
 
 'use strict';
 'require dom';
+'require homeproxy as hp';
+'require poll';
 'require rpc';
+'require uci';
 'require ui';
 'require view';
 
@@ -68,6 +71,35 @@ const callServiceRestart = rpc.declare({
 	expect: { '': {} }
 });
 
+const callConnCheck = rpc.declare({
+	object: 'luci.homeproxy',
+	method: 'connection_check',
+	params: ['site'],
+	expect: { '': {} }
+});
+
+const callIpInfo = rpc.declare({
+	object: 'luci.homeproxy',
+	method: 'clash_ip_info',
+	expect: { '': {} }
+});
+
+const callActiveNode = rpc.declare({
+	object: 'luci.homeproxy',
+	method: 'clash_active_node',
+	expect: { '': {} }
+});
+
+/* Resolve a sing-box outbound tag (cfg-<section>-out) to its UCI label. */
+function resolveTag(tag) {
+	const m = tag && tag.match(/^cfg-(.+)-out$/);
+	if (m) {
+		const label = uci.get('homeproxy', m[1], 'label');
+		if (label) return label;
+	}
+	return tag;
+}
+
 /* ── DOM helpers ──────────────────────────────────────────────────────── */
 
 function statusBadge(ok, text) {
@@ -104,6 +136,85 @@ function spinner(el, label) {
 }
 
 /* ── Section builders ─────────────────────────────────────────────────── */
+
+function buildConnectivitySection(view, coreType) {
+	const items = [];   /* manual checks; the section's run() fires them together */
+
+	function siteRow(label, site) {
+		const resultEl = E('strong', { 'class': 'diag-gray' }, _('unchecked'));
+		function run() {
+			dom.content(resultEl, E('em', { 'class': 'diag-gray' }, _('Testing…')));
+			return L.resolveDefault(callConnCheck(site), {}).then(function(ret) {
+				dom.content(resultEl, statusBadge(!!ret.result, ret.result ? _('passed') : _('failed')));
+			});
+		}
+		items.push(run);
+		const btn = E('button', { 'class': 'btn cbi-button cbi-button-action diag-btn',
+			'click': ui.createHandlerFn(view, run) }, [ _('Check') ]);
+		return E('div', { 'class': 'diag-row' }, [ E('span', { 'class': 'diag-label' }, label), btn, resultEl ]);
+	}
+
+	/* Exit IP / geo — only hiddify-core's Clash API reports it. */
+	function ipRow(label, type) {
+		const resultEl = E('strong', { 'class': 'diag-gray' }, _('unchecked'));
+		function run() {
+			dom.content(resultEl, E('em', { 'class': 'diag-gray' }, _('Testing…')));
+			return L.resolveDefault(callIpInfo(), {}).then(function(ret) {
+				if (ret.error) { dom.content(resultEl, E('span', { 'class': 'diag-fail' }, ret.error)); return; }
+				const entry = ret[type];
+				if (!entry || !entry.ip) { dom.content(resultEl, E('span', { 'class': 'diag-gray' }, _('No data'))); return; }
+				const meta  = [entry.country, entry.org].filter(Boolean).join(', ');
+				const delay = (entry.delay && entry.delay !== 65535) ? ' — ' + entry.delay + ' ms' : '';
+				const node  = (type === 'proxy' && entry.node) ? resolveTag(entry.node) + ': ' : '';
+				dom.content(resultEl, E('strong', { 'class': 'diag-ok' },
+					node + entry.ip + (meta ? ' (' + meta + ')' : '') + delay));
+			});
+		}
+		items.push(run);
+		const btn = E('button', { 'class': 'btn cbi-button cbi-button-action diag-btn',
+			'click': ui.createHandlerFn(view, run) }, [ _('Check') ]);
+		return E('div', { 'class': 'diag-row' }, [ E('span', { 'class': 'diag-label' }, label), btn, resultEl ]);
+	}
+
+	/* Active node — live status (which node sing-box has selected), auto-updating;
+	 * sing-box can't report exit IP, so this stands in for the IP rows. */
+	function activeNodeRow() {
+		const resultEl = E('span', { 'class': 'diag-gray' }, '—');
+		poll.add(L.bind(function() {
+			return L.resolveDefault(callActiveNode(), {}).then(function(ret) {
+				if (ret && !ret.error && ret.node) {
+					const type  = ret.type ? ' (' + ret.type + ')' : '';
+					const delay = (ret.delay && ret.delay !== 65535) ? ' — ' + ret.delay + ' ms' : '';
+					dom.content(resultEl, E('strong', { 'class': 'diag-ok' }, resolveTag(ret.node) + type + delay));
+				} else {
+					dom.content(resultEl, E('span', { 'class': 'diag-gray' }, _('No active node')));
+				}
+			});
+		}));
+		return E('div', { 'class': 'diag-row' }, [ E('span', { 'class': 'diag-label' }, _('Active Node')), resultEl ]);
+	}
+
+	const rows = [
+		siteRow(_('Baidu'),     'baidu'),
+		siteRow(_('Google'),    'google'),
+		siteRow(_('YouTube'),   'youtube'),
+		siteRow(_('Yandex'),    'yandex'),
+		siteRow(_('Speedtest'), 'speedtest')
+	];
+
+	/* hiddify → exit-IP rows; sing-box → live Active Node (it can't report exit IP). */
+	if (coreType === 'hiddify') {
+		rows.push(ipRow(_('Direct IP'), 'direct'));
+		rows.push(ipRow(_('Proxy IP'),  'proxy'));
+	} else if (coreType === 'singbox') {
+		rows.push(activeNodeRow());
+	}
+
+	return {
+		el: sectionCard(_('Connectivity'), 'diag-connectivity', rows),
+		run: function() { return Promise.all(items.map(function(fn) { return fn(); })); }
+	};
+}
 
 function buildCoreSection(view) {
 	const resultsEl   = E('div', {});
@@ -363,16 +474,21 @@ function buildReportSection(view) {
 
 return view.extend({
 	load: function() {
-		return Promise.resolve();
+		return Promise.all([
+			L.resolveDefault(hp.getBuiltinFeatures(), {}),
+			uci.load('homeproxy')
+		]);
 	},
 
-	render: function() {
+	render: function(data) {
+		const features = (data && data[0]) || {};
 		document.head.appendChild(E('style', {}, [ css ]));
 
 		const core   = buildCoreSection(this);
 		const config = buildConfigSection(this);
 		const dns    = buildDnsSection(this);
 		const nft    = buildNftSection(this);
+		const conn   = buildConnectivitySection(this, features.core_type || null);
 		const report = buildReportSection(this);
 
 		dns.run();
@@ -381,7 +497,8 @@ return view.extend({
 			return Promise.all([
 				core.run(),
 				config.run(),
-				nft.run()
+				nft.run(),
+				conn.run()
 			]);
 		});
 
@@ -393,12 +510,13 @@ return view.extend({
 					'click': runAll
 				}, _('Run All Tests')),
 				E('em', { 'class': 'diag-gray', 'style': 'margin-left:.8em; font-size:.9em' },
-					_('Runs Core, Config, and Network checks simultaneously.'))
+					_('Runs Core, Config, Network, and Connectivity checks simultaneously.'))
 			]),
 			core.el,
 			config.el,
 			dns.el,
 			nft.el,
+			conn.el,
 			report.el
 		]);
 	},

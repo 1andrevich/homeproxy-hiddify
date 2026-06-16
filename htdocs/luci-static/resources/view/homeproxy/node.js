@@ -2214,76 +2214,86 @@ return view.extend({
 
 		(function() {
 			const BYEDPI_PRESETS = [
-				/* 0-4: Disorder — most effective on Linux */
-				{ name: '1 — Disorder Basic',              args: '--disorder 1' },
-				{ name: '2 — Disorder at SNI',             args: '--disorder 1+s' },
-				{ name: '3 — Disorder TLS+HTTP',           args: '--proto tls,http --disorder 1' },
-				{ name: '4 — Split + Disorder',            args: '--split 1 --disorder 3' },
-				{ name: '5 — Disorder + Auto TLS Record',  args: '--disorder 1 --auto=torst --tlsrec 1+s' },
-				/* 5-9: Fake TTL */
-				{ name: '6 — Fake TTL=6',                  args: '--fake -1 --ttl 6' },
-				{ name: '7 — Fake TTL=8',                  args: '--fake -1 --ttl 8' },
-				{ name: '8 — Fake TTL=10',                 args: '--fake -1 --ttl 10' },
-				{ name: '9 — Fake TTL=12',                 args: '--fake -1 --ttl 12' },
-				{ name: '10 — Fake TTL=15',                args: '--fake -1 --ttl 15' },
-				/* 10-13: Fake MD5 — Linux-only TCP option */
-				{ name: '11 — Fake MD5',                   args: '--fake -1 --md5sig' },
-				{ name: '12 — Disorder + Fake MD5',        args: '--disorder 1 --fake -1 --md5sig' },
-				{ name: '13 — Fake MD5 TLS+HTTP',          args: '--proto tls,http --fake -1 --md5sig' },
-				{ name: '14 — Fake MD5 + Auto Reset',      args: '--fake -1 --md5sig --auto=torst --disorder 1' },
-				/* 14-17: TLS Record split */
-				{ name: '15 — TLS Record Split',           args: '--tlsrec 1+s' },
-				{ name: '16 — TLS Record + Auto',          args: '--auto=torst --tlsrec 1+s' },
-				{ name: '17 — TLS Record + Timeout',       args: '--auto=torst --timeout 3 --tlsrec 1+s' },
-				{ name: '18 — Disorder + TLS Record',      args: '--disorder 1 --tlsrec 1+s' },
-				/* 18-21: OOB */
-				{ name: '19 — OOB at SNI',                 args: '--oob 1+s' },
-				{ name: '20 — OOB at SNI+3',               args: '--oob 3+s' },
-				{ name: '21 — DisoOB at SNI',              args: '--disoob 1+s' },
-				{ name: '22 — DisoOB + Fake MD5',          args: '--disoob 1+s --fake -1 --md5sig' },
-				/* 22-25: Split */
-				{ name: '23 — Split at SNI',               args: '--split 1+s' },
-				{ name: '24 — Split at SNI Middle',        args: '--split 0+sm' },
-				{ name: '25 — Split at 2',                 args: '--split 2' },
-				{ name: '26 — Split + OOB',                args: '--split 1+s --oob 2+s' },
-				/* 26-29: HTTP modification */
-				{ name: '27 — HTTP Host Case Mix',         args: '--proto http --mod-http hcsmix' },
-				{ name: '28 — HTTP Host Double Mix',       args: '--proto http --mod-http hcsmix,dcsmix' },
-				{ name: '29 — HTTP Full Mix',              args: '--proto http --mod-http hcsmix,dcsmix,rmspace' },
-				{ name: '30 — HTTP Mix + Disorder',        args: '--proto tls,http --mod-http hcsmix --disorder 1' },
-				/* 30-31: Auto-mode */
-				{ name: '31 — Auto SSL Error Fallback',    args: '--fake -1 --ttl 8 --auto=ssl_err --fake -1 --ttl 5' },
-				{ name: '32 — Auto Reset Fallback',        args: '--fake -1 --md5sig --auto=torst --disorder 1' },
-				/* 32-34: Fake SNI / TLS mod */
-				{ name: '33 — Random SNI Fake',            args: '--fake -1 --fake-sni "????.net"' },
-				{ name: '34 — Random TLS Fake',            args: '--fake -1 --fake-tls-mod rand' },
-				{ name: '35 — Original TLS Fake',          args: '--fake -1 --fake-tls-mod orig' },
-				/* 35-39: Aggressive combos */
-				{ name: '36 — Aggressive Split',           args: '--split 1+s --disorder 3+s' },
-				{ name: '37 — Aggressive OOB + MD5',       args: '--oob 1+s --disorder 1 --fake -1 --md5sig' },
-				{ name: '38 — Aggressive DisoOB',          args: '--disoob 1+s --disorder 3+s' },
-				{ name: '39 — Aggressive Combo',           args: '--split 1+s --oob 2+s --disorder 3+s' },
-				{ name: '40 — TLS+HTTP Disorder + Record', args: '--proto tls,http --disorder 1 --tlsrec 1+s' },
-				/* 40-41: UDP */
-				{ name: '41 — UDP Fake',                   args: '--proto udp --udp-fake 5' },
-				{ name: '42 — TLS+UDP Fake MD5',           args: '--proto tls,udp --fake -1 --md5sig --udp-fake 5' },
-				/* 42: Full combo */
-				{ name: '43 — Full TLS Bypass',            args: '--proto tls --fake -1 --md5sig --tlsrec 1+s' }
+				/* A — Community-contributed strategies (from issues / community testing) */
+				{ name: 'A1 — YouTube 1',                  args: '-o1 -r-5+se -a1 -At,r,s -d1 -n google.com -Qr -f-1' },
+				{ name: 'A2 — YouTube 2',                  args: '-d1 -d3+s -s6+s -d9+s -s12+s -d15+s -s20+s -d25+s -s30+s -d35+s -r1+s -S -a1 -As -d1 -d3+s -s6+s -d9+s -s12+s -d15+s -s20+s -d25+s -s30+s -d35+s -S -a1' },
+				{ name: 'A3 — General 1',                  args: '-d1+s -O1 -s29+s -t 5 -An -Ku -a5 -s443+s -d80+s -d443+s -s80+s -s443+s -d53+s -s53+s -d443+s -An' },
+				{ name: 'A4 — YouTube 3',                  args: '-H:"youtube.com googlevideo.com ggpht.com ytimg.com googleapis.com googleusercontent.com youtube-ui.l.google.com yt4.ggpht.com" -o1 -a1 -r-5+se -t6 -n rutube.com -An -f-1 -t8 -n www.google.com -d1 -s1+s -d1+s -s3+s -d6+s -s12+s -d14+s -s20+s -d24+s -s30+s -a1' },
+				{ name: 'A5 — General 2',                  args: '-H:"youtube.com googlevideo.com ytimg.com ggpht.com youtu.be youtubei.googleapis.com" -Kt,h -d1 -s1+s -s3+s -s6+s -s9+s -s12+s -s15+s -s20+s -s30+s -a1 -An -H:"soundcloud.com api.soundcloud.com api-v2.soundcloud.com m.soundcloud.com eventgateway.soundcloud.com api-partners.soundcloud.com api-mobile.soundcloud.com wis.sndcdn.com va.sndcdn.com invite.soundcloud.com events.soundcloud.com" -Kth -Qorig -n "www.google.com" -f-1 -t5 -d1 -s1+s -s3+s -s6+s -s9+s -s12+s -s15+s -s20+s -s30+s -Mh,d,r -An -H:"sndcdn.com a-v2.sndcdn.com cf-hls-media.sndcdn.com cf-media.sndcdn.com cf-preview-media.sndcdn.com cf-hls-opus-media.sndcdn.com i1.sndcdn.com i2.sndcdn.com i3.sndcdn.com i4.sndcdn.com assets.soundcloud.com playback.media-streaming.soundcloud.cloud" -Kth -Qorig -n "www.google.com" -f-1 -t5 -s1 -d2 -Mh,d,r -An -H:"discord.com discord.gg discord.media discordapp.com cdn.discordapp.com media.discordapp.net images-ext-1.discordapp.net images-ext-2.discordapp.net images.discordapp.net gateway.discord.gg status.discord.com api.discord.com discord-attachments-uploads-prd.storage.googleapis.com hcaptcha.com recaptcha.net accounts.google.com appleid.apple.com" -Kth -Qorig -n "www.google.com" -f-1 -t5 -o1 -s1+s -s2+s -s5+s -d3+s -s7+s -s10+s -s15+s -An -Ku' },
+				{ name: 'A6 — General 3',                  args: '-H:"youtube.com googlevideo.com ggpht.com ytimg.com googleapis.com googleusercontent.com youtube-ui.l.google.com yt4.ggpht.com" -o1 -a1 -r-5+se -t6 -n rutube.com -An -H:"cdn.discordapp.com canary.discord.com vdis.gd ptb.discord.com discord-attachments-uploads-prd.storage.googleapis.com discord-activities.com discord.co discord.com discord.design discord.dev discord.gg discord.gift discord.gifts discord.media discord.new discord.store discord.tools discordactivities.com discordapp.com discordapp.net media.discordapp.net images-ext-1.discordapp.net images-ext-2.discordapp.net stable.dl2.discordapp.net discordcdn.com discordmerch.com discordpartygames.com discordsays.com discordsez.com discordstatus.com" -f-1 -t8 -n www.google.com -s1+s -a5 -An -H:"soundcloud.com sndcdn.com soundcloud.app.goo.gl" -f-1 -T0.5 -Ars -d0+sm -At -r1+s -An -f-200 -s2 -s5+hm -t6 -Qr -n wb.ru' },
+				/* B — Disorder — most effective on Linux */
+				{ name: 'B1 — Disorder Basic',             args: '--disorder 1' },
+				{ name: 'B2 — Disorder at SNI',            args: '--disorder 1+s' },
+				{ name: 'B3 — Disorder TLS+HTTP',          args: '--proto tls,http --disorder 1' },
+				{ name: 'B4 — Split + Disorder',           args: '--split 1 --disorder 3' },
+				{ name: 'B5 — Disorder + Auto TLS Record', args: '--disorder 1 --auto=torst --tlsrec 1+s' },
+				/* C — Fake TTL */
+				{ name: 'C1 — Fake TTL=6',                 args: '--fake -1 --ttl 6' },
+				{ name: 'C2 — Fake TTL=8',                 args: '--fake -1 --ttl 8' },
+				{ name: 'C3 — Fake TTL=10',                args: '--fake -1 --ttl 10' },
+				{ name: 'C4 — Fake TTL=12',                args: '--fake -1 --ttl 12' },
+				{ name: 'C5 — Fake TTL=15',                args: '--fake -1 --ttl 15' },
+				/* D — Fake MD5 — Linux-only TCP option */
+				{ name: 'D1 — Fake MD5',                   args: '--fake -1 --md5sig' },
+				{ name: 'D2 — Disorder + Fake MD5',        args: '--disorder 1 --fake -1 --md5sig' },
+				{ name: 'D3 — Fake MD5 TLS+HTTP',          args: '--proto tls,http --fake -1 --md5sig' },
+				/* E — TLS Record split */
+				{ name: 'E1 — TLS Record Split',           args: '--tlsrec 1+s' },
+				{ name: 'E2 — TLS Record + Auto',          args: '--auto=torst --tlsrec 1+s' },
+				{ name: 'E3 — TLS Record + Timeout',       args: '--auto=torst --timeout 3 --tlsrec 1+s' },
+				{ name: 'E4 — Disorder + TLS Record',      args: '--disorder 1 --tlsrec 1+s' },
+				/* F — OOB */
+				{ name: 'F1 — OOB at SNI',                 args: '--oob 1+s' },
+				{ name: 'F2 — OOB at SNI+3',               args: '--oob 3+s' },
+				{ name: 'F3 — DisoOB at SNI',              args: '--disoob 1+s' },
+				{ name: 'F4 — DisoOB + Fake MD5',          args: '--disoob 1+s --fake -1 --md5sig' },
+				/* G — Split */
+				{ name: 'G1 — Split at SNI',               args: '--split 1+s' },
+				{ name: 'G2 — Split at SNI Middle',        args: '--split 0+sm' },
+				{ name: 'G3 — Split at 2',                 args: '--split 2' },
+				{ name: 'G4 — Split + OOB',                args: '--split 1+s --oob 2+s' },
+				/* H — HTTP modification */
+				{ name: 'H1 — HTTP Host Case Mix',         args: '--proto http --mod-http hcsmix' },
+				{ name: 'H2 — HTTP Host Double Mix',       args: '--proto http --mod-http hcsmix,dcsmix' },
+				{ name: 'H3 — HTTP Full Mix',              args: '--proto http --mod-http hcsmix,dcsmix,rmspace' },
+				{ name: 'H4 — HTTP Mix + Disorder',        args: '--proto tls,http --mod-http hcsmix --disorder 1' },
+				/* I — Auto-mode */
+				{ name: 'I1 — Auto SSL Error Fallback',    args: '--fake -1 --ttl 8 --auto=ssl_err --fake -1 --ttl 5' },
+				{ name: 'I2 — Auto Reset Fallback',        args: '--fake -1 --md5sig --auto=torst --disorder 1' },
+				/* J — Fake TLS modification */
+				{ name: 'J1 — Random TLS Fake',            args: '--fake -1 --fake-tls-mod rand' },
+				{ name: 'J2 — Original TLS Fake',          args: '--fake -1 --fake-tls-mod orig' },
+				/* K — Aggressive combos */
+				{ name: 'K1 — Aggressive Split',           args: '--split 1+s --disorder 3+s' },
+				{ name: 'K2 — Aggressive OOB + MD5',       args: '--oob 1+s --disorder 1 --fake -1 --md5sig' },
+				{ name: 'K3 — Aggressive DisoOB',          args: '--disoob 1+s --disorder 3+s' },
+				{ name: 'K4 — Aggressive Combo',           args: '--split 1+s --oob 2+s --disorder 3+s' },
+				{ name: 'K5 — TLS+HTTP Disorder + Record', args: '--proto tls,http --disorder 1 --tlsrec 1+s' },
+				/* L — UDP */
+				{ name: 'L1 — UDP Fake',                   args: '--proto udp --udp-fake 5' },
+				{ name: 'L2 — TLS+UDP Fake MD5',           args: '--proto tls,udp --fake -1 --md5sig --udp-fake 5' },
+				/* M — Full combo */
+				{ name: 'M1 — Full TLS Bypass',            args: '--proto tls --fake -1 --md5sig --tlsrec 1+s' }
 			];
 
+			/* Groups are matched to presets by the letter prefix of the preset name
+			 * (A1 → group A, B3 → group B, …). A preset can sit anywhere in the array and
+			 * still render under its group, in both the dropdown and the test-all table —
+			 * so adding a strategy is a one-line append, no index bookkeeping. */
 			const BYEDPI_GROUPS = [
-				{ label: _('Disorder — reorders TCP segments'),  range: [0,  4]  },
-				{ label: _('Fake TTL'),                          range: [5,  9]  },
-				{ label: _('Fake MD5'),                          range: [10, 13] },
-				{ label: _('TLS Record Split'),                                   range: [14, 17] },
-				{ label: _('OOB'),                                                range: [18, 21] },
-				{ label: _('Split'),                                              range: [22, 25] },
-				{ label: _('HTTP Modification'),                                  range: [26, 29] },
-				{ label: _('Auto-mode'),                                          range: [30, 31] },
-				{ label: _('Fake SNI / TLS Modification'),                        range: [32, 34] },
-				{ label: _('Aggressive'),                                         range: [35, 39] },
-				{ label: _('UDP'),                                                range: [40, 41] },
-				{ label: _('Full Combo'),                                         range: [42, 42] },
+				{ key: 'A', label: _('Community') },
+				{ key: 'B', label: _('Disorder — reorders TCP segments') },
+				{ key: 'C', label: _('Fake TTL') },
+				{ key: 'D', label: _('Fake MD5') },
+				{ key: 'E', label: _('TLS Record Split') },
+				{ key: 'F', label: _('OOB') },
+				{ key: 'G', label: _('Split') },
+				{ key: 'H', label: _('HTTP Modification') },
+				{ key: 'I', label: _('Auto-mode') },
+				{ key: 'J', label: _('TLS Modification') },
+				{ key: 'K', label: _('Aggressive') },
+				{ key: 'L', label: _('UDP') },
+				{ key: 'M', label: _('Full Combo') },
 			];
 
 			const callByeDPITest = rpc.declare({
@@ -2342,12 +2352,13 @@ return view.extend({
 				}, curIdx < 0 ? _('— custom / select a preset —') : _('— select a preset —')));
 				for (let g of BYEDPI_GROUPS) {
 					const grp = E('optgroup', { label: g.label });
-					for (let i = g.range[0]; i <= g.range[1]; i++) {
+					BYEDPI_PRESETS.forEach((p, i) => {
+						if (p.name.charAt(0) !== g.key) return;
 						grp.appendChild(E('option', {
 							value: String(i),
 							selected: i === curIdx ? '' : null
-						}, BYEDPI_PRESETS[i].name));
-					}
+						}, p.name));
+					});
 					sel.appendChild(grp);
 				}
 				sel.addEventListener('change', function() {
@@ -2432,24 +2443,46 @@ return view.extend({
 					style: 'width:100%; border-collapse:collapse; font-size:0.85em; display:none; margin-top:4px'
 				});
 
+				let stopRequested = false;
+				const stopBtn = E('button', {
+					'class': 'btn cbi-button cbi-button-reset',
+					'style': 'display:none; margin-left:6px',
+					'click': function() {
+						stopRequested = true;
+						stopBtn.disabled = true;
+						stopBtn.textContent = _('Stopping…');
+					}
+				}, [ _('Stop') ]);
+
 				const btn = E('button', {
 					'class': 'btn cbi-button cbi-button-action',
 					'disabled': true,
 					'click': ui.createHandlerFn(this, function() {
-						if (!confirm(_('Test all 43 strategies?\n\n' +
-						              'Each is probed against 4 sites (2 far, 2 near) — ~6 min total.\n' +
-						              'LAN clients are not affected during testing.')))
+						if (!confirm(_('Test all strategies?') + '\n\n' +
+						             _('Each is probed against 4 sites (~12 min total). You can Stop it at any point.') + '\n' +
+						             _('LAN clients are not affected during testing.')))
 							return;
 
 						btn.disabled = true;
+						stopRequested = false;
+						stopBtn.disabled = false;
+						stopBtn.textContent = _('Stop');
+						stopBtn.style.display = '';
 						progressEl.style.display = '';
 						progressEl.style.color = 'gray';
 						progressEl.textContent = _('Preparing...');
 						tableEl.style.display = '';
 						tableEl.innerHTML = '';
 
+						/* Display order = group order, then array order within a group, so an
+						 * appended preset shows under its letter-group here too (not at the bottom). */
+						const orderedIdx = [];
+						for (let g of BYEDPI_GROUPS)
+							BYEDPI_PRESETS.forEach((p, gi) => { if (p.name.charAt(0) === g.key) orderedIdx.push(gi); });
+
 						const rows = [];
-						for (let i = 0; i < BYEDPI_PRESETS.length; i++) {
+						for (let k = 0; k < orderedIdx.length; k++) {
+							const i = orderedIdx[k];
 							const dotsCell = E('td', {
 								style: 'white-space:nowrap; padding:2px 8px; font-size:0.95em; color:gray'
 							}, '–');
@@ -2474,16 +2507,18 @@ return view.extend({
 
 						let fullPass = 0, partial = 0;
 						let chain = Promise.resolve();
-						for (let i = 0; i < BYEDPI_PRESETS.length; i++) {
-							chain = chain.then((function(idx) {
+						for (let k = 0; k < orderedIdx.length; k++) {
+							chain = chain.then((function(pos) {
 								return function() {
-									const { dotsCell, applyBtn } = rows[idx];
+									if (stopRequested) return;
+									const i = orderedIdx[pos];
+									const { dotsCell, applyBtn } = rows[pos];
 									progressEl.textContent =
-										(idx + 1) + ' / ' + BYEDPI_PRESETS.length +
-										': ' + BYEDPI_PRESETS[idx].name;
+										(pos + 1) + ' / ' + orderedIdx.length +
+										': ' + BYEDPI_PRESETS[i].name;
 									dotsCell.textContent = '⏳';
 									return L.resolveDefault(
-										callByeDPITest(BYEDPI_PRESETS[idx].args, '15335'), {}
+										callByeDPITest(BYEDPI_PRESETS[i].args, '15335'), {}
 									).then(function(ret) {
 										if (ret.results && ret.results.length) {
 											const frag = [];
@@ -2509,20 +2544,27 @@ return view.extend({
 						}
 
 						return chain.then(function() {
-							progressEl.style.color = fullPass > 0 ? 'green' : (partial > 0 ? '#c80' : '#cc3300');
-							progressEl.textContent =
-								_('Done') + ': ' + fullPass + ' / ' + BYEDPI_PRESETS.length +
-								' ' + _('work on all sites') +
+							stopBtn.style.display = 'none';
+							const tail =
 								(partial > 0 ? ', ' + partial + ' ' + _('partial') : '') +
 								((fullPass + partial) > 0 ? ' — ' + _('click Apply next to a strategy (prefer all-green)') : '');
+							if (stopRequested) {
+								progressEl.style.color = '#c80';
+								progressEl.textContent = _('Stopped') + ' — ' + fullPass + ' ' + _('work on all sites') + tail;
+							} else {
+								progressEl.style.color = fullPass > 0 ? 'green' : (partial > 0 ? '#c80' : '#cc3300');
+								progressEl.textContent = _('Done') + ': ' + fullPass + ' / ' + BYEDPI_PRESETS.length +
+									' ' + _('work on all sites') + tail;
+							}
 							btn.disabled = false;
 						});
 					})
 				}, [ _('Test all strategies') ]);
 
 				const hintEl = E('div', { style: 'font-size:0.85em; color:#666; margin-bottom:6px' },
-					_('Probes each preset against 4 sites (YouTube/Telegram far, Discord/Speedtest near). ' +
-					  '● = pass, ○ = fail; hover a dot for the site and result. All-green = works everywhere. ~6 min total.'));
+					_('Probes each preset against 4 sites (YouTube video CDN, Telegram, Discord, Speedtest). ' +
+					  '● = TLS handshake got through, ○ = blocked; hover a dot for the site and result. ' +
+					  'This is a fixed set — the test checks each one, it does not generate or auto-pick. You can Stop it anytime. ~12 min total.'));
 
 				L.resolveDefault(callCurlStatus(), {}).then(function(status) {
 					if (status.installed) {
@@ -2538,6 +2580,7 @@ return view.extend({
 					E('div', { 'class': 'cbi-value-field' }, [
 						hintEl,
 						btn,
+						stopBtn,
 						progressEl,
 						tableEl
 					])

@@ -3783,6 +3783,78 @@ msgid "Diagnostics Report"
 msgstr "Отчёт диагностики"
 
 #: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Re:HomeProxy Diagnostics"
+msgstr "Диагностика Re:HomeProxy"
+
+#: root/usr/share/luci/menu.d/luci-app-re-homeproxy.json
+msgid "Core & Tools"
+msgstr "Ядро и службы"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Connectivity"
+msgstr "Проверка соединения"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Testing…"
+msgstr "Проверка…"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Active URLTest node"
+msgstr "Активная нода URLTest"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Runs Core, Config, Network, and Connectivity checks simultaneously."
+msgstr "Запускает проверки ядра, конфигурации, сети и подключения одновременно."
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Community"
+msgstr "Сообщество"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "TLS Modification"
+msgstr "Изменение TLS"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Stop"
+msgstr "Остановить"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Stopping…"
+msgstr "Остановка…"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Stopped"
+msgstr "Остановлено"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "work on all sites"
+msgstr "работают на всех сайтах"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "partial"
+msgstr "частично"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "click Apply next to a strategy (prefer all-green)"
+msgstr "нажмите «Применить» рядом со стратегией (лучше all-green)"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Test all strategies?"
+msgstr "Проверить все стратегии?"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Each is probed against 4 sites (~12 min total). You can Stop it at any point."
+msgstr "Каждая проверяется на 4 сайтах (всего ~12 мин). Можно остановить в любой момент."
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "LAN clients are not affected during testing."
+msgstr "На клиентов локальной сети проверка не влияет."
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Probes each preset against 4 sites (YouTube video CDN, Telegram, Discord, Speedtest). ● = TLS handshake got through, ○ = blocked; hover a dot for the site and result. This is a fixed set — the test checks each one, it does not generate or auto-pick. You can Stop it anytime. ~12 min total."
+msgstr "Проверяет каждую стратегию на 4 сайтах (видео-CDN YouTube, Telegram, Discord, Speedtest). ● = TLS-рукопожатие прошло, ○ = заблокировано; наведите на точку, чтобы увидеть сайт и результат. Это фиксированный набор — тест проверяет каждую, он не генерирует и не подбирает. Можно остановить в любой момент. Всего ~12 мин."
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
 msgid "Click Generate to collect diagnostics…"
 msgstr "Нажмите «Сформировать» для сбора диагностики…"
 
@@ -3880,8 +3952,8 @@ msgid "Resolves blocked domains via proxy — your ISP cannot see which sites yo
 msgstr "Разрешает заблокированные домены через прокси — провайдер не видит, какие сайты вы запрашиваете. Использует зашифрованный DNS (DoH/DoT = DNS поверх HTTPS/TLS)."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Default route is Direct. Added rules are proxied, with automatic priority:<br>1. Smaller lists (YouTube, Discord etc.)<br>2. <b>Russia Inside</b> (1000+ domains) — Russian services that must stay accessible (allows-list by itdoginfo)<br>3. <b>Re-filter</b> (60000+ domains + 25000+ IPs) — community blocklist of domains and IPs banned in Russia (Roskomnadzor)"
-msgstr "Маршрут по умолчанию — прямой. Добавленные правила проксируются с автоматическим приоритетом:<br>1. Небольшие списки (YouTube, Discord и т.д.)<br>2. <b>Russia Inside</b> (1000+ доменов) — российские сервисы, которые должны оставаться доступными (список разрешений от itdoginfo)<br>3. <b>Re-filter</b> (60000+ доменов + 25000+ IP) — список заблокированных доменов и IP (Роскомнадзор, сообщество)"
+msgid "Default route is Direct. Added rules are proxied, with automatic priority:<br>1. Smaller lists (YouTube, Discord etc.)<br>2. <b>Russia Inside</b> (1000+ domains, itdoginfo) — the in-Russia must-have set (YouTube, Discord, Telegram, Meta…) routed through the proxy<br>3. <b>Re-filter</b> (60000+ domains + 25000+ IPs) — community blocklist of domains and IPs banned in Russia (Roskomnadzor)"
+msgstr "Маршрут по умолчанию — прямой. Добавленные правила проксируются с автоматическим приоритетом:<br>1. Небольшие списки (YouTube, Discord и т.д.)<br>2. <b>Russia Inside</b> (1000+ доменов, itdoginfo) — обязательный для России набор (YouTube, Discord, Telegram, Meta…), проксируется<br>3. <b>Re-filter</b> (60000+ доменов + 25000+ IP) — список заблокированных в России доменов и IP (Роскомнадзор, от сообщества)"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "ByeDPI"

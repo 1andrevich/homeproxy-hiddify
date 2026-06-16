@@ -942,6 +942,17 @@ const methods = {
 
 	byedpi_remove: {
 		call: function(req) {
+			/* Stop the running ciadpi BEFORE pulling the package. Otherwise the live
+			 * process keeps running (Linux keeps a deleted binary's process alive via its
+			 * inode), and byedpi_status — which is just `pidof ciadpi` — still reports
+			 * "running" until the next homeproxy restart. So: disable it in config (so
+			 * homeproxy's procd instance stops and won't respawn), stop/disable the
+			 * standalone service, reload homeproxy, then kill any leftover (e.g.
+			 * strategy-test) instances — and only then remove the package. */
+			system("uci set homeproxy.config.byedpi_enabled='0'; uci commit homeproxy 2>/dev/null; true");
+			system('/etc/init.d/ciadpi stop 2>/dev/null; /etc/init.d/ciadpi disable 2>/dev/null; true');
+			system('/etc/init.d/homeproxy reload 2>/dev/null; true');
+			system('pkill -f ciadpi 2>/dev/null; true');
 			let ret;
 			if (access('/usr/bin/apk'))
 				ret = system('apk del byedpi');
@@ -962,15 +973,17 @@ const methods = {
 			const test_port = req.args?.port || 15335;
 			const has_curl = !!access('/usr/bin/curl');
 
-			/* Test panel: 2 far servers (youtube, telegram) that fixed fake-TTL strategies
-			 * survive (fake dies in transit) + 2 near Cloudflare/Ookla edges (discord,
-			 * speedtest) where the fake reaches the server and corrupts the handshake. The
-			 * far/near spread exposes destination-sensitivity instead of hiding it. */
+			/* Test panel. Pass = the TLS handshake completes (judged below by time_appconnect),
+			 * which is the precise DPI-bypass signal — not the HTTP status. YouTube probes the
+			 * real video CDN (redirector.googlevideo.com), not the www page: the video path is
+			 * what users care about and what the DPI actually blocks. It returns 404 with no
+			 * path requested — irrelevant, we judge the handshake. Discord/Telegram/Speedtest
+			 * cover the Cloudflare/other edges for a destination spread. */
 			const hosts = [
-				{ tag: 'yt', label: 'YouTube',       url: 'https://www.youtube.com' },
-				{ tag: 'tg', label: 'Telegram',      url: 'https://telegram.org' },
-				{ tag: 'dc', label: 'Discord',       url: 'https://discord.com' },
-				{ tag: 'st', label: 'Speedtest.net', url: 'https://www.speedtest.net' }
+				{ tag: 'yt', label: 'YouTube (video)', url: 'https://redirector.googlevideo.com' },
+				{ tag: 'tg', label: 'Telegram',        url: 'https://telegram.org' },
+				{ tag: 'dc', label: 'Discord',         url: 'https://discord.com' },
+				{ tag: 'st', label: 'Speedtest.net',   url: 'https://www.speedtest.net' }
 			];
 
 			/* Detect redirect mode: homeproxy_output_redir intercepts router-originated
@@ -1030,14 +1043,15 @@ const methods = {
 			}
 
 			/* Probe every host in parallel through the one ciadpi instance. Each background
-			 * job writes "<http_code> <curl_exit>" so we can tell a corrupted handshake (tls)
-			 * from a host that's simply down/unresolvable (dns) — the latter isn't the
-			 * strategy's fault. */
+			 * job writes "<http_code> <time_appconnect> <curl_exit>": time_appconnect is the
+			 * pass signal (non-zero = the TLS handshake completed, i.e. the desync got the
+			 * ClientHello past the DPI), and curl_exit explains a failure (tls reset vs timeout
+			 * vs dns). 15s max-time gives slow/adaptive strategies room to land. */
 			const tmp = `/tmp/byedpi_test_${test_port}`;
 			system(`rm -rf ${tmp}; mkdir -p ${tmp} 2>/dev/null; true`);
 			let cmd = '';
 			for (let i = 0; i < length(hosts); i++)
-				cmd += `( code=$(curl -s --socks5-hostname 127.0.0.1:${test_port} -o /dev/null -w '%{http_code}' --connect-timeout 4 --max-time 8 ${shellquote(hosts[i].url)} 2>/dev/null); echo "$code $?" > ${tmp}/${i} ) & `;
+				cmd += `( out=$(curl -s --socks5-hostname 127.0.0.1:${test_port} -o /dev/null -w '%{http_code} %{time_appconnect}' --connect-timeout 5 --max-time 15 ${shellquote(hosts[i].url)} 2>/dev/null); echo "$out $?" > ${tmp}/${i} ) & `;
 			cmd += 'wait';
 			system(cmd);
 
@@ -1047,14 +1061,20 @@ const methods = {
 				const raw = trim(readfile(`${tmp}/${i}`) || '');
 				const parts = split(raw, ' ');
 				const code = parts[0] || '000';
-				const rc = parts[1] || '';
-				const ok = (code === '200' || code === '301' || code === '302');
+				const appconnect = parts[1] || '0';
+				const rc = parts[2] || '';
+				/* Pass = the TLS handshake completed (time_appconnect > 0) — the precise
+				 * DPI-bypass signal. The HTTP status is irrelevant (a 404 from googlevideo is a
+				 * pass). The old criterion (2xx/3xx only) produced false negatives: 4xx replies
+				 * and slow adaptive handshakes were wrongly failed. */
+				const ok = (+appconnect > 0);
 				if (ok) passed++;
 				push(results, {
 					tag:   hosts[i].tag,
 					label: hosts[i].label,
 					host:  hosts[i].url,
 					code:  code,
+					tls:   appconnect,
 					ok:    ok,
 					reason: ok ? null :
 					        (rc === '6')  ? 'dns' :
