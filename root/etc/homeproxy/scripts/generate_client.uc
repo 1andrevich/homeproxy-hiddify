@@ -343,6 +343,15 @@ function xhttp_download(node) {
 	};
 }
 
+/* sing-box-extended FATALs with "x_padding_bytes cannot be disabled" whenever xhttp
+ * padding resolves to empty: an explicit "0"/"0-0" disables it, AND an absent field
+ * decodes to "" in Go which counts as disabled too. So the field must always be present
+ * and non-empty on every xhttp transport — including the nested `download` block, which
+ * is itself a full transport. Coerce any disabling/empty value to the default range. */
+function xhttp_padding(v) {
+	return (isEmpty(v) || v === '0' || v === '0-0') ? '100-1000' : v;
+}
+
 function generate_outbound(node) {
 	if (type(node) !== 'object' || isEmpty(node))
 		return null;
@@ -473,8 +482,8 @@ function generate_outbound(node) {
 			 * snake_case. Emit both spellings; the wrong-core one is null and removeBlankAttrs
 			 * strips it before write. sing-box keeps a forced 100-1000 padding default to
 			 * preserve prior behaviour; hiddify only emits what the node actually carries. */
-			x_padding_bytes: (is_singbox && node.transport === 'xhttp') ? (node.xhttp_padding_bytes || '100-1000') : null,
-			xPaddingBytes: (is_hiddify && node.transport === 'xhttp') ? (node.xhttp_padding_bytes || null) : null,
+			x_padding_bytes: (is_singbox && node.transport === 'xhttp') ? xhttp_padding(node.xhttp_padding_bytes) : null,
+			xPaddingBytes: (is_hiddify && node.transport === 'xhttp' && !isEmpty(node.xhttp_padding_bytes)) ? xhttp_padding(node.xhttp_padding_bytes) : null,
 			sc_max_each_post_bytes: (is_singbox && node.transport === 'xhttp') ? (node.xhttp_sc_max_each_post_bytes || null) : null,
 			scMaxEachPostBytes: (is_hiddify && node.transport === 'xhttp') ? (node.xhttp_sc_max_each_post_bytes || null) : null,
 			sc_min_posts_interval_ms: (is_singbox && node.transport === 'xhttp') ? (node.xhttp_sc_min_posts_interval_ms || null) : null,
@@ -505,11 +514,20 @@ function generate_outbound(node) {
 	};
 
 	/* xhttp split download: attach under the per-core key (`download` for
-	 * sing-box-extended, `downloadSettings` for hiddify-core). */
+	 * sing-box-extended, `downloadSettings` for hiddify-core). The download block is a
+	 * full xhttp transport, so sing-box requires it to carry x_padding_bytes too — an
+	 * absent field decodes to "" and FATALs ("cannot be disabled"). Mirror the main
+	 * transport's per-core padding spelling (sing-box always forces a default; hiddify
+	 * only emits what the node carries). */
 	if (type(outbound.transport) === 'object') {
 		const dl = xhttp_download(node);
-		if (dl)
+		if (dl) {
+			if (is_singbox && node.transport === 'xhttp')
+				dl.x_padding_bytes = xhttp_padding(node.xhttp_padding_bytes);
+			else if (is_hiddify && node.transport === 'xhttp' && !isEmpty(node.xhttp_padding_bytes))
+				dl.xPaddingBytes = xhttp_padding(node.xhttp_padding_bytes);
 			outbound.transport[is_hiddify ? 'downloadSettings' : 'download'] = dl;
+		}
 	}
 
 	return outbound;
@@ -1051,7 +1069,7 @@ uci.foreach(uciconfig, uciserver, (cfg) => {
 			host: transport_host(cfg),
 			path: cfg.http_path || cfg.ws_path,
 			mode: (cfg.transport === 'xhttp') ? (cfg.xhttp_mode || 'auto') : null,
-			x_padding_bytes: (is_singbox && cfg.transport === 'xhttp') ? (cfg.xhttp_padding_bytes || '100-1000') : null,
+			x_padding_bytes: (is_singbox && cfg.transport === 'xhttp') ? xhttp_padding(cfg.xhttp_padding_bytes) : null,
 			headers: cfg.ws_host ? {
 				Host: cfg.ws_host
 			} : null,

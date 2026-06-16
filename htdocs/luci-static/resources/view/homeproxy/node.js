@@ -2604,7 +2604,7 @@ return view.extend({
 										}
 									});
 								};
-							})(i));
+							})(k));
 						}
 
 						return chain.then(function() {
@@ -2628,7 +2628,7 @@ return view.extend({
 				const hintEl = E('div', { style: 'font-size:0.85em; color:#666; margin-bottom:6px' },
 					_('Probes each preset against 4 sites (YouTube video CDN, Telegram, Discord, Speedtest). ' +
 					  '● = TLS handshake got through, ○ = blocked; hover a dot for the site and result. ' +
-					  'This is a fixed set — the test checks each one, it does not generate or auto-pick. You can Stop it anytime. ~12 min total.'));
+					  'Tests a fixed preset list. You can Stop it anytime. ~12 min total.'));
 
 				L.resolveDefault(callCurlStatus(), {}).then(function(status) {
 					if (status.installed) {

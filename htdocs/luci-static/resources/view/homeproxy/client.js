@@ -335,6 +335,8 @@ return view.extend({
 		o.value('77.88.8.8', _('Yandex DNS (77.88.8.8)'));
 		o.value('193.58.251.251', _('SkyDNS (193.58.251.251)'));
 		o.value('83.220.169.155', _('Comss.one (83.220.169.155)'));
+		o.value('1.1.1.1', _('Cloudflare DNS UDP (1.1.1.1)'));
+		o.value('8.8.8.8', _('Google DNS UDP (8.8.8.8)'));
 		o.depends('routing_mode', 'proxy_banned_ru');
 		o.default = '77.88.8.8';
 		o.rmempty = false;
@@ -1043,11 +1045,17 @@ return view.extend({
 			delete this.vallist;
 
 			this.value('direct-out', _('Direct'));
-			if (uci.get(data[0], 'config', 'routing_mode') === 'proxy_banned_ru') {
+			/* "Same as main node" (main-out) exists only OUTSIDE custom mode: custom mode
+			 * hides the main-node selector and the generator never emits a main-out there
+			 * (its default/final is default_outbound). So gate it on the mode, not on a
+			 * possibly-stale main_node value, to avoid offering a tag that won't exist. */
+			if (uci.get(data[0], 'config', 'routing_mode') !== 'custom' &&
+			    uci.get(data[0], 'config', 'main_node'))
 				this.value('main-out', _('Same as main node') + ' 🔗');
-				if (uci.get(data[0], 'config', 'byedpi_enabled') === '1')
-					this.value('byedpi-out', _('ByeDPI'));
-			}
+			/* byedpi-out, by contrast, IS emitted in every routing mode whenever ByeDPI is
+			 * enabled — so a custom-mode rule can target it directly, no routing node needed. */
+			if (uci.get(data[0], 'config', 'byedpi_enabled') === '1')
+				this.value('byedpi-out', _('ByeDPI'));
 			uci.sections(data[0], 'routing_node', (res) => {
 				if (res.enabled === '1')
 					this.value(res['.name'], res.label);
@@ -1778,7 +1786,7 @@ return view.extend({
 		/* LAN IP policy start */
 		ss.tab('lan_ip_policy', _('LAN IP Policy'));
 
-		so = ss.taboption('lan_ip_policy', form.ListValue, 'lan_proxy_mode', _('Proxy filter mode'));
+		so = ss.taboption('lan_ip_policy', form.ListValue, 'lan_proxy_mode', _('Proxy mode for devices'));
 		so.value('disabled', _('Disable'));
 		so.value('listed_only', _('Proxy listed only'));
 		so.value('except_listed', _('Proxy all except listed'));
@@ -1803,14 +1811,14 @@ return view.extend({
 		so = fwtool.addMACOption(ss, 'lan_ip_policy', 'lan_proxy_mac_addrs', _('Proxy MAC-s'), null, hosts);
 		so.depends('lan_proxy_mode', 'listed_only');
 
-		so = fwtool.addIPOption(ss, 'lan_ip_policy', 'lan_gaming_mode_ipv4_ips', _('Gaming mode IPv4 IP-s'), null, 'ipv4', hosts, true);
+		so = fwtool.addIPOption(ss, 'lan_ip_policy', 'lan_gaming_mode_ipv4_ips', _('Gaming mode IPv4 IP-s'), _('In gaming mode, only TCP traffic from the selected device is proxied.'), 'ipv4', hosts, true);
 
 		so = fwtool.addIPOption(ss, 'lan_ip_policy', 'lan_gaming_mode_ipv6_ips', _('Gaming mode IPv6 IP-s'), null, 'ipv6', hosts, true);
 		so.depends('homeproxy.config.ipv6_support', '1');
 
 		so = fwtool.addMACOption(ss, 'lan_ip_policy', 'lan_gaming_mode_mac_addrs', _('Gaming mode MAC-s'), null, hosts);
 
-		so = fwtool.addIPOption(ss, 'lan_ip_policy', 'lan_global_proxy_ipv4_ips', _('Global proxy IPv4 IP-s'), null, 'ipv4', hosts, true);
+		so = fwtool.addIPOption(ss, 'lan_ip_policy', 'lan_global_proxy_ipv4_ips', _('Global proxy IPv4 IP-s'), _('In global proxy mode, all traffic from the selected device goes through the proxy.'), 'ipv4', hosts, true);
 		so.depends({'homeproxy.config.routing_mode': 'custom', '!reverse': true});
 
 		so = fwtool.addIPOption(ss, 'lan_ip_policy', 'lan_global_proxy_ipv6_ips', _('Global proxy IPv6 IP-s'), null, 'ipv6', hosts, true);

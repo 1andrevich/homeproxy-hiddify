@@ -211,6 +211,21 @@ start_service() {
 		fi
 	fi
 
+	# Subscription auto-update cron. This install half was dropped in the init rewrite
+	# (commit 4f3511f) while the stop_service cleanup below was kept, leaving the UI
+	# "Auto update" checkbox wired to nothing. Restored verbatim from upstream: when
+	# enabled, run update_crond.sh daily at the chosen hour (refreshes subscriptions and,
+	# in bypass_mainland_china mode, the China resources). The #${CONF}_autosetup marker
+	# lets stop_service remove only our line without touching user cron jobs.
+	local auto_update auto_update_time
+	config_get_bool auto_update "subscription" "auto_update" "0"
+	if [ "$auto_update" = "1" ]; then
+		config_get auto_update_time "subscription" "auto_update_time" "2"
+		sed -i "/#${CONF}_autosetup/d" "/etc/crontabs/root" 2>"/dev/null"
+		echo -e "0 $auto_update_time * * * $HP_DIR/scripts/update_crond.sh #${CONF}_autosetup" >> "/etc/crontabs/root"
+		/etc/init.d/cron restart >"/dev/null" 2>&1
+	fi
+
 	log "$(basename $PROG) started."
 }
 
