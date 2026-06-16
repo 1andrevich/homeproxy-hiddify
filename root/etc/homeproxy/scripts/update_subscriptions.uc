@@ -132,17 +132,26 @@ function parse_singbox_outbound(ob, companion_map) {
 			config.http_path = tr.path || null;
 			config.http_host = tr.host || null;
 			config.xhttp_mode = tr.mode || null;
+			/* Accept both dialects: hiddify camelCase (what the Hiddify app exports) and
+			 * sing-box snake_case. */
+			config.xhttp_padding_bytes = tr.xPaddingBytes || tr.x_padding_bytes || null;
+			config.xhttp_sc_max_each_post_bytes = tr.scMaxEachPostBytes || tr.sc_max_each_post_bytes || null;
+			config.xhttp_sc_min_posts_interval_ms = tr.scMinPostsIntervalMs || tr.sc_min_posts_interval_ms || null;
 			if (!isEmpty(tr.headers))
 				config.xhttp_headers = sprintf('%J', tr.headers);
-			if (tr.downloadSettings) {
-				const dl = tr.downloadSettings;
-				const dl_tls = dl.tls || {};
+			/* Split download — hiddify `downloadSettings` or sing-box `download`. */
+			let dl = tr.downloadSettings || tr.download;
+			if (dl) {
+				let dl_tls = dl.tls || {};
 				config.xhttp_download_path = dl.path || null;
 				config.xhttp_download_host = dl.host || null;
+				config.xhttp_download_server = dl.server || dl.address || null;
+				config.xhttp_download_port = (dl.server_port != null && dl.server_port !== 0) ? ('' + dl.server_port) :
+				                             (dl.port != null ? ('' + dl.port) : null);
 				if (dl_tls.enabled) {
 					config.xhttp_download_security = 'tls';
 					config.xhttp_download_sni = dl_tls.server_name || null;
-					config.xhttp_download_alpn = dl_tls.alpn ? join(',', dl_tls.alpn) : null;
+					config.xhttp_download_alpn = (type(dl_tls.alpn) === 'array') ? join(',', dl_tls.alpn) : (dl_tls.alpn || null);
 					const dl_utls = dl_tls.utls || {};
 					config.xhttp_download_fp = dl_utls.fingerprint || null;
 				}

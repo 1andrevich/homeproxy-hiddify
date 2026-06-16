@@ -301,6 +301,48 @@ function transport_host(node) {
 	return h || node.httpupgrade_host;
 }
 
+/* xhttp "split download" (the "dl=h2"/"dl=h3" feature): the download direction can use
+ * a different host, path, server/port and TLS (commonly a different server_name + ALPN
+ * such as h2/h3) than the upload. sing-box-extended names this nested transport
+ * `download`; hiddify-core uses the xray-style `downloadSettings`. The inner shape is
+ * the same sing-box transport + TLS for both, so build it once and let the caller pick
+ * the key per core. Returns null when the node has no split download configured. An
+ * unset server/port is omitted (removeBlankAttrs strips it) = "reuse the main
+ * connection" — this matches the hiddify reference configs (and works on hiddify-core);
+ * sing-box users should set an explicit download server. */
+function xhttp_download(node) {
+	if (node.transport !== 'xhttp')
+		return null;
+	if (isEmpty(node.xhttp_download_host) && isEmpty(node.xhttp_download_sni) && isEmpty(node.xhttp_download_path))
+		return null;
+
+	const sec = node.xhttp_download_security;
+	const want_tls = (sec === 'tls' || sec === 'reality' || !isEmpty(node.xhttp_download_sni) || !isEmpty(node.xhttp_download_alpn));
+	const tls = want_tls ? {
+		enabled: true,
+		server_name: node.xhttp_download_sni,
+		insecure: strToBool(node.xhttp_download_insecure),
+		alpn: node.xhttp_download_alpn ? (type(node.xhttp_download_alpn) === 'array' ? node.xhttp_download_alpn : split(node.xhttp_download_alpn, ',')) : null,
+		utls: !isEmpty(node.xhttp_download_fp) ? {
+			enabled: true,
+			fingerprint: node.xhttp_download_fp
+		} : null,
+		reality: (sec === 'reality') ? {
+			enabled: true,
+			public_key: node.xhttp_download_pbk,
+			short_id: node.xhttp_download_sid
+		} : null
+	} : null;
+
+	return {
+		host: node.xhttp_download_host || transport_host(node),
+		path: node.xhttp_download_path || node.http_path,
+		server: node.xhttp_download_server || null,
+		server_port: strToInt(node.xhttp_download_port) || null,
+		tls: tls
+	};
+}
+
 function generate_outbound(node) {
 	if (type(node) !== 'object' || isEmpty(node))
 		return null;
@@ -425,7 +467,18 @@ function generate_outbound(node) {
 			host: transport_host(node),
 			path: node.http_path || node.ws_path,
 			mode: (node.transport === 'xhttp') ? (node.xhttp_mode || 'auto') : null,
+			/* xhttp transport options differ by core DIALECT: hiddify-core (HiddifyCli, the
+			 * format the Hiddify app exports) uses camelCase — xPaddingBytes /
+			 * scMaxEachPostBytes / scMinPostsIntervalMs — while sing-box-extended uses
+			 * snake_case. Emit both spellings; the wrong-core one is null and removeBlankAttrs
+			 * strips it before write. sing-box keeps a forced 100-1000 padding default to
+			 * preserve prior behaviour; hiddify only emits what the node actually carries. */
 			x_padding_bytes: (is_singbox && node.transport === 'xhttp') ? (node.xhttp_padding_bytes || '100-1000') : null,
+			xPaddingBytes: (is_hiddify && node.transport === 'xhttp') ? (node.xhttp_padding_bytes || null) : null,
+			sc_max_each_post_bytes: (is_singbox && node.transport === 'xhttp') ? (node.xhttp_sc_max_each_post_bytes || null) : null,
+			scMaxEachPostBytes: (is_hiddify && node.transport === 'xhttp') ? (node.xhttp_sc_max_each_post_bytes || null) : null,
+			sc_min_posts_interval_ms: (is_singbox && node.transport === 'xhttp') ? (node.xhttp_sc_min_posts_interval_ms || null) : null,
+			scMinPostsIntervalMs: (is_hiddify && node.transport === 'xhttp') ? (node.xhttp_sc_min_posts_interval_ms || null) : null,
 			headers: node.xhttp_headers ? json(node.xhttp_headers) : (node.ws_host ? { Host: node.ws_host } : null),
 			method: node.http_method,
 			max_early_data: strToInt(node.websocket_early_data),
@@ -450,6 +503,14 @@ function generate_outbound(node) {
 		bind_interface: node.bind_interface || null,
 		detour: (node.type === 'shadowsocks' && node.shadowtls_enabled === '1') ? ('cfg-' + node['.name'] + '-shadowtls-out') : null
 	};
+
+	/* xhttp split download: attach under the per-core key (`download` for
+	 * sing-box-extended, `downloadSettings` for hiddify-core). */
+	if (type(outbound.transport) === 'object') {
+		const dl = xhttp_download(node);
+		if (dl)
+			outbound.transport[is_hiddify ? 'downloadSettings' : 'download'] = dl;
+	}
 
 	return outbound;
 }

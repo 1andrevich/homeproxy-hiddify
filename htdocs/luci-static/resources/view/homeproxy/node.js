@@ -148,6 +148,8 @@ async function parseVpnLink(uri) {
 			config.http_host = xhttpCfg.host || null;
 			config.xhttp_mode = xhttpCfg.mode || null;
 			config.xhttp_padding_bytes = xhttpCfg.xPaddingBytes || xhttpCfg.x_padding_bytes || null;
+			config.xhttp_sc_max_each_post_bytes = xhttpCfg.scMaxEachPostBytes || xhttpCfg.sc_max_each_post_bytes || null;
+			config.xhttp_sc_min_posts_interval_ms = xhttpCfg.scMinPostsIntervalMs || xhttpCfg.sc_min_posts_interval_ms || null;
 		}
 
 		/* Protocol-specific fields */
@@ -589,6 +591,8 @@ function parseShareLink(uri, features) {
 				config.http_host = params.get('host') ? decodeURIComponent(params.get('host')) : null;
 				config.xhttp_mode = params.get('mode') || null;
 				config.xhttp_padding_bytes = params.get('xPaddingBytes') || params.get('x_padding_bytes') || null;
+				config.xhttp_sc_max_each_post_bytes = params.get('scMaxEachPostBytes') || params.get('sc_max_each_post_bytes') || null;
+				config.xhttp_sc_min_posts_interval_ms = params.get('scMinPostsIntervalMs') || params.get('sc_min_posts_interval_ms') || null;
 				break;
 			}
 
@@ -696,6 +700,8 @@ function parseShareLink(uri, features) {
 				config.http_host = params.get('host') ? decodeURIComponent(params.get('host')) : null;
 				config.xhttp_mode = params.get('mode') || null;
 				config.xhttp_padding_bytes = params.get('xPaddingBytes') || params.get('x_padding_bytes') || null;
+				config.xhttp_sc_max_each_post_bytes = params.get('scMaxEachPostBytes') || params.get('sc_max_each_post_bytes') || null;
+				config.xhttp_sc_min_posts_interval_ms = params.get('scMinPostsIntervalMs') || params.get('sc_min_posts_interval_ms') || null;
 				break;
 			}
 
@@ -1424,6 +1430,64 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 
 	o = s.option(form.Value, 'xhttp_headers', _('Extra headers'),
 		_('JSON object, e.g. {"X-Header": "value"}. Leave empty for none.'));
+	o.depends('transport', 'xhttp');
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'xhttp_padding_bytes', _('Padding bytes'),
+		_('Random padding length range, e.g. 100-1000. Leave empty for the core default.'));
+	o.depends('transport', 'xhttp');
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'xhttp_sc_max_each_post_bytes', _('Max bytes per POST'),
+		_('packet-up mode: max body size of each upload POST, e.g. 1000000-1000000.'));
+	o.depends('transport', 'xhttp');
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'xhttp_sc_min_posts_interval_ms', _('Min POST interval (ms)'),
+		_('packet-up mode: minimum interval between upload POSTs in ms, e.g. 30-30.'));
+	o.depends('transport', 'xhttp');
+	o.modalonly = true;
+
+	/* XHTTP split download ("dl=h2"/"dl=h3"): the download direction may use a
+	 * separate host/path/server and TLS (different SNI/ALPN) from the upload.
+	 * Leave these empty to use a single bidirectional stream. */
+	o = s.option(form.Value, 'xhttp_download_host', _('Download host'),
+		_('Split download: host (Host header / :authority) for the download direction. Leave empty to reuse the upload host.'));
+	o.depends('transport', 'xhttp');
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'xhttp_download_path', _('Download path'),
+		_('Split download: path for the download direction. Leave empty to reuse the upload path.'));
+	o.depends('transport', 'xhttp');
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'xhttp_download_server', _('Download server'),
+		_('Optional separate server address for the download direction. Empty reuses the main server (works on hiddify-core; set explicitly for sing-box).'));
+	o.datatype = 'host';
+	o.depends('transport', 'xhttp');
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'xhttp_download_port', _('Download port'));
+	o.datatype = 'port';
+	o.depends('transport', 'xhttp');
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'xhttp_download_sni', _('Download TLS server name'),
+		_('TLS SNI for the download direction (often a different CDN/edge host than the upload).'));
+	o.depends('transport', 'xhttp');
+	o.modalonly = true;
+
+	o = s.option(form.ListValue, 'xhttp_download_alpn', _('Download ALPN'));
+	o.value('', _('Default'));
+	o.value('h2');
+	o.value('h3');
+	o.value('http/1.1');
+	o.depends('transport', 'xhttp');
+	o.modalonly = true;
+
+	o = s.option(form.Flag, 'xhttp_download_insecure', _('Download allow insecure'),
+		_('Allow insecure TLS for the download direction. Use only for testing.'));
+	o.default = o.disabled;
 	o.depends('transport', 'xhttp');
 	o.modalonly = true;
 	/* XHTTP config end */

@@ -4146,3 +4146,75 @@ msgstr "ByeDPI (ciadpi) не установлен. Установить сейч
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "Cannot remove: ByeDPI is selected as Main Node. Change Main Node first."
 msgstr "Нельзя удалить: ByeDPI выбран в качестве основного узла. Сначала смените основной узел."
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Download host"
+msgstr "Хост загрузки"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Split download: host (Host header / :authority) for the download direction. Leave empty to reuse the upload host."
+msgstr "Раздельная загрузка: хост (заголовок Host / :authority) для направления загрузки. Оставьте пустым, чтобы использовать хост отдачи."
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Download path"
+msgstr "Путь загрузки"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Split download: path for the download direction. Leave empty to reuse the upload path."
+msgstr "Раздельная загрузка: путь для направления загрузки. Оставьте пустым, чтобы использовать путь отдачи."
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Download server"
+msgstr "Сервер загрузки"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Optional separate server address for the download direction. Empty reuses the main server (works on hiddify-core; set explicitly for sing-box)."
+msgstr "Необязательный отдельный адрес сервера для направления загрузки. Пусто — используется основной сервер (работает на hiddify-core; для sing-box задайте явно)."
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Download port"
+msgstr "Порт загрузки"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Download TLS server name"
+msgstr "Имя сервера TLS для загрузки"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "TLS SNI for the download direction (often a different CDN/edge host than the upload)."
+msgstr "TLS SNI для направления загрузки (часто отличается от отдачи — другой CDN/пограничный хост)."
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Download ALPN"
+msgstr "ALPN загрузки"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Download allow insecure"
+msgstr "Разрешить небезопасный TLS для загрузки"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Allow insecure TLS for the download direction. Use only for testing."
+msgstr "Разрешить небезопасный TLS для направления загрузки. Только для тестирования."
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Padding bytes"
+msgstr "Байты заполнения"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Random padding length range, e.g. 100-1000. Leave empty for the core default."
+msgstr "Диапазон длины случайного заполнения, напр. 100-1000. Пусто — значение по умолчанию ядра."
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Max bytes per POST"
+msgstr "Макс. байт на POST"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "packet-up mode: max body size of each upload POST, e.g. 1000000-1000000."
+msgstr "Режим packet-up: макс. размер тела каждого POST отдачи, напр. 1000000-1000000."
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Min POST interval (ms)"
+msgstr "Мин. интервал POST (мс)"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "packet-up mode: minimum interval between upload POSTs in ms, e.g. 30-30."
+msgstr "Режим packet-up: минимальный интервал между POST отдачи в мс, напр. 30-30."
