@@ -500,8 +500,12 @@ function generate_outbound(node) {
 		/* NaiveProxy */
 		quic: (node.type === 'naive') ? strToBool(node.naive_quic) : null,
 		extra_headers: (node.type === 'naive') ? (node.naive_extra_headers ? json(node.naive_extra_headers) : null) : null,
+		/* sing-box-extended's ssh outbound has NO udp_over_tcp field → emitting it FATALs
+		 * with "unknown field udp_over_tcp" (verified on sing-box check). hiddify-core's
+		 * ssh works with it as-is (tested), so keep the ssh branch for hiddify only.
+		 * naive/shadowsocks keep udp_over_tcp on both cores. */
 		udp_over_tcp: (node.type === 'naive') ? strToBool(node.naive_udp_over_tcp) :
-		              (node.type === 'ssh') ? (node.ssh_udp_over_tcp !== '0' ? true : null) :
+		              (is_hiddify && node.type === 'ssh') ? (node.ssh_udp_over_tcp !== '0' ? true : null) :
 		              ((is_hiddify && node.udp_over_tcp === '1') ? {
 			enabled: true,
 			version: strToInt(node.udp_over_tcp_version)
