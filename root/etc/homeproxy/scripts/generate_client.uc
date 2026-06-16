@@ -214,6 +214,22 @@ function generate_endpoint(node) {
 	return endpoint;
 }
 
+/* The transport "host" JSON type differs by transport: sing-box's HTTP/2 (`http`)
+ * transport takes an ARRAY of strings, while xhttp and httpupgrade take a single
+ * STRING. The UI's DynamicList (and some share-link parsers) store http_host as a
+ * UCI list, which would emit a JSON array and crash hiddify-core on an xhttp node
+ * ("json: cannot unmarshal array into Go value of type string"). Coerce to the
+ * correct shape per transport here, so every input path (UI edit, share-link,
+ * subscription) produces valid config. */
+function transport_host(node) {
+	let h = node.http_host;
+	if (node.transport === 'http')
+		return (type(h) === 'array') ? (length(h) ? h : null) : (isEmpty(h) ? null : [ h ]);
+	if (type(h) === 'array')
+		h = h[0];
+	return h || node.httpupgrade_host;
+}
+
 function generate_outbound(node) {
 	if (type(node) !== 'object' || isEmpty(node))
 		return null;
@@ -329,7 +345,7 @@ function generate_outbound(node) {
 		} : null,
 		transport: !isEmpty(node.transport) ? {
 			type: node.transport,
-			host: node.http_host || node.httpupgrade_host,
+			host: transport_host(node),
 			path: node.http_path || node.ws_path,
 			mode: (node.transport === 'xhttp') ? (node.xhttp_mode || 'auto') : null,
 			headers: node.xhttp_headers ? json(node.xhttp_headers) : (node.ws_host ? { Host: node.ws_host } : null),
@@ -788,7 +804,7 @@ uci.foreach(uciconfig, uciserver, (cfg) => {
 
 		transport: !isEmpty(cfg.transport) ? {
 			type: cfg.transport,
-			host: cfg.http_host || cfg.httpupgrade_host,
+			host: transport_host(cfg),
 			path: cfg.http_path || cfg.ws_path,
 			headers: cfg.ws_host ? {
 				Host: cfg.ws_host
