@@ -763,10 +763,23 @@ const methods = {
 			add('## UCI Config (sanitized)');
 			fd = popen('uci show homeproxy 2>&1');
 			if (fd) {
+				/* uci show prints multi-line option values (PEM keys — ssh_priv_key /
+				 * ssh_host_key) across several physical lines; only the first carries
+				 * `key=`, so a naive per-line redaction leaks the whole key body on the
+				 * lines after it. Every real uci line begins with `homeproxy.`; the value
+				 * continuation lines never do. So after redacting an option, drop the
+				 * following non-`homeproxy.` lines until the next option begins. */
+				let skip_value_body = false;
 				for (let line = fd.read('line'); length(line); line = fd.read('line')) {
 					let out = trim(line);
-					if (match(out, /(password|private_key|pre_shared_key|uuid|token|secret|subscription_url|address|tls_sni|tls_reality_public_key|tls_reality_short_id|grouphash|username|grpc_servicename|http_path|xhttp_download_server|ssh_priv_key|ssh_host_key)=/))
+					let is_uci_line = match(out, /^homeproxy\./);
+					if (skip_value_body && !is_uci_line)
+						continue;
+					skip_value_body = false;
+					if (is_uci_line && match(out, /(password|private_key|pre_shared_key|uuid|token|secret|subscription_url|address|tls_sni|tls_reality_public_key|tls_reality_short_id|grouphash|username|grpc_servicename|http_path|xhttp_download_server|naive_extra_headers|ssh_priv_key|ssh_host_key)=/)) {
 						out = replace(out, /=.*$/, '=[REDACTED]');
+						skip_value_body = true;
+					}
 					add(out);
 				}
 				fd.close();
@@ -813,6 +826,24 @@ const methods = {
 				} else {
 					add('Mode: ' + routing_mode + ' (DNS test only runs in proxy_banned_ru)');
 				}
+			}
+			add('');
+
+			add('## Connectivity');
+			/* Same site probes as the interactive Connectivity card (connection_check),
+			 * captured into the report so a copy/download carries them. Exit-IP rows
+			 * (Direct IP / Proxy IP) are intentionally omitted — they are interactive,
+			 * hiddify-only, and expose addresses. */
+			let conn_sites = [
+				['Baidu',     'https://www.baidu.com'],
+				['Google',    'https://www.google.com'],
+				['YouTube',   'https://www.youtube.com'],
+				['Yandex',    'https://www.yandex.ru'],
+				['Speedtest', 'https://www.speedtest.net']
+			];
+			for (let site in conn_sites) {
+				const conn_ok = (system(`/usr/bin/wget --spider -qT3 ${site[1]} 2>"/dev/null"`, 3100) === 0);
+				add(sprintf('%-11s %s', site[0] + ':', conn_ok ? 'OK' : 'FAIL'));
 			}
 			add('');
 

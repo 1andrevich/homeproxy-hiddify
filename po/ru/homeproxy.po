@@ -3379,7 +3379,7 @@ msgstr "Привязанный интерфейс"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "Direct IP"
-msgstr "Прямой IP"
+msgstr "IP провайдера"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "Proxy IP"
@@ -3868,7 +3868,7 @@ msgstr "На клиентов локальной сети проверка не 
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js
 msgid "Probes each preset against 4 sites (YouTube video CDN, Telegram, Discord, Speedtest). ● = TLS handshake got through, ○ = blocked; hover a dot for the site and result. Tests a fixed preset list. You can Stop it anytime. ~12 min total."
-msgstr "Проверяет каждую стратегию на 4 сайтах (видео-CDN YouTube, Telegram, Discord, Speedtest). ● = TLS-рукопожатие прошло, ○ = заблокировано; наведите на точку, чтобы увидеть сайт и результат. Тест проверяет предустановленный набор стратегий. Можно остановить в любой момент. Всего ~12 мин."
+msgstr "Проверяет каждую стратегию на 4 сайтах (видео-CDN YouTube, Telegram, Discord, Speedtest). ● = TLS-рукопожатие успешно, ○ = заблокировано; наведите на точку, чтобы увидеть сайт и результат. Тест проверяет предустановленный набор стратегий. Можно остановить в любой момент. Всего ~12 мин."
 
 #: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
 msgid "Click Generate to collect diagnostics…"
@@ -4109,7 +4109,7 @@ msgstr "Готово"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "passed"
-msgstr "прошло"
+msgstr "успешно"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "click Apply next to any working strategy"
