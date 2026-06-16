@@ -2293,11 +2293,11 @@ msgstr "Параметры маршрута"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:396
 msgid "Routing Nodes"
-msgstr "Узлы маршрутизации"
+msgstr "Правила узлов"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:567
 msgid "Routing Rules"
-msgstr "Правила маршрутизации"
+msgstr "Расширенные правила"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:120
 msgid "Routing Settings"
@@ -3571,7 +3571,7 @@ msgstr "Расширенные правила"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Show Routing Nodes and Routing Rules tabs for additional custom rules."
-msgstr "Показать вкладки «Узлы маршрутизации» и «Правила маршрутизации» для дополнительных настроек."
+msgstr "Показать вкладки «Правила узлов» и «Расширенные правила» для дополнительных настроек."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Proxy calls"
