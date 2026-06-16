@@ -319,7 +319,7 @@ msgstr "Обходить трафик CN"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:253
 msgid "Bypass mainland China"
-msgstr "Обходить материковый Китай"
+msgstr "Китай - Direct"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:344
 msgid "Bypass mainland China traffic via firewall rules by default."
@@ -953,7 +953,7 @@ msgstr "Версия списка GFW"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:252
 msgid "GFWList"
-msgstr "GFWList"
+msgstr "Китай - GFWList"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1446
 msgid "Gaming mode IPv4 IP-s"
@@ -1745,7 +1745,7 @@ msgstr "Обрабатывать трафик только с указанных
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:254
 msgid "Only proxy mainland China"
-msgstr "Проксировать только материковый Китай"
+msgstr "Китай - Proxy"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:580
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1060
