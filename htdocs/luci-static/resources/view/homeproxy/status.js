@@ -147,8 +147,19 @@ function getActiveNode(o) {
 			}
 			const name  = resolveTag(ret.node);
 			const type  = ret.type  ? ` (${ret.type})`  : '';
-			const delay = (ret.delay && ret.delay !== 65535) ? ` — ${ret.delay} ms` : '';
-			dom.content(el, E('strong', { 'style': 'color:green' }, `${name}${type}${delay}`));
+			/* Colour by what the core actually reported, not by assumption:
+			 *  - 65535 ms = a CONFIRMED URLTest timeout (the core positively reported
+			 *    it) → red;
+			 *  - 3000–65534 ms = working but slow → orange;
+			 *  - < 3000 ms real latency → green;
+			 *  - no delay / 0 (no data yet, or a non-confirmation some cores return on
+			 *    failure) → gray — UNCONFIRMED, so never red. */
+			let dColor, dStr = '';
+			if (ret.delay === 65535) { dColor = 'red'; dStr = ` — ${_('timeout')}`; }
+			else if (ret.delay >= 3000) { dColor = 'orange'; dStr = ` — ${ret.delay} ms`; }
+			else if (ret.delay) { dColor = 'green'; dStr = ` — ${ret.delay} ms`; }
+			else dColor = 'gray';
+			dom.content(el, E('strong', { 'style': 'color:' + dColor }, `${name}${type}${dStr}`));
 		});
 	}));
 

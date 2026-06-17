@@ -204,7 +204,7 @@ return view.extend({
 		};
 
 		o = s.taboption('routing', form.DummyValue, '_urltest_info', _('URLTest'),
-			_('Automatically picks the fastest node by periodically measuring latency. Traffic is always sent through the lowest-latency node in the pool.'));
+			_('Automatically picks the fastest node by periodically measuring latency. Traffic is always sent through the lowest-latency node in the pool.<br>If you have connection problems and a node stays orange/grey for a long time, try removing it from the URLTest pool.'));
 		o.depends('main_node', 'urltest');
 		o.rawhtml = true;
 		o.cfgvalue = function() { return ''; };

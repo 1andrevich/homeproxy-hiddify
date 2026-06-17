@@ -3949,8 +3949,8 @@ msgid "How often each node is tested (seconds). Lower = faster failover, higher 
 msgstr "Время в секундах: меньше = узлы тестируются чаще, больше = реже тесты - меньше нагрузки."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Automatically picks the fastest node by periodically measuring latency. Traffic is always sent through the lowest-latency node in the pool."
-msgstr "Автоматически выбирает самый быстрый узел, периодически измеряя задержку. Трафик всегда идёт через узел с наименьшей задержкой в пуле."
+msgid "Automatically picks the fastest node by periodically measuring latency. Traffic is always sent through the lowest-latency node in the pool.<br>If you have connection problems and a node stays orange/grey for a long time, try removing it from the URLTest pool."
+msgstr "Автоматически выбирает самый быстрый узел, периодически измеряя задержку. Трафик всегда идёт через узел с наименьшей задержкой в пуле.<br>Если вы испытываете проблемы с подключением, а узел остаётся оранжевым/серым продолжительное время — попробуйте удалить его из списка URLTest."
 
 msgid "Minimum latency gap (ms) required to switch to a faster node — prevents flapping between nodes with close latency values."
 msgstr "Минимальная разница задержек (мс) для переключения на более быстрый узел — предотвращает постоянное переключение между узлами с близкой задержкой."
@@ -4234,3 +4234,7 @@ msgstr "Мин. интервал POST (мс)"
 #: htdocs/luci-static/resources/view/homeproxy/node.js
 msgid "packet-up mode: minimum interval between upload POSTs in ms, e.g. 30-30."
 msgstr "Режим packet-up: минимальный интервал между POST отдачи в мс, напр. 30-30."
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "timeout"
+msgstr "таймаут"
