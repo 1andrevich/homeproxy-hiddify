@@ -184,8 +184,16 @@ function buildConnectivitySection(view, coreType) {
 			return L.resolveDefault(callActiveNode(), {}).then(function(ret) {
 				if (ret && !ret.error && ret.node) {
 					const type  = ret.type ? ' (' + ret.type + ')' : '';
-					const delay = (ret.delay && ret.delay !== 65535) ? ' — ' + ret.delay + ' ms' : '';
-					dom.content(resultEl, E('strong', { 'class': 'diag-ok' }, resolveTag(ret.node) + type + delay));
+					/* Same 4-colour scheme as the status/client pages: 65535 ms is the
+					   URLTest timeout sentinel (confirmed dead → red); >=3000 ms is
+					   working-but-slow (orange); a real low latency is green; no delay
+					   is unmeasured (gray, no number). */
+					let cls, dStr = '';
+					if (ret.delay === 65535) { cls = 'diag-fail'; dStr = ' — ' + _('timeout'); }
+					else if (ret.delay >= 3000) { cls = 'diag-warn'; dStr = ' — ' + ret.delay + ' ms'; }
+					else if (ret.delay) { cls = 'diag-ok'; dStr = ' — ' + ret.delay + ' ms'; }
+					else cls = 'diag-gray';
+					dom.content(resultEl, E('strong', { 'class': cls }, resolveTag(ret.node) + type + dStr));
 				} else {
 					dom.content(resultEl, E('span', { 'class': 'diag-gray' }, _('No active node')));
 				}

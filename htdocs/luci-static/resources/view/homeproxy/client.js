@@ -191,9 +191,17 @@ return view.extend({
 						const m = ret.node.match(/^cfg-(.+)-out$/);
 						const name = (m && proxy_nodes[m[1]]) ? proxy_nodes[m[1]] : ret.node;
 						const type = ret.type ? ' (' + ret.type + ')' : '';
-						const delay = (ret.delay && ret.delay !== 65535) ? ' — ' + ret.delay + ' ms' : '';
-						el.textContent = name + type + delay;
-						el.style.color = 'green';
+						/* Same 4-colour scheme as the status page: 65535 ms is the
+						   URLTest timeout sentinel (confirmed dead → red); >=3000 ms is
+						   working-but-slow (orange); a real low latency is green; no
+						   delay at all is unmeasured (gray, no number). */
+						let dColor, dStr = '';
+						if (ret.delay === 65535) { dColor = 'red'; dStr = ' — ' + _('timeout'); }
+						else if (ret.delay >= 3000) { dColor = 'orange'; dStr = ' — ' + ret.delay + ' ms'; }
+						else if (ret.delay) { dColor = 'green'; dStr = ' — ' + ret.delay + ' ms'; }
+						else dColor = 'gray';
+						el.textContent = name + type + dStr;
+						el.style.color = dColor;
 					} else {
 						el.textContent = _('No active node');
 						el.style.color = 'gray';

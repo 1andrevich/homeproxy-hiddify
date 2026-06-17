@@ -126,46 +126,6 @@ function getConnStat(o, site) {
 	]);
 }
 
-function getActiveNode(o) {
-	const callActiveNode = rpc.declare({
-		object: 'luci.homeproxy',
-		method: 'clash_active_node',
-		expect: { '': {} }
-	});
-
-	const el = E('span', { 'style': 'color:gray' }, '—');
-
-	poll.add(L.bind(() => {
-		return L.resolveDefault(callActiveNode(), {}).then((ret) => {
-			if (ret.error) {
-				dom.content(el, E('span', { 'style': 'color:red' }, ret.error));
-				return;
-			}
-			if (!ret.node) {
-				dom.content(el, E('span', { 'style': 'color:gray' }, _('No active node')));
-				return;
-			}
-			const name  = resolveTag(ret.node);
-			const type  = ret.type  ? ` (${ret.type})`  : '';
-			/* Colour by what the core actually reported, not by assumption:
-			 *  - 65535 ms = a CONFIRMED URLTest timeout (the core positively reported
-			 *    it) → red;
-			 *  - 3000–65534 ms = working but slow → orange;
-			 *  - < 3000 ms real latency → green;
-			 *  - no delay / 0 (no data yet, or a non-confirmation some cores return on
-			 *    failure) → gray — UNCONFIRMED, so never red. */
-			let dColor, dStr = '';
-			if (ret.delay === 65535) { dColor = 'red'; dStr = ` — ${_('timeout')}`; }
-			else if (ret.delay >= 3000) { dColor = 'orange'; dStr = ` — ${ret.delay} ms`; }
-			else if (ret.delay) { dColor = 'green'; dStr = ` — ${ret.delay} ms`; }
-			else dColor = 'gray';
-			dom.content(el, E('strong', { 'style': 'color:' + dColor }, `${name}${type}${dStr}`));
-		});
-	}));
-
-	o.default = el;
-}
-
 function getResVersion(o, type) {
 	const callResVersion = rpc.declare({
 		object: 'luci.homeproxy',
