@@ -239,6 +239,173 @@ function parse_singbox_outbound(ob, companion_map) {
 	return config;
 }
 
+/* Parse ONE Xray/V2Ray outbound object (settings.vnext|servers + streamSettings)
+ * into a HomeProxy node config. `remarks` is the config-level friendly name (Xray
+ * outbounds don't carry it). Mirrors parse_singbox_outbound for the Xray schema. */
+function parse_xray_outbound(ob, remarks) {
+	const proxy_types = ['vless', 'vmess', 'trojan', 'shadowsocks', 'socks', 'http', 'hysteria'];
+	const proto = ob.protocol;
+	if (!(proto in proxy_types)) return null;
+
+	const st = ob.settings || {};
+	const ss = ob.streamSettings || {};
+	const net = ss.network || 'tcp';
+	const security = ss.security || 'none';
+	const tls_s = ss.tlsSettings || {};
+	const reality = ss.realitySettings || {};
+
+	/* Hysteria (v1/v2): non-standard Xray shape — server is in settings.{address,port}
+	 * and auth in streamSettings.hysteriaSettings. Needs QUIC support in sing-box. */
+	if (proto === 'hysteria') {
+		if (!sing_features.with_quic) {
+			log(sprintf('Skipping hysteria node (sing-box has no QUIC): %s.', remarks || st.address));
+			return null;
+		}
+		const hyS = ss.hysteriaSettings || {};
+		const is_v2 = (('' + (st.version || hyS.version || '2')) === '2');
+		let hcfg = {
+			label: remarks || null,
+			type: is_v2 ? 'hysteria2' : 'hysteria',
+			address: st.address || null,
+			port: (st.port != null) ? ('' + st.port) : null,
+			tls: '1',
+			tls_sni: tls_s.serverName || null,
+			tls_insecure: tls_s.allowInsecure ? '1' : null,
+			tls_alpn: (type(tls_s.alpn) === 'array') ? tls_s.alpn : (tls_s.alpn ? [tls_s.alpn] : null),
+			tls_utls: sing_features.with_utls ? (tls_s.fingerprint || null) : null
+		};
+		if (is_v2) {
+			hcfg.password = hyS.auth || null;
+			if (hyS.obfs) {
+				hcfg.hysteria_obfs_type = hyS.obfs.type || null;
+				hcfg.hysteria_obfs_password = hyS.obfs.password || null;
+			}
+		} else {
+			hcfg.hysteria_protocol = 'udp';
+			hcfg.hysteria_auth_type = hyS.auth ? 'string' : null;
+			hcfg.hysteria_auth_payload = hyS.auth || null;
+		}
+		return hcfg;
+	}
+
+	const vnext = (st.vnext && st.vnext[0]) ? st.vnext[0] : null;
+	const server = (st.servers && st.servers[0]) ? st.servers[0] : null;
+	const user = (vnext && vnext.users && vnext.users[0]) ? vnext.users[0] : {};
+
+	let config = {
+		label: remarks || null,
+		type: proto,
+		address: vnext ? vnext.address : (server ? server.address : null),
+		port: vnext ? ('' + vnext.port) : (server ? ('' + server.port) : null),
+		tls: (security in ['tls', 'xtls', 'reality']) ? '1' : '0',
+		tls_sni: tls_s.serverName || reality.serverName || null,
+		tls_insecure: (tls_s.allowInsecure || reality.allowInsecure) ? '1' : null,
+		tls_alpn: (type(tls_s.alpn) === 'array') ? tls_s.alpn : (tls_s.alpn ? [tls_s.alpn] : null),
+		tls_reality: (security === 'reality') ? '1' : null,
+		tls_reality_public_key: (security === 'reality') ? (reality.publicKey || null) : null,
+		tls_reality_short_id: (security === 'reality') ? (reality.shortId || null) : null,
+		tls_utls: sing_features.with_utls ? (tls_s.fingerprint || reality.fingerprint || null) : null
+	};
+
+	switch (proto) {
+	case 'vless':
+		config.uuid = user.id || null;
+		config.vless_flow = user.flow || null;
+		break;
+	case 'vmess':
+		config.uuid = user.id || null;
+		config.vmess_alterid = (user.alterId != null) ? ('' + user.alterId) : null;
+		config.vmess_encrypt = user.security || 'auto';
+		config.vmess_global_padding = '1';
+		break;
+	case 'trojan':
+		config.password = server ? server.password : null;
+		break;
+	case 'shadowsocks':
+		config.shadowsocks_encrypt_method = server ? server.method : null;
+		config.password = server ? server.password : null;
+		break;
+	case 'socks':
+	case 'http':
+		const su = (server && server.users && server.users[0]) ? server.users[0] : {};
+		config.username = su.user || null;
+		config.password = su.pass || null;
+		if (proto === 'socks')
+			config.socks_version = '5';
+		break;
+	}
+
+	/* V2Ray transport */
+	if (net && net !== 'tcp') {
+		config.transport = (net === 'h2') ? 'http' : net;
+		switch (config.transport) {
+		case 'ws':
+			const wsS = ss.wsSettings || {};
+			config.ws_host = (wsS.headers && wsS.headers.Host) ? wsS.headers.Host : (wsS.host || null);
+			config.ws_path = wsS.path || null;
+			break;
+		case 'grpc':
+			const grpcS = ss.grpcSettings || {};
+			config.grpc_servicename = grpcS.serviceName || null;
+			break;
+		case 'httpupgrade':
+			const huS = ss.httpupgradeSettings || {};
+			config.httpupgrade_host = huS.host || null;
+			config.http_path = huS.path || null;
+			break;
+		case 'http':
+			const hS = ss.httpSettings || {};
+			config.http_host = hS.host ? ((type(hS.host) === 'array') ? hS.host : [hS.host]) : null;
+			config.http_path = hS.path || null;
+			break;
+		case 'xhttp':
+			const xS = ss.xhttpSettings || {};
+			config.http_path = xS.path || null;
+			config.http_host = xS.host || null;
+			config.xhttp_mode = xS.mode || null;
+			break;
+		}
+	} else if (net === 'tcp' && ss.tcpSettings && ss.tcpSettings.header &&
+	           ss.tcpSettings.header.type === 'http') {
+		config.transport = 'http';
+		const req = ss.tcpSettings.header.request || {};
+		config.http_host = (req.headers && req.headers.Host) ?
+			((type(req.headers.Host) === 'array') ? req.headers.Host : [req.headers.Host]) : null;
+		config.http_path = (type(req.path) === 'array') ? req.path[0] : (req.path || null);
+	}
+
+	return config;
+}
+
+/* Parse ONE full Xray config object (an element of the subscription array): pick
+ * its proxy outbound (the one tagged "proxy", else the first real proxy outbound
+ * that isn't an internal helper like direct/block/dns or a routing upstream). */
+function parse_xray_config(cfg) {
+	if (type(cfg) !== 'object' || type(cfg.outbounds) !== 'array')
+		return null;
+
+	const skip = ['freedom', 'blackhole', 'dns', 'loopback'];
+	let chosen = null;
+	for (let ob in cfg.outbounds)
+		if (ob.tag === 'proxy') {
+			chosen = ob;
+			break;
+		}
+	if (!chosen)
+		for (let ob in cfg.outbounds) {
+			if (ob.protocol in skip)
+				continue;
+			if (ob.tag && match(ob.tag, /upstream/))
+				continue;
+			chosen = ob;
+			break;
+		}
+	if (!chosen)
+		return null;
+
+	return parse_xray_outbound(chosen, cfg.remarks);
+}
+
 function parse_uri(uri) {
 	let config, url, params;
 
@@ -934,6 +1101,22 @@ function main() {
 			}
 		}
 
+		/* Xray/V2Ray JSON config array (e.g. connliberty): an ARRAY of full Xray
+		 * configs, each with .outbounds and a .remarks name. The first fetch above
+		 * (HiddifyNext UA) already returns it on app-gated servers. */
+		if (isEmpty(nodes) && !isEmpty(res) && match(trim(res), /^\s*\[/)) {
+			let xray_arr;
+			try { xray_arr = json(res); } catch(e) {}
+			if (type(xray_arr) === 'array' && length(xray_arr) &&
+			    type(xray_arr[0]) === 'object' && xray_arr[0].outbounds) {
+				nodes = filter(
+					map(xray_arr, cfg => parse_xray_config(cfg)),
+					c => !isEmpty(c)
+				);
+				log(sprintf('Received Xray JSON subscription from %s.', url));
+			}
+		}
+
 		if (isEmpty(nodes)) {
 			/* Fallback: fetch with configured user_agent */
 			res = wGET(url, user_agent);
@@ -955,11 +1138,18 @@ function main() {
 			}
 
 			try {
-				nodes = json(res).servers || json(res);
+				const parsed = json(res);
+				if (type(parsed) === 'array' && length(parsed) &&
+				    type(parsed[0]) === 'object' && parsed[0].outbounds) {
+					/* Xray/V2Ray JSON config array */
+					nodes = filter(map(parsed, cfg => parse_xray_config(cfg)), c => !isEmpty(c));
+				} else {
+					nodes = parsed.servers || parsed;
 
-				/* Shadowsocks SIP008 format */
-				if (nodes[0].server && nodes[0].method)
-					map(nodes, (_, i) => nodes[i].nodetype = 'sip008');
+					/* Shadowsocks SIP008 format */
+					if (nodes[0].server && nodes[0].method)
+						map(nodes, (_, i) => nodes[i].nodetype = 'sip008');
+				}
 			} catch(e) {
 				const decoded = decodeBase64Str(res);
 				if (decoded)
