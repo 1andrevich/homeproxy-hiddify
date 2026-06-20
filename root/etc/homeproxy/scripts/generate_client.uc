@@ -82,6 +82,14 @@ else {
 
 const ipv6_support = uci.get(uciconfig, ucimain, 'ipv6_support') || '0';
 const byedpi_enabled = uci.get(uciconfig, ucimain, 'byedpi_enabled');
+/* ZAPRET DISABLED (commented out for safety until finalized). zapret_enabled forced
+ * null so every `zapret_enabled === '1'` check below is false and zapret-out is never
+ * emitted; route nodes set to 'zapret-out' fall back to direct-out. */
+const zapret_enabled = null;
+/* zapret: a `direct` outbound stamped with routing_mark; nft catches the mark and
+ * sends the handshake to NFQUEUE where nfqws desyncs it. Separate from byedpi. */
+// const zapret_enabled = uci.get(uciconfig, ucimain, 'zapret_enabled');
+// const zapret_mark = uci.get(uciconfig, ucimain, 'zapret_mark') || '110';
 
 let main_node, main_udp_node, dedicated_udp_node, default_outbound, default_outbound_dns,
     domain_strategy, sniff_override, dns_server, china_dns_server, russia_dns_server,
@@ -580,6 +588,9 @@ function get_outbound(cfg) {
 		case 'byedpi-out':
 			/* Fall back to direct if ByeDPI is disabled so the config stays valid */
 			return (byedpi_enabled === '1') ? 'byedpi-out' : 'direct-out';
+		case 'zapret-out':
+			/* Fall back to plain direct if zapret is disabled so the config stays valid */
+			return (zapret_enabled === '1') ? 'zapret-out' : 'direct-out';
 		default:
 			const node = uci.get(uciconfig, cfg, 'node');
 			if (isEmpty(node))
@@ -1511,11 +1522,13 @@ if (!isEmpty(main_node)) {
 				effective_outbound = 'main-out';
 			else if (cfg.node === 'byedpi-out')
 				effective_outbound = (byedpi_enabled === '1') ? 'byedpi-out' : 'direct-out';
+			else if (cfg.node === 'zapret-out')
+				effective_outbound = (zapret_enabled === '1') ? 'zapret-out' : 'direct-out';
 			else
 				effective_outbound = 'hp-ru-' + cfg.source + '-out';
 
-			if (cfg.node === 'main-out' || isEmpty(cfg.node) || cfg.node === 'byedpi-out') {
-				/* no new outbound needed — main-out / byedpi-out already exist */
+			if (cfg.node === 'main-out' || isEmpty(cfg.node) || cfg.node === 'byedpi-out' || cfg.node === 'zapret-out') {
+				/* no new outbound needed — main-out / byedpi-out / zapret-out already exist */
 			} else if (!has_outbound(effective_outbound)) {
 				if (cfg.node === 'urltest') {
 					const ut_nodes = filter(cfg.urltest_nodes || [], (k) => uci.get_all(uciconfig, k) != null);
@@ -1709,6 +1722,21 @@ if (byedpi_enabled === '1') {
 	});
 }
 /* ByeDPI outbound end */
+
+/* ZAPRET DISABLED — outbound emission commented out for safety until finalized.
+ * zapret outbound: a plain direct dialer stamped with routing_mark. sing-box egresses
+ * the selected (e.g. YouTube) flows directly but tagged with zapret_mark; nft catches
+ * that mark and feeds the handshake to NFQUEUE where nfqws (running separately) desyncs
+ * the DPI. routing_mark OVERRIDES the global default_mark, so firewall_post.ut adds a
+ * matching loop-avoidance return for zapret_mark.
+if (zapret_enabled === '1') {
+	push(config.outbounds, {
+		type: 'direct',
+		tag: 'zapret-out',
+		routing_mark: strToInt(zapret_mark)
+	});
+}
+ * zapret outbound end */
 
 /* Experimental start */
 config.experimental = {
