@@ -251,14 +251,14 @@ if (action === 'info') {
 			exit_code = system(
 				'{ wget -qO /tmp/homeproxy-hiddify.pub https://github.com/1andrevich/homeproxy-hiddify/releases/latest/download/homeproxy-hiddify.pub' +
 				' && cp /tmp/homeproxy-hiddify.pub /etc/apk/keys/' +
-				` && apk add --no-cache ${shellquote(tmp_path)}; } >/dev/null 2>&1` +
+				` && apk add ${shellquote(tmp_path)}; } >/dev/null 2>&1` +
 				`; RC=$?; rm -f ${shellquote(tmp_path)} /tmp/homeproxy-hiddify.pub; exit $RC`,
 				120000
 			);
 		} else if (pkg_manager === 'apk') {
 			/* sing-box-extended has no signing key — allow-untrusted is unavoidable */
 			exit_code = system(
-				`{ apk add --no-cache --allow-untrusted ${shellquote(tmp_path)}; } >/dev/null 2>&1` +
+				`{ apk add --allow-untrusted ${shellquote(tmp_path)}; } >/dev/null 2>&1` +
 				`; RC=$?; rm -f ${shellquote(tmp_path)}; exit $RC`,
 				120000
 			);
@@ -275,8 +275,11 @@ if (action === 'info') {
 } else if (action === 'install_kmods') {
 	const pkg_manager = ARGV[1] || detect_pkg_manager();
 	let exit_code = 1;
+	/* No --no-cache: it forces apk to refetch the package index over the network
+	 * (slow / >60s on poor uplinks, and the index is usually already cached from the
+	 * app install). The kmods are tiny and resolve from the local index in seconds. */
 	if (pkg_manager === 'apk')
-		exit_code = system('apk add --no-cache kmod-nft-tproxy kmod-tun >/dev/null 2>&1', 60000);
+		exit_code = system('apk add kmod-nft-tproxy kmod-tun >/dev/null 2>&1', 120000);
 	else if (pkg_manager === 'opkg')
 		exit_code = system('opkg install kmod-nft-tproxy kmod-tun >/dev/null 2>&1', 60000);
 	result = (exit_code === 0)
