@@ -331,9 +331,11 @@ function xhttp_download(node) {
 		server_name: node.xhttp_download_sni,
 		insecure: strToBool(node.xhttp_download_insecure),
 		alpn: node.xhttp_download_alpn ? (type(node.xhttp_download_alpn) === 'array' ? node.xhttp_download_alpn : split(node.xhttp_download_alpn, ',')) : null,
-		utls: !isEmpty(node.xhttp_download_fp) ? {
+		/* Reality requires uTLS in sing-box (see the main-TLS block) — default the
+		 * fingerprint to 'chrome' when reality is on but the node carries none. */
+		utls: (!isEmpty(node.xhttp_download_fp) || sec === 'reality') ? {
 			enabled: true,
-			fingerprint: node.xhttp_download_fp
+			fingerprint: !isEmpty(node.xhttp_download_fp) ? node.xhttp_download_fp : 'chrome'
 		} : null,
 		reality: (sec === 'reality') ? {
 			enabled: true,
@@ -469,9 +471,14 @@ function generate_outbound(node) {
 				config: node.tls_ech_config,
 				config_path: node.tls_ech_config_path
 			} : null,
-			utls: !isEmpty(node.tls_utls) ? {
+			/* Reality REQUIRES uTLS in sing-box ("uTLS is required by reality client"
+			 * is a FATAL that crash-loops the whole service; hiddify-core defaults it
+			 * silently). So when reality is on we always emit utls, defaulting the
+			 * fingerprint to 'chrome' if the node (e.g. a sub-imported reality node)
+			 * didn't carry one. */
+			utls: (!isEmpty(node.tls_utls) || node.tls_reality === '1') ? {
 				enabled: true,
-				fingerprint: node.tls_utls
+				fingerprint: !isEmpty(node.tls_utls) ? node.tls_utls : 'chrome'
 			} : null,
 			reality: (node.tls_reality === '1') ? {
 				enabled: true,
