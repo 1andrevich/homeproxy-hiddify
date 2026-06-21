@@ -4253,8 +4253,8 @@ msgstr "Рекомендуемые"
 msgid "Full-test pool"
 msgstr "Полный набор для проверки"
 
-msgid "Fills the strategy below. Use the tester to find one that works on your ISP."
-msgstr "Заполняет поле стратегии ниже. Используйте тест, чтобы найти рабочую для вашего провайдера."
+msgid "Fills the strategy below. Use the tester to find one that works on your ISP. Based on <a href=\"https://github.com/bol-van/zapret\" target=\"_blank\">bol-van/zapret</a> (nfqws2/blockcheck2) and <a href=\"https://github.com/flowseal/zapret-discord-youtube\" target=\"_blank\">flowseal/zapret-discord-youtube</a> (MIT). Packages by <a href=\"https://github.com/1andrevich/zapret2-openwrt\" target=\"_blank\">1andrevich/zapret2-openwrt</a>."
+msgstr "Заполняет поле стратегии ниже. Используйте тест, чтобы найти рабочую для вашего провайдера. На основе <a href=\"https://github.com/bol-van/zapret\" target=\"_blank\">bol-van/zapret</a> (nfqws2/blockcheck2) и <a href=\"https://github.com/flowseal/zapret-discord-youtube\" target=\"_blank\">flowseal/zapret-discord-youtube</a> (MIT). Пакеты: <a href=\"https://github.com/1andrevich/zapret2-openwrt\" target=\"_blank\">1andrevich/zapret2-openwrt</a>."
 
 msgid "Desync strategy"
 msgstr "Стратегия рассинхронизации (desync)"
@@ -4331,3 +4331,18 @@ msgstr "Запускает ByeDPI с текущими опциями на вре
 
 msgid "✓ ByeDPI started (install curl for full test)"
 msgstr "✓ ByeDPI запущен (установите curl для полной проверки)"
+
+# --- Zapret diagnostics (Network Intercept card) ---
+
+msgid "Zapret (nfqws2)"
+msgstr "Zapret (nfqws2)"
+
+msgid "enabled, but nfqws2 not running"
+msgstr "включён, но nfqws2 не запущен"
+
+msgid "Zapret NFQUEUE counters (mark 110 → queue)"
+msgstr "Счётчики NFQUEUE Zapret (метка 110 → очередь)"
+
+# --- Zapret NFQUEUE kmod guard ---
+msgid "Zapret is installed, but the NFQUEUE kernel module (kmod-nft-queue) is missing. Enabling it now could break the firewall. Reinstall Zapret or install kmod-nft-queue first."
+msgstr "Zapret установлен, но отсутствует модуль ядра NFQUEUE (kmod-nft-queue). Включение сейчас может сломать firewall. Сначала переустановите Zapret или установите kmod-nft-queue."

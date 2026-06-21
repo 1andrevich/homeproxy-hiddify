@@ -65,4 +65,4 @@ Tight on flash but building your own image? Large cores fit comfortably when **b
 
 The proxy needs `kmod-nft-tproxy` and `kmod-tun` for transparent routing. The installer pulls these in; if routing doesn't work after a fresh install, confirm they're present.
 
-See also: [ByeDPI](ByeDPI-en) · [Supported Protocols](Supported-Protocols-en) · [Troubleshooting](Troubleshooting-en)
+See also: [ByeDPI](ByeDPI-en) · [Zapret](Zapret-en) · [Supported Protocols](Supported-Protocols-en) · [Troubleshooting](Troubleshooting-en)

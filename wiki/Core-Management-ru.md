@@ -65,4 +65,4 @@ Re:HomeProxy **многоядерный**: приложение LuCI — это 
 
 Для прозрачной маршрутизации прокси нужны `kmod-nft-tproxy` и `kmod-tun`. Установщик подтягивает их; если после свежей установки маршрутизация не работает — проверьте, что они присутствуют.
 
-См. также: [ByeDPI](ByeDPI-ru) · [Поддерживаемые протоколы](Supported-Protocols-ru) · [Устранение неполадок](Troubleshooting-ru)
+См. также: [ByeDPI](ByeDPI-ru) · [Zapret](Zapret-ru) · [Поддерживаемые протоколы](Supported-Protocols-ru) · [Устранение неполадок](Troubleshooting-ru)

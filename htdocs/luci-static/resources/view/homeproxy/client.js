@@ -682,7 +682,16 @@ return view.extend({
 					node.querySelector('input').addEventListener('change', async function(ev) {
 						if (!ev.target.checked) return;
 						const status = await L.resolveDefault(callZapretStatus(), {});
-						if (status.installed) return;
+						if (status.installed) {
+							/* Installed but the NFQUEUE kmod is missing → enabling would emit
+							 * `queue num` and nft would reject the whole fw4 set. Block it.
+							 * (kmod_ok === false only; undefined = old backend = don't block.) */
+							if (status.kmod_ok === false) {
+								ui.addNotification(null, E('p', _('Zapret is installed, but the NFQUEUE kernel module (kmod-nft-queue) is missing. Enabling it now could break the firewall. Reinstall Zapret or install kmod-nft-queue first.')), 'error');
+								ev.target.checked = false;
+							}
+							return;
+						}
 
 						if (!status.pkg_manager) {
 							ui.addNotification(null, E('p', _('No package manager found. Install zapret2 manually from the Status page.')), 'error');

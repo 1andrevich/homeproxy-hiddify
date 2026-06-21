@@ -516,6 +516,9 @@ const methods = {
 				byedpi_installed:  !!access('/usr/bin/ciadpi'),
 				byedpi_running:    false,
 				byedpi_pid:        null,
+				zapret_installed:  !!access('/opt/zapret2/nfq2/nfqws2'),
+				zapret_running:    false,
+				zapret_pid:        null,
 				listen_ports:      []
 			};
 
@@ -528,6 +531,15 @@ const methods = {
 				bfd.close();
 				result.byedpi_running = length(bpid) > 0;
 				result.byedpi_pid = length(bpid) > 0 ? bpid : null;
+			}
+
+			/* Zapret (nfqws2) is the homeproxy-launched packet mangler — detect like ByeDPI. */
+			let zfd = popen('pidof nfqws2 2>/dev/null');
+			if (zfd) {
+				const zpid = trim(zfd.read('all'));
+				zfd.close();
+				result.zapret_running = length(zpid) > 0;
+				result.zapret_pid = length(zpid) > 0 ? zpid : null;
 			}
 
 			if (!binary)
@@ -684,10 +696,34 @@ const methods = {
 
 			const nft_present = length(nft_lines) > 0;
 
+			/* Zapret queue chain: its counter rules don't contain the word "homeproxy",
+			 * so they are NOT in nft_lines above. Pull the chain explicitly so the packet
+			 * counters (mark 110 tcp/udp → NFQUEUE) are visible. */
+			let zapret_enabled = false;
+			let zfd = popen('uci -q get homeproxy.config.zapret_enabled 2>/dev/null');
+			if (zfd) { zapret_enabled = trim(zfd.read('all')) === '1'; zfd.close(); }
+			let zapret_running = false;
+			zfd = popen('pidof nfqws2 2>/dev/null');
+			if (zfd) { zapret_running = length(trim(zfd.read('all'))) > 0; zfd.close(); }
+
+			let zq_lines = [];
+			fd = popen('nft list chain inet fw4 homeproxy_zapret_queue 2>/dev/null');
+			if (fd) {
+				for (let line = fd.read('line'); length(line); line = fd.read('line')) {
+					const l = trim(line);
+					if (match(l, /(mark|queue|counter|chain)/))
+						push(zq_lines, l);
+				}
+				fd.close();
+			}
+
 			return {
 				nft_present: nft_present,
 				nft_rules:   join('\n', nft_lines),
-				uci_firewall: join('\n', uci_lines)
+				uci_firewall: join('\n', uci_lines),
+				zapret_enabled: zapret_enabled,
+				zapret_running: zapret_running,
+				zapret_queue: join('\n', zq_lines)
 			};
 		}
 	},
@@ -735,6 +771,34 @@ const methods = {
 				add('Installed: yes');
 				fd = popen('pgrep -x ciadpi 2>/dev/null');
 				if (fd) { const bpid = trim(fd.read('all')); fd.close(); add('PID: ' + (length(bpid) > 0 ? bpid : 'not running')); }
+			} else {
+				add('Installed: no');
+			}
+			add('');
+
+			add('## Zapret (zapret2/nfqws2)');
+			if (access('/opt/zapret2/nfq2/nfqws2')) {
+				add('Installed: yes');
+				fd = popen('uci -q get homeproxy.config.zapret_enabled 2>/dev/null');
+				let zen = '0'; if (fd) { zen = trim(fd.read('all')); fd.close(); }
+				add('Enabled: ' + (zen === '1' ? 'yes' : 'no'));
+				fd = popen('pidof nfqws2 2>/dev/null');
+				if (fd) { const zpid = trim(fd.read('all')); fd.close(); add('PID: ' + (length(zpid) > 0 ? zpid : 'not running')); }
+				fd = popen('uci -q get homeproxy.config.zapret_voice 2>/dev/null');
+				let zvoice = '0'; if (fd) { zvoice = trim(fd.read('all')); fd.close(); }
+				add('Discord calls: ' + (zvoice === '1' ? 'on' : 'off'));
+				fd = popen('uci -q get homeproxy.config.zapret_cmd_opts 2>/dev/null');
+				if (fd) { const zstrat = trim(fd.read('all')); fd.close(); if (length(zstrat)) add('Strategy: ' + zstrat); }
+				fd = popen('nft list chain inet fw4 homeproxy_zapret_queue 2>/dev/null');
+				if (fd) {
+					let any = false;
+					for (let line = fd.read('line'); length(line); line = fd.read('line')) {
+						const l = trim(line);
+						if (match(l, /(mark|queue)/)) { add('  ' + l); any = true; }
+					}
+					fd.close();
+					if (!any) add('Queue chain: not present (firewall rule missing?)');
+				}
 			} else {
 				add('Installed: no');
 			}
@@ -1027,10 +1091,28 @@ const methods = {
 			let pkg_manager = null;
 			if (access('/usr/bin/apk') || access('/sbin/apk') || access('/usr/sbin/apk')) pkg_manager = 'apk';
 			else if (access('/bin/opkg') || access('/usr/bin/opkg')) pkg_manager = 'opkg';
+
+			/* kmod_ok: nfqws2's `nft ... queue num` needs the NFQUEUE kernel module
+			 * (kmod-nft-queue). Without it the firewall rule fails to load and nft
+			 * rejects the whole fw4 set. Check the package first, then a loaded module
+			 * as a fallback (built-in / already-inserted kernels). */
+			let kmod_ok = false;
+			if (pkg_manager === 'apk') {
+				const kf = popen('apk info -e kmod-nft-queue 2>/dev/null');
+				if (kf) { kmod_ok = length(trim(kf.read('all'))) > 0; kf.close(); }
+			} else if (pkg_manager === 'opkg') {
+				const kf = popen('opkg list-installed kmod-nft-queue 2>/dev/null');
+				if (kf) { kmod_ok = length(trim(kf.read('all'))) > 0; kf.close(); }
+			}
+			if (!kmod_ok) {
+				const kf = popen('grep -qE "(^|[[:space:]])(nft_queue|nfnetlink_queue)([[:space:]]|$)" /proc/modules 2>/dev/null && echo y');
+				if (kf) { kmod_ok = trim(kf.read('all')) === 'y'; kf.close(); }
+			}
+
 			let arch = null;
 			const afd = popen("awk -F\\' '/DISTRIB_ARCH/ {print $2}' /etc/openwrt_release 2>/dev/null");
 			if (afd) { arch = trim(afd.read('all')); afd.close(); }
-			return { installed, version, running, pkg_manager, arch };
+			return { installed, version, running, pkg_manager, arch, kmod_ok };
 		}
 	},
 

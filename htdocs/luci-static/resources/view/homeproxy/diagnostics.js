@@ -400,6 +400,12 @@ function buildNftSection(view) {
 				ret.uci_firewall ? E('div', {}, [
 					E('div', { 'class': 'diag-label' }, _('UCI firewall settings')),
 					pre(ret.uci_firewall)
+				]) : null,
+				ret.zapret_enabled ? row(_('Zapret (nfqws2)'), statusBadge(ret.zapret_running,
+					ret.zapret_running ? _('running') : _('enabled, but nfqws2 not running'))) : null,
+				(ret.zapret_enabled && ret.zapret_queue) ? E('div', {}, [
+					E('div', { 'class': 'diag-label' }, _('Zapret NFQUEUE counters (mark 110 → queue)')),
+					pre(ret.zapret_queue)
 				]) : null
 			].filter(Boolean));
 		});

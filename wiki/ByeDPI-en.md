@@ -99,4 +99,4 @@ ByeDPI is a desync, not a tunnel, so DNS does **not** go through it. When ByeDPI
 | Router/LuCI/SSH becomes laggy | A destination-sensitive strategy is causing retry storms — switch to an adaptive preset. |
 | A site is unreachable, not just slow | It may be IP-blocked, not throttled — ByeDPI can't help; use a proxy/VPN node for it. |
 
-See also: [Core Management](Core-Management-en) · [Supported Protocols](Supported-Protocols-en) · [Troubleshooting](Troubleshooting-en)
+See also: [Zapret](Zapret-en) · [Core Management](Core-Management-en) · [Supported Protocols](Supported-Protocols-en) · [Troubleshooting](Troubleshooting-en)

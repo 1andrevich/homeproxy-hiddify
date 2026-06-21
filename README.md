@@ -13,10 +13,12 @@ Re:HomeProxy is a feature-rich proxy management system, a fresh take on Immortal
 
 - **Multi-core engine** — run on **hiddify-core** or **sing-box-extended**, your choice per device. The built-in **Core Management** page installs and updates the core for you and automatically picks the right build for your available storage (with a compact build for tight-storage devices).
 - **Wide protocol support** — Naive, Mieru, Hysteria, SOCKS, Shadowsocks, ShadowTLS, Tor, Trojan, VLESS (XHTTP), VMess, WireGuard, **AmneziaWG / WARP** (sing-box-extended), SSH and more.
-- **ByeDPI DPI-bypass** — built-in [ByeDPI](https://github.com/hufrea/byedpi) integration to un-throttle sites (e.g. YouTube) **without any VPN subscription**, with ready-made strategy presets and a multi-site **strategy tester** that shows which setting actually works on your ISP.
+- **Two built-in DPI-bypass engines** — un-throttle and unblock sites (e.g. YouTube, Discord) **without any VPN subscription**:
+  - **ByeDPI** ([hufrea/byedpi](https://github.com/hufrea/byedpi)) — a SOCKS-level desync proxy, with 40 ready-made strategy presets and a multi-site **strategy tester** that shows which setting actually works on your ISP.
+  - **Zapret 2** ([bol-van/zapret2](https://github.com/bol-van/zapret2), nfqws2) — a packet-level NFQUEUE desync that mangles the handshake in-place. Selected per routing rule (e.g. send only YouTube/Discord through it), with curated presets, optional Discord-voice desync, and its own scoped tester.
 - **URLTest auto-selection** — automatically routes through the fastest reachable node and fails over when one goes down.
 - **Russia routing rules** — one-click RU Proxy Rules (Russia Inside, Re:Filter) with curated domain/IP lists, so only blocked destinations go through the proxy.
-- **Subscription support** — import nodes from subscription links (including sing-box JSON / Hiddify) and update them on demand.
+- **Subscription support** — import nodes from subscription links (sing-box JSON / Hiddify, base64 / plain share-links, and Xray/V2Ray JSON configs) and update them on demand.
 - **Diagnostics** — a built-in page to check core/system health, inspect ports, and generate a shareable report.
 - **Modern web interface** — clean, responsive LuCI UI with node management, ACL traffic routing, and NFT rule control.
 
@@ -89,3 +91,43 @@ If using "Custom JSON" — see the **[Custom JSON Config](../../wiki/Custom-JSON
 ```
 
 The service will auto-start on boot. Monitor logs at **Services → Re:HomeProxy → Status**.
+
+## Documentation
+
+Full guides live in the **[Wiki](../../wiki/Home)**:
+
+- **[Getting Started](../../wiki/Getting-Started-en)** — from a fresh install to a working connection, step by step
+- **[Core Management](../../wiki/Core-Management-en)** — hiddify-core vs sing-box-extended, the smart installer, storage and the compact build
+- **[Supported Protocols](../../wiki/Supported-Protocols-en)** — every protocol, transport, and the build tags each needs
+- **[Subscriptions & Node Import](../../wiki/Subscriptions-en)** — share links, .conf, Amnezia `vpn://` (AmneziaWG/Xray), subscriptions, base64
+- **[Routing & Access Control](../../wiki/Routing-and-Access-Control-en)** — routing modes, RU Proxy Rules, per-device access control
+- **[DNS & Diagnostics](../../wiki/DNS-and-Diagnostics-en)** — clean vs secure DNS, IPv6 leaks, and the Diagnostics page
+- **[ByeDPI](../../wiki/ByeDPI-en)** — SOCKS-level DPI bypass, strategy presets and the tester
+- **[Zapret](../../wiki/Zapret-en)** — packet-level (nfqws2) DPI bypass, presets, Discord-voice and the tester
+- **[Custom JSON Config](../../wiki/Custom-JSON-Config-en)** — raw hiddify-core config routing mode
+- **[Troubleshooting](../../wiki/Troubleshooting-en)** — common errors and fixes
+
+## Credits & Acknowledgements
+
+Re:HomeProxy stands on the work of many upstream projects. The LuCI app is GPL-licensed; the cores and bypass engines are fetched at install time from their own releases and remain under their own licenses.
+
+**Base & cores**
+- [ImmortalWrt HomeProxy](https://github.com/immortalwrt/homeproxy) — the original LuCI app this is a fork of
+- [hiddify-core](https://github.com/hiddify/hiddify-core) — default proxy core (a sing-box fork by the Hiddify team)
+- [sing-box-extended](https://github.com/shtorm-7/sing-box-extended) — alternative core with extra build tags (AmneziaWG/WARP, widest protocol set)
+- [sing-box](https://sing-box.sagernet.org) — the upstream engine both cores derive from
+
+**DPI-bypass engines**
+- [hufrea/byedpi](https://github.com/hufrea/byedpi) — the ByeDPI (`ciadpi`) desync engine; OpenWrt packages by [1andrevich/ByeDPI-OpenWrt](https://github.com/1andrevich/ByeDPI-OpenWrt)
+- [bol-van/zapret2](https://github.com/bol-van/zapret2) — the Zapret / nfqws2 / blockcheck2 packet desync engine; OpenWrt packages by [1andrevich/zapret2-openwrt](https://github.com/1andrevich/zapret2-openwrt); some strategy presets adapted from [flowseal/zapret-discord-youtube](https://github.com/flowseal/zapret-discord-youtube) (MIT)
+
+**Protocols** — implemented by the cores above (see [Supported Protocols](../../wiki/Supported-Protocols-en)):
+
+Naive, Mieru, Hysteria/Hysteria2, TUIC, SOCKS, Shadowsocks/Shadowsocks 2022, ShadowTLS, AnyTLS, Tor, Trojan, VLESS (Reality, XHTTP), VMess, WireGuard, AmneziaWG/WARP, SSH.
+
+**Routing lists**
+- [Re:Filter](https://github.com/1andrevich/re-filter) — RKN-registry domain + IP blocklist
+- [itdoginfo/allow-domains](https://github.com/itdoginfo/allow-domains) — "Russia Inside" and the per-service routing lists (YouTube, Telegram, Discord, Meta, etc.)
+- [itdoginfo](https://github.com/itdoginfo) — HODCA and other curated lists by itdoginfo
+
+All trademarks and service names are the property of their respective owners and are referenced nominatively to identify the traffic each rule or list affects.
