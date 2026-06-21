@@ -5,6 +5,7 @@
 			"file": {
 				"/etc/homeproxy/scripts/update_subscriptions.uc": [ "exec" ],
 				"/usr/bin/ucode": [ "exec" ],
+				"/etc/homeproxy/zapret_candidates.json": [ "read" ],
 				"/var/run/homeproxy/homeproxy.log": [ "read" ],
 				"/var/run/homeproxy/hiddify-c.log": [ "read" ]
 			},

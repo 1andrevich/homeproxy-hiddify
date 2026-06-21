@@ -67,6 +67,25 @@ const callByeDPIInstallPkg = rpc.declare({
 	expect: { '': {} }
 });
 
+const callZapretStatus = rpc.declare({
+	object: 'luci.homeproxy',
+	method: 'zapret_status',
+	expect: { '': {} }
+});
+
+const callZapretPrepareInstall = rpc.declare({
+	object: 'luci.homeproxy',
+	method: 'zapret_prepare_install',
+	expect: { '': {} }
+});
+
+const callZapretInstallPkg = rpc.declare({
+	object: 'luci.homeproxy',
+	method: 'zapret_install_pkg',
+	params: ['tmp_path', 'pkg_manager'],
+	expect: { '': {} }
+});
+
 function callCoreDownload(url, tmpPath) {
 	return fs.exec_direct('/usr/bin/ucode', [CORE_MGMT, 'download_pkg', url, tmpPath], 'json');
 }
@@ -648,6 +667,90 @@ return view.extend({
 			};
 		})(o);
 
+		o = s.taboption('routing', form.Flag, 'zapret_enabled', _('Enable Zapret'),
+			_('An alternative to ByeDPI: another free way to unblock throttled or blocked sites (YouTube, Discord…) without a VPN subscription. ' +
+			  'It does the same job a different way — your traffic still stays direct and is NOT encrypted, so your ISP can see which sites you visit but can no longer throttle or block them. ' +
+			  'Practical difference: Zapret can also unblock video and calls (e.g. YouTube video) that ByeDPI does not handle. ' +
+			  'The two don\'t compete — if one doesn\'t fully unblock your sites, try the other; what works depends on your ISP. ' +
+			  'Pick "Zapret" for specific sites in the rules below, then fine-tune it in the Zapret tab on the Node page. Installed automatically on first enable.'));
+		o.default = o.disabled;
+		o.rmempty = false;
+		(function(opt) {
+			const _super = opt.renderWidget.bind(opt);
+			opt.renderWidget = function(section_id, option_index, cfgvalue) {
+				return Promise.resolve(_super(section_id, option_index, cfgvalue)).then(function(node) {
+					node.querySelector('input').addEventListener('change', async function(ev) {
+						if (!ev.target.checked) return;
+						const status = await L.resolveDefault(callZapretStatus(), {});
+						if (status.installed) return;
+
+						if (!status.pkg_manager) {
+							ui.addNotification(null, E('p', _('No package manager found. Install zapret2 manually from the Status page.')), 'error');
+							ev.target.checked = false;
+							return;
+						}
+
+						const progressEl = E('p', { style: 'margin:8px 0' }, _('Checking requirements...'));
+						const cancelBtn  = E('button', { class: 'btn cbi-button' }, _('Cancel'));
+						const installBtn = E('button', { class: 'btn cbi-button-action', style: 'margin-left:4px' }, _('Install'));
+						const input = ev.target;
+
+						cancelBtn.addEventListener('click', function() {
+							input.checked = false;
+							ui.hideModal();
+						});
+
+						installBtn.addEventListener('click', async function() {
+							cancelBtn.disabled = true;
+							installBtn.disabled = true;
+
+							progressEl.style.color = '';
+							progressEl.textContent = _('Checking requirements...');
+							const prep = await L.resolveDefault(callZapretPrepareInstall(), {});
+							if (prep.error) {
+								progressEl.style.color = 'red';
+								progressEl.textContent = prep.error;
+								cancelBtn.disabled = false;
+								input.checked = false;
+								return;
+							}
+
+							progressEl.textContent = _('Downloading...');
+							const dl = await L.resolveDefault(callCoreDownload(prep.dl_url, prep.tmp_path), {});
+							if (!dl.result) {
+								progressEl.style.color = 'red';
+								progressEl.textContent = dl.error || _('Download failed');
+								cancelBtn.disabled = false;
+								input.checked = false;
+								return;
+							}
+
+							progressEl.textContent = _('Installing...');
+							const inst = await L.resolveDefault(callZapretInstallPkg(prep.tmp_path, prep.pkg_manager), {});
+							if (!inst.result) {
+								progressEl.style.color = 'red';
+								progressEl.textContent = inst.error || _('Installation failed');
+								cancelBtn.disabled = false;
+								input.checked = false;
+								return;
+							}
+
+							progressEl.style.color = 'green';
+							progressEl.textContent = _('Installed successfully');
+							setTimeout(() => ui.hideModal(), 1500);
+						});
+
+						ui.showModal(_('Install Zapret'), [
+							E('p', _('Zapret (zapret2/nfqws2) is not installed. Install it now?')),
+							progressEl,
+							E('div', { class: 'right' }, [cancelBtn, installBtn])
+						]);
+					});
+					return node;
+				});
+			};
+		})(o);
+
 		/* RU Proxy Rules start */
 		s.tab('ru_rules', _('RU Proxy Rules'));
 		o = s.taboption('ru_rules', form.SectionValue, '_ru_rules', form.TypedSection, 'proxy_ru_rule');
@@ -704,6 +807,7 @@ return view.extend({
 		for (let i in proxy_nodes)
 			so.value(i, proxy_nodes[i]);
 		so.value('byedpi-out', _('ByeDPI'));
+		so.value('zapret-out', _('Zapret'));
 		so.rmempty = false;
 		so.editable = true;
 
@@ -1064,6 +1168,8 @@ return view.extend({
 			 * enabled — so a custom-mode rule can target it directly, no routing node needed. */
 			if (uci.get(data[0], 'config', 'byedpi_enabled') === '1')
 				this.value('byedpi-out', _('ByeDPI'));
+			if (uci.get(data[0], 'config', 'zapret_enabled') === '1')
+				this.value('zapret-out', _('Zapret'));
 			uci.sections(data[0], 'routing_node', (res) => {
 				if (res.enabled === '1')
 					this.value(res['.name'], res.label);

@@ -4238,3 +4238,96 @@ msgstr "Режим packet-up: минимальный интервал между
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "timeout"
 msgstr "таймаут"
+
+# --- Zapret strategy UI (added manually; re-verify on next xgettext rescan) ---
+
+msgid "Default (fake + multidisorder)"
+msgstr "По умолчанию (fake + multidisorder)"
+
+msgid "Fake only"
+msgstr "Только fake"
+
+msgid "Recommended"
+msgstr "Рекомендуемые"
+
+msgid "Full-test pool"
+msgstr "Полный набор для проверки"
+
+msgid "Fills the strategy below. Use the tester to find one that works on your ISP."
+msgstr "Заполняет поле стратегии ниже. Используйте тест, чтобы найти рабочую для вашего провайдера."
+
+msgid "Desync strategy"
+msgstr "Стратегия рассинхронизации (desync)"
+
+msgid "nfqws2 options applied to every flow routed to Zapret. No hostlists — the routing rules already select what is sent here. Pick a preset above or edit freely. The <code>--qnum</code>/<code>--user</code>/<code>--fwmark</code>/<code>--lua-init</code> arguments are added automatically."
+msgstr "Опции nfqws2, применяемые к каждому потоку, направленному в Zapret. Без хост-листов — что сюда попадает, уже выбирают правила маршрутизации. Выберите предустановку выше или измените вручную. Аргументы <code>--qnum</code>/<code>--user</code>/<code>--fwmark</code>/<code>--lua-init</code> добавляются автоматически."
+
+msgid "Runs the current strategy on a temporary NFQUEUE scoped to 4 test sites — <b>YouTube</b>, <b>Telegram</b>, <b>Discord</b>, <b>Speedtest.net</b> — and checks whether each TLS handshake completes. Does not touch your live connection. A site that fails here means the strategy breaks it."
+msgstr "Запускает текущую стратегию на временной очереди NFQUEUE для 4 тестовых сайтов — <b>YouTube</b>, <b>Telegram</b>, <b>Discord</b>, <b>Speedtest.net</b> — и проверяет, проходит ли TLS-рукопожатие. Ваше соединение не затрагивается. Если сайт здесь не проходит, стратегия его ломает."
+
+msgid "Full strategy test"
+msgstr "Полная проверка стратегий"
+
+msgid "Tries every strategy in the list one by one on a temporary NFQUEUE — your live connection is untouched — and shows which pass. Stay on this page while it runs; leaving stops it. Press <b>Apply</b> on any passing strategy to select it, then Save &amp; Apply."
+msgstr "Проверяет каждую стратегию из списка по очереди на временной очереди NFQUEUE — ваше соединение не затрагивается — и показывает, какие проходят. Оставайтесь на этой странице во время проверки; уход со страницы прерывает её. Нажмите <b>Применить</b> у любой работающей стратегии, чтобы выбрать её, затем «Сохранить и применить»."
+
+msgid "Run full test"
+msgstr "Запустить полную проверку"
+
+msgid "Applied: %s — now Save & Apply"
+msgstr "Применено: %s — теперь «Сохранить и применить»"
+
+msgid "Testing %d/%d: %s"
+msgstr "Проверка %d/%d: %s"
+
+msgid "rpc error"
+msgstr "ошибка RPC"
+
+msgid "%d/%d passed"
+msgstr "%d/%d пройдено"
+
+msgid "Discord calls via Zapret"
+msgstr "Звонки Discord через Zapret"
+
+msgid "Route Discord's voice UDP ports (19294–19344, 50000–50100) through Zapret. Discord voice has no domain to match, so it can only be selected by port. Leave off if your VPN already handles calls."
+msgstr "Направлять голосовые UDP-порты Discord (19294–19344, 50000–50100) через Zapret. У голоса Discord нет домена для сопоставления, поэтому его можно выбрать только по порту. Оставьте выключенным, если звонки и так работают через VPN."
+
+msgid "Enable Zapret"
+msgstr "Включить Zapret"
+
+msgid "An alternative to ByeDPI: another free way to unblock throttled or blocked sites (YouTube, Discord…) without a VPN subscription. It does the same job a different way — your traffic still stays direct and is NOT encrypted, so your ISP can see which sites you visit but can no longer throttle or block them. Practical difference: Zapret can also unblock video and calls (e.g. YouTube video) that ByeDPI does not handle. The two don't compete — if one doesn't fully unblock your sites, try the other; what works depends on your ISP. Pick \"Zapret\" for specific sites in the rules below, then fine-tune it in the Zapret tab on the Node page. Installed automatically on first enable."
+msgstr "Альтернатива ByeDPI: ещё один бесплатный способ разблокировать замедлённые или заблокированные сайты (YouTube, Discord…) без VPN-подписки. Делает ту же работу иначе — трафик по-прежнему идёт напрямую и НЕ шифруется, поэтому провайдер видит, какие сайты вы посещаете, но больше не может их замедлять или блокировать. Практическое отличие: Zapret умеет разблокировать видео и звонки (например, видео на YouTube), с которыми ByeDPI не справляется. Они не конкурируют — если один не разблокирует ваши сайты полностью, попробуйте другой; что сработает, зависит от провайдера. Выберите «Zapret» для нужных сайтов в правилах ниже, затем донастройте во вкладке Zapret на странице узла. Устанавливается автоматически при первом включении."
+
+msgid "No package manager found. Install zapret2 manually from the Status page."
+msgstr "Менеджер пакетов не найден. Установите zapret2 вручную со страницы «Статус»."
+
+msgid "Install Zapret"
+msgstr "Установить Zapret"
+
+msgid "Zapret (zapret2/nfqws2) is not installed. Install it now?"
+msgstr "Zapret (zapret2/nfqws2) не установлен. Установить сейчас?"
+
+# --- Zapret strategy UI (added manually; re-verify on next xgettext rescan) ---
+
+msgid "— custom / select a preset —"
+msgstr "— произвольная / выберите предустановку —"
+
+# --- ByeDPI strings (filling pre-existing gaps; survive xgettext rescan) ---
+
+msgid "Install ByeDPI"
+msgstr "Установить ByeDPI"
+
+msgid "ByeDPI running"
+msgstr "ByeDPI работает"
+
+msgid "Wrap UDP traffic in TCP when routing to ByeDPI."
+msgstr "Оборачивать UDP-трафик в TCP при маршрутизации через ByeDPI."
+
+msgid "Arguments passed to ByeDPI. Select a preset above or enter custom options. See <code>ciadpi --help</code> for full flag reference."
+msgstr "Аргументы, передаваемые ByeDPI. Выберите предустановку выше или введите свои опции. См. <code>ciadpi --help</code> для полного списка флагов."
+
+msgid "Starts ByeDPI with the current options on a temporary port and probes 4 sites — <b>YouTube</b> and <b>Telegram</b> (far servers), <b>Discord</b> and <b>Speedtest.net</b> (near Cloudflare/Ookla edges). A strategy that passes the far ones but fails the near ones is destination-sensitive (typical of fixed <code>--fake --ttl</code>). Requires curl; without it, only confirms ByeDPI starts."
+msgstr "Запускает ByeDPI с текущими опциями на временном порту и проверяет 4 сайта — <b>YouTube</b> и <b>Telegram</b> (дальние серверы), <b>Discord</b> и <b>Speedtest.net</b> (ближние узлы Cloudflare/Ookla). Стратегия, которая проходит дальние, но не проходит ближние, чувствительна к назначению (типично для фиксированных <code>--fake --ttl</code>). Требуется curl; без него подтверждается только запуск ByeDPI."
+
+msgid "✓ ByeDPI started (install curl for full test)"
+msgstr "✓ ByeDPI запущен (установите curl для полной проверки)"

@@ -1921,7 +1921,9 @@ return view.extend({
 	load() {
 		return Promise.all([
 			uci.load('homeproxy'),
-			hp.getBuiltinFeatures()
+			hp.getBuiltinFeatures(),
+			/* Zapret strategy candidates (shipped read-only); null if absent → builtin fallback used */
+			L.resolveDefault(fs.read('/etc/homeproxy/zapret_candidates.json'), null)
 		]);
 	},
 
@@ -1930,6 +1932,15 @@ return view.extend({
 		let main_node = uci.get(data[0], 'config', 'main_node');
 		let routing_mode = uci.get(data[0], 'config', 'routing_mode');
 		let features = data[1];
+
+		/* Parse the Zapret candidate list once; each entry = {name, args, group}.
+		 * 'args' is the stable key (used for match/apply); 'name' is display-only. */
+		let zapret_candidates = null;
+		try {
+			const parsed = JSON.parse(data[2] || 'null');
+			if (parsed && Array.isArray(parsed.candidates) && parsed.candidates.length)
+				zapret_candidates = parsed.candidates;
+		} catch (e) { /* fall back to builtin below */ }
 
 		/* Cache subscription information, it will be called multiple times */
 		let subinfo = [];
@@ -2662,6 +2673,226 @@ return view.extend({
 		o.default = o.disabled;
 		o.rmempty = false;
 		/* ByeDPI settings end */
+
+		/* Zapret settings start */
+		s.tab('zapret', _('Zapret'));
+		let zapretSV = s.taboption('zapret', form.SectionValue, '_zapret', form.NamedSection, 'config', 'homeproxy');
+		ss = zapretSV.subsection;
+		ss.anonymous = true;
+		ss.addremove = false;
+
+		(function() {
+			const HTTP = '--filter-tcp=80 --filter-l7=http --payload=http_req --lua-desync=fake:blob=fake_default_http:tcp_md5 --lua-desync=multisplit:pos=method+2 --new ';
+			const TLS = '--filter-tcp=443 --filter-l7=tls --payload=tls_client_hello ';
+			/* Domain-specific fakes shipped by the zapret2 package (registered via --blob=@file). */
+			const FK = '/opt/zapret2/files/fake';
+			/* Strategy candidates come from the shipped read-only file
+			 * /etc/homeproxy/zapret_candidates.json (loaded in load()). Each entry =
+			 * {name, args, group} where group is 'recommended' (curated, purpose-named)
+			 * or 'auto' (the full-test pool, technique-named). If the file is missing,
+			 * fall back to this minimal builtin set so the UI never breaks. */
+			const ZAPRET_PRESETS = zapret_candidates || [
+				{ name: _('Default (fake + multidisorder)'), group: 'recommended', args: HTTP + TLS + '--lua-desync=fake:blob=fake_default_tls:tcp_md5:tcp_seq=-10000 --lua-desync=multidisorder:pos=1,midsld' },
+				{ name: _('Multisplit'),                     group: 'recommended', args: HTTP + TLS + '--lua-desync=fake:blob=fake_default_tls:tcp_md5:tcp_seq=-10000 --lua-desync=multisplit:pos=1,midsld' },
+				{ name: _('Fake only'),                      group: 'recommended', args: HTTP + TLS + '--lua-desync=fake:blob=fake_default_tls:tcp_md5' }
+			];
+
+			const callZapretTest = rpc.declare({
+				object: 'luci.homeproxy',
+				method: 'zapret_strategy_test',
+				params: ['cmd_opts'],
+				expect: { '': {} }
+			});
+
+			let cmdOptsOpt = null;
+			function applyPreset(idx) {
+				if (!ZAPRET_PRESETS[idx]) return;
+				const val = ZAPRET_PRESETS[idx].args;
+				const widget = cmdOptsOpt ? cmdOptsOpt.getUIElement('config') : null;
+				if (widget) {
+					widget.setValue(val);
+					widget.node.dispatchEvent(new Event('change', { bubbles: true }));
+				} else {
+					const el = document.querySelector('[name*=".zapret_cmd_opts"]');
+					if (el) { el.value = val; el.dispatchEvent(new Event('change', { bubbles: true })); }
+				}
+			}
+
+			/* Preset picker — DummyValue, never stored; it just fills zapret_cmd_opts and
+			 * pre-selects whichever preset matches the current value. */
+			o = ss.option(form.DummyValue, '_zapret_preset', _('Strategy preset'));
+			o.render = function(option_index, section_id) {
+				const cur = (uci.get('homeproxy', 'config', 'zapret_cmd_opts') || '').trim();
+				let curIdx = -1;
+				for (let i = 0; i < ZAPRET_PRESETS.length; i++)
+					if (ZAPRET_PRESETS[i].args === cur) { curIdx = i; break; }
+				const sel = E('select', { 'class': 'cbi-input-select', 'style': 'max-width:100%' });
+				sel.appendChild(E('option', { value: '', selected: curIdx < 0 ? '' : null },
+					curIdx < 0 ? _('— custom / select a preset —') : _('— select a preset —')));
+				/* Group into two optgroups but keep the flat index as the option value
+				 * (applyPreset / curIdx both index the flat ZAPRET_PRESETS array). */
+				const _groups = [
+					{ key: 'recommended', label: _('Recommended') },
+					{ key: 'auto',        label: _('Full-test pool') }
+				];
+				_groups.forEach((g) => {
+					const og = E('optgroup', { label: g.label });
+					ZAPRET_PRESETS.forEach((p, i) => {
+						if ((p.group || 'recommended') !== g.key) return;
+						og.appendChild(E('option', { value: String(i), selected: i === curIdx ? '' : null }, p.name));
+					});
+					if (og.children.length) sel.appendChild(og);
+				});
+				sel.addEventListener('change', function() { if (sel.value !== '') applyPreset(parseInt(sel.value)); });
+				return E('div', { 'class': 'cbi-value' }, [
+					E('label', { 'class': 'cbi-value-title' }, _('Strategy preset')),
+					E('div', { 'class': 'cbi-value-field' }, [ sel,
+						E('div', { 'class': 'cbi-value-description' }, _('Fills the strategy below. Use the tester to find one that works on your ISP.')) ])
+				]);
+			};
+			o.write = function() {};
+
+			o = ss.option(form.Value, 'zapret_cmd_opts', _('Desync strategy'),
+				_('nfqws2 options applied to every flow routed to Zapret. No hostlists — the routing rules already select what is sent here. ' +
+				  'Pick a preset above or edit freely. The <code>--qnum</code>/<code>--user</code>/<code>--fwmark</code>/<code>--lua-init</code> arguments are added automatically.'));
+			o.default = ZAPRET_PRESETS[0].args;
+			o.rmempty = false;
+			cmdOptsOpt = o;
+
+			/* Strategy tester — runs the candidate on a temp queue scoped to 4 test sites,
+			 * leaving the live queue/traffic untouched (zapret_test.sh). */
+			o = ss.option(form.DummyValue, '_zapret_tester', _('Test current strategy'),
+				_('Runs the current strategy on a temporary NFQUEUE scoped to 4 test sites — ' +
+				  '<b>YouTube</b>, <b>Telegram</b>, <b>Discord</b>, <b>Speedtest.net</b> — and checks whether each TLS handshake completes. ' +
+				  'Does not touch your live connection. A site that fails here means the strategy breaks it.'));
+			o.render = function(option_index, section_id) {
+				const msgEl = E('span', { style: 'margin-left:8px; font-size:0.9em; color:gray' }, '');
+				const btn = E('button', {
+					'class': 'btn cbi-button cbi-button-action',
+					'click': ui.createHandlerFn(this, () => {
+						const el = document.querySelector('[name*=".zapret_cmd_opts"]');
+						const opts = el ? el.value.trim() : '';
+						btn.disabled = true;
+						msgEl.style.color = 'gray';
+						msgEl.textContent = _('Testing...');
+						return L.resolveDefault(callZapretTest(opts), {}).then((ret) => {
+							btn.disabled = false;
+							let data = {};
+							try { data = JSON.parse(ret.output || '{}'); } catch (e) {}
+							if (data.error) {
+								msgEl.style.color = 'red';
+								msgEl.textContent = data.error;
+							} else if (data.results && data.results.length) {
+								const frag = [];
+								data.results.forEach((r, i) => {
+									if (i) frag.push(document.createTextNode(' · '));
+									frag.push(E('span', {
+										style: 'font-weight:bold; color:' + (r.ok ? 'green' : '#cc3300'),
+										title: r.host + (r.ok ? (' → ' + r.tls + 's') : (' → ' + (r.reason || 'fail')))
+									}, (r.label || r.tag) + (r.ok ? ' ✓' : ' ✗')));
+								});
+								frag.push(E('span', { style: 'color:gray; margin-left:6px' }, '(' + data.ok + '/' + data.total + ')'));
+								while (msgEl.firstChild) msgEl.removeChild(msgEl.firstChild);
+								frag.forEach((n) => msgEl.appendChild(n));
+							} else {
+								msgEl.style.color = 'red';
+								msgEl.textContent = _('Test failed');
+							}
+						});
+					})
+				}, [ _('Test') ]);
+				return E('div', { 'class': 'cbi-value' }, [
+					E('label', { 'class': 'cbi-value-title' }, _('Test current strategy')),
+					E('div', { 'class': 'cbi-value-field' }, [ btn, msgEl ])
+				]);
+			};
+			o.write = function() {};
+
+			/* Full strategy test — client-driven sweep over every candidate. Page-bound:
+			 * runs only while the user is on the page, one candidate at a time through the
+			 * same isolated probe RPC, with live X/N progress, a Stop button, and a per-winner
+			 * Apply (writes that candidate into zapret_cmd_opts, like picking it in the
+			 * dropdown). Leaving the page stops the sweep; applied results persist on Save. */
+			o = ss.option(form.DummyValue, '_zapret_fulltest', _('Full strategy test'),
+				_('Tries every strategy in the list one by one on a temporary NFQUEUE — your live connection is untouched — ' +
+				  'and shows which pass. Stay on this page while it runs; leaving stops it. ' +
+				  'Press <b>Apply</b> on any passing strategy to select it, then Save &amp; Apply.'));
+			o.render = function(option_index, section_id) {
+				let running = false, stop = false;
+				const runBtn  = E('button', { 'class': 'btn cbi-button cbi-button-action' }, [ _('Run full test') ]);
+				const stopBtn = E('button', { 'class': 'btn cbi-button cbi-button-negative', style: 'margin-left:6px; display:none' }, [ _('Stop') ]);
+				const prog = E('span', { style: 'margin-left:8px; font-size:0.9em; color:gray' }, '');
+				const list = E('div', { style: 'margin-top:8px' });
+
+				function addRow(p, idx, data) {
+					const ok = (data && data.ok) ? data.ok : 0;
+					const total = (data && data.total) ? data.total : 0;
+					const err = data && data.error;
+					const pass = ok > 0 && !err;
+					const r = E('div', { style: 'padding:2px 0; font-size:0.9em' });
+					r.appendChild(E('span', { style: 'font-weight:bold; color:' + (pass ? 'green' : '#999') }, pass ? '✓ ' : '✗ '));
+					r.appendChild(E('span', {}, p.name));
+					r.appendChild(E('span', { style: 'color:gray; margin-left:6px' }, err ? err : ('(' + ok + '/' + total + ')')));
+					if (pass) {
+						const ap = E('a', { href: '#', style: 'margin-left:10px' }, _('Apply'));
+						ap.addEventListener('click', function(ev) {
+							ev.preventDefault();
+							applyPreset(idx);
+							prog.style.color = 'green';
+							prog.textContent = _('Applied: %s — now Save & Apply').format(p.name);
+						});
+						r.appendChild(ap);
+					}
+					list.appendChild(r);
+				}
+
+				async function runAll() {
+					running = true; stop = false;
+					runBtn.disabled = true; stopBtn.disabled = false; stopBtn.style.display = '';
+					while (list.firstChild) list.removeChild(list.firstChild);
+					const N = ZAPRET_PRESETS.length;
+					let passed = 0;
+					for (let i = 0; i < N; i++) {
+						if (stop) break;
+						const p = ZAPRET_PRESETS[i];
+						prog.style.color = 'gray';
+						prog.textContent = _('Testing %d/%d: %s').format(i + 1, N, p.name);
+						let data = {};
+						try {
+							const ret = await callZapretTest(p.args);
+							data = JSON.parse(ret.output || '{}');
+						} catch (e) { data = { error: _('rpc error') }; }
+						if (data && data.ok > 0 && !data.error) passed++;
+						addRow(p, i, data);
+					}
+					prog.style.color = stop ? '#cc3300' : 'green';
+					prog.textContent = (stop ? _('Stopped') : _('Done')) + ' — ' + _('%d/%d passed').format(passed, ZAPRET_PRESETS.length);
+					runBtn.disabled = false; stopBtn.style.display = 'none'; running = false;
+				}
+
+				runBtn.addEventListener('click', function() { if (!running) runAll(); });
+				stopBtn.addEventListener('click', function() { stop = true; stopBtn.disabled = true; });
+
+				return E('div', { 'class': 'cbi-value' }, [
+					E('label', { 'class': 'cbi-value-title' }, _('Full strategy test')),
+					E('div', { 'class': 'cbi-value-field' }, [ runBtn, stopBtn, prog, list ])
+				]);
+			};
+			o.write = function() {};
+
+			/* Discord voice opt-in: Discord voice is raw RTP/STUN UDP to bare IPs with no
+			 * sniffable domain, so the hostlist/routing can't catch it. This adds a port-based
+			 * rule (UDP 19294-19344, 50000-50100) sending it to Zapret. Only emitted when both
+			 * Zapret and this switch are on; off = those ports follow the normal call rules. */
+			o = ss.option(form.Flag, 'zapret_voice', _('Discord calls via Zapret'),
+				_('Route Discord\'s voice UDP ports (19294–19344, 50000–50100) through Zapret. ' +
+				  'Discord voice has no domain to match, so it can only be selected by port. ' +
+				  'Leave off if your VPN already handles calls.'));
+			o.default = '0';
+			o.rmempty = false;
+		})();
+
+		/* Zapret settings end */
 
 		return m.render();
 	}

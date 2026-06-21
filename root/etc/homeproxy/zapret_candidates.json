@@ -1,0 +1,185 @@
+{
+  "version": 1,
+  "candidates": [
+    {
+      "name": "Default (fake + multidisorder)",
+      "args": "--filter-tcp=80 --filter-l7=http --payload=http_req --lua-desync=fake:blob=fake_default_http:tcp_md5 --lua-desync=multisplit:pos=method+2 --new --filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=fake:blob=fake_default_tls:tcp_md5:tcp_seq=-10000 --lua-desync=multidisorder:pos=1,midsld",
+      "group": "recommended"
+    },
+    {
+      "name": "Multisplit",
+      "args": "--filter-tcp=80 --filter-l7=http --payload=http_req --lua-desync=fake:blob=fake_default_http:tcp_md5 --lua-desync=multisplit:pos=method+2 --new --filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=fake:blob=fake_default_tls:tcp_md5:tcp_seq=-10000 --lua-desync=multisplit:pos=1,midsld",
+      "group": "recommended"
+    },
+    {
+      "name": "Fake repeats (x6)",
+      "args": "--filter-tcp=80 --filter-l7=http --payload=http_req --lua-desync=fake:blob=fake_default_http:tcp_md5 --lua-desync=multisplit:pos=method+2 --new --filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=fake:blob=fake_default_tls:tcp_md5:repeats=6 --lua-desync=multidisorder:pos=1,midsld",
+      "group": "recommended"
+    },
+    {
+      "name": "Fake only",
+      "args": "--filter-tcp=80 --filter-l7=http --payload=http_req --lua-desync=fake:blob=fake_default_http:tcp_md5 --lua-desync=multisplit:pos=method+2 --new --filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=fake:blob=fake_default_tls:tcp_md5",
+      "group": "recommended"
+    },
+    {
+      "name": "YouTube (Google seqovl + fake-QUIC)",
+      "args": "--blob=tls_google:@/opt/zapret2/files/fake/tls_clienthello_www_google_com.bin --blob=quic_google:@/opt/zapret2/files/fake/quic_initial_www_google_com.bin --filter-tcp=80 --filter-l7=http --payload=http_req --lua-desync=fake:blob=fake_default_http:tcp_md5 --lua-desync=multisplit:pos=method+2 --new --filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=multisplit:pos=2,sniext+1:seqovl=679:seqovl_pattern=tls_google --new --filter-udp=443 --filter-l7=quic --payload=quic_initial --lua-desync=fake:blob=quic_google:repeats=6",
+      "group": "recommended"
+    },
+    {
+      "name": "Discord (TLS seqovl + STUN voice)",
+      "args": "--blob=tls_google:@/opt/zapret2/files/fake/tls_clienthello_www_google_com.bin --blob=stun_fake:@/opt/zapret2/files/fake/stun.bin --filter-tcp=80 --filter-l7=http --payload=http_req --lua-desync=fake:blob=fake_default_http:tcp_md5 --lua-desync=multisplit:pos=method+2 --new --filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=multidisorder:pos=1,sniext+1:seqovl=336:seqovl_pattern=tls_google --new --filter-udp=443 --filter-l7=stun,discord --lua-desync=fake:blob=stun_fake:repeats=6",
+      "group": "recommended"
+    },
+    {
+      "name": "YouTube + Discord (combined)",
+      "args": "--blob=tls_google:@/opt/zapret2/files/fake/tls_clienthello_www_google_com.bin --blob=quic_google:@/opt/zapret2/files/fake/quic_initial_www_google_com.bin --blob=stun_fake:@/opt/zapret2/files/fake/stun.bin --filter-tcp=80 --filter-l7=http --payload=http_req --lua-desync=fake:blob=fake_default_http:tcp_md5 --lua-desync=multisplit:pos=method+2 --new --filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=multisplit:pos=2,sniext+1:seqovl=679:seqovl_pattern=tls_google --new --filter-udp=443 --filter-l7=quic --payload=quic_initial --lua-desync=fake:blob=quic_google:repeats=6 --new --filter-udp=443 --filter-l7=stun,discord --lua-desync=fake:blob=stun_fake:repeats=6",
+      "group": "recommended"
+    },
+    {
+      "name": "Fake TLS auto (rnd SNI)",
+      "args": "--filter-tcp=80 --filter-l7=http --payload=http_req --lua-desync=fake:blob=fake_default_http:tcp_md5 --lua-desync=multisplit:pos=method+2 --new --filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=fake:blob=fake_default_tls:tcp_seq=-10000:tls_mod=rnd,dupsid:repeats=11 --lua-desync=multidisorder:pos=1,midsld",
+      "group": "recommended"
+    },
+    {
+      "name": "Fake + multisplit seqovl",
+      "args": "--filter-tcp=80 --filter-l7=http --payload=http_req --lua-desync=fake:blob=fake_default_http:tcp_md5 --lua-desync=multisplit:pos=method+2 --new --filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=fake:blob=fake_default_tls:tcp_seq=-10000:repeats=8 --lua-desync=multisplit:pos=1:seqovl=679:seqovl_pattern=fake_default_tls",
+      "group": "recommended"
+    },
+    {
+      "name": "Hostfakesplit",
+      "args": "--filter-tcp=80 --filter-l7=http --payload=http_req --lua-desync=fake:blob=fake_default_http:tcp_md5 --lua-desync=multisplit:pos=method+2 --new --filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=hostfakesplit:host=www.google.com:tcp_ts=-1000:repeats=4",
+      "group": "recommended"
+    },
+    {
+      "name": "Syndata + multidisorder",
+      "args": "--filter-tcp=80 --filter-l7=http --payload=http_req --lua-desync=fake:blob=fake_default_http:tcp_md5 --lua-desync=multisplit:pos=method+2 --new --filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=syndata --lua-desync=multidisorder:pos=1,midsld",
+      "group": "recommended"
+    },
+    {
+      "name": "Split @2",
+      "args": "--filter-tcp=80 --filter-l7=http --payload=http_req --lua-desync=fake:blob=fake_default_http:tcp_md5 --lua-desync=multisplit:pos=method+2 --new --filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=multisplit:pos=2",
+      "group": "auto"
+    },
+    {
+      "name": "Split @1,midsld",
+      "args": "--filter-tcp=80 --filter-l7=http --payload=http_req --lua-desync=fake:blob=fake_default_http:tcp_md5 --lua-desync=multisplit:pos=method+2 --new --filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=multisplit:pos=1,midsld",
+      "group": "auto"
+    },
+    {
+      "name": "Split @sniext+1",
+      "args": "--filter-tcp=80 --filter-l7=http --payload=http_req --lua-desync=fake:blob=fake_default_http:tcp_md5 --lua-desync=multisplit:pos=method+2 --new --filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=multisplit:pos=sniext+1",
+      "group": "auto"
+    },
+    {
+      "name": "Split @midsld",
+      "args": "--filter-tcp=80 --filter-l7=http --payload=http_req --lua-desync=fake:blob=fake_default_http:tcp_md5 --lua-desync=multisplit:pos=method+2 --new --filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=multisplit:pos=midsld",
+      "group": "auto"
+    },
+    {
+      "name": "Split multi-pos (7pt)",
+      "args": "--filter-tcp=80 --filter-l7=http --payload=http_req --lua-desync=fake:blob=fake_default_http:tcp_md5 --lua-desync=multisplit:pos=method+2 --new --filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=multisplit:pos=1,sniext+1,host+1,midsld-2,midsld,midsld+2,endhost-1",
+      "group": "auto"
+    },
+    {
+      "name": "Disorder @1",
+      "args": "--filter-tcp=80 --filter-l7=http --payload=http_req --lua-desync=fake:blob=fake_default_http:tcp_md5 --lua-desync=multisplit:pos=method+2 --new --filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=multidisorder:pos=1",
+      "group": "auto"
+    },
+    {
+      "name": "Disorder @sniext+1",
+      "args": "--filter-tcp=80 --filter-l7=http --payload=http_req --lua-desync=fake:blob=fake_default_http:tcp_md5 --lua-desync=multisplit:pos=method+2 --new --filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=multidisorder:pos=sniext+1",
+      "group": "auto"
+    },
+    {
+      "name": "Disorder @midsld",
+      "args": "--filter-tcp=80 --filter-l7=http --payload=http_req --lua-desync=fake:blob=fake_default_http:tcp_md5 --lua-desync=multisplit:pos=method+2 --new --filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=multidisorder:pos=midsld",
+      "group": "auto"
+    },
+    {
+      "name": "Seqovl split @10",
+      "args": "--filter-tcp=80 --filter-l7=http --payload=http_req --lua-desync=fake:blob=fake_default_http:tcp_md5 --lua-desync=multisplit:pos=method+2 --new --filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=multisplit:pos=10:seqovl=1",
+      "group": "auto"
+    },
+    {
+      "name": "Seqovl split @10,sniext+1",
+      "args": "--filter-tcp=80 --filter-l7=http --payload=http_req --lua-desync=fake:blob=fake_default_http:tcp_md5 --lua-desync=multisplit:pos=method+2 --new --filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=multisplit:pos=10,sniext+1:seqovl=1",
+      "group": "auto"
+    },
+    {
+      "name": "Seqovl disorder @2",
+      "args": "--filter-tcp=80 --filter-l7=http --payload=http_req --lua-desync=fake:blob=fake_default_http:tcp_md5 --lua-desync=multisplit:pos=method+2 --new --filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=multidisorder:pos=2:seqovl=1",
+      "group": "auto"
+    },
+    {
+      "name": "Seqovl disorder @midsld",
+      "args": "--filter-tcp=80 --filter-l7=http --payload=http_req --lua-desync=fake:blob=fake_default_http:tcp_md5 --lua-desync=multisplit:pos=method+2 --new --filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=multidisorder:pos=midsld:seqovl=1",
+      "group": "auto"
+    },
+    {
+      "name": "Tcpseg seqovl + drop",
+      "args": "--filter-tcp=80 --filter-l7=http --payload=http_req --lua-desync=fake:blob=fake_default_http:tcp_md5 --lua-desync=multisplit:pos=method+2 --new --filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=tcpseg:pos=0,-1:seqovl=1 --lua-desync=drop",
+      "group": "auto"
+    },
+    {
+      "name": "Fake TLS + badsum",
+      "args": "--filter-tcp=80 --filter-l7=http --payload=http_req --lua-desync=fake:blob=fake_default_http:tcp_md5 --lua-desync=multisplit:pos=method+2 --new --filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=fake:blob=fake_default_tls:badsum",
+      "group": "auto"
+    },
+    {
+      "name": "Fake TLS + bad-seq",
+      "args": "--filter-tcp=80 --filter-l7=http --payload=http_req --lua-desync=fake:blob=fake_default_http:tcp_md5 --lua-desync=multisplit:pos=method+2 --new --filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=fake:blob=fake_default_tls:tcp_seq=-3000",
+      "group": "auto"
+    },
+    {
+      "name": "Fake TLS + bad-ack/ts",
+      "args": "--filter-tcp=80 --filter-l7=http --payload=http_req --lua-desync=fake:blob=fake_default_http:tcp_md5 --lua-desync=multisplit:pos=method+2 --new --filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=fake:blob=fake_default_tls:tcp_ack=-66000:tcp_ts_up",
+      "group": "auto"
+    },
+    {
+      "name": "Fake TLS + bad-ts",
+      "args": "--filter-tcp=80 --filter-l7=http --payload=http_req --lua-desync=fake:blob=fake_default_http:tcp_md5 --lua-desync=multisplit:pos=method+2 --new --filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=fake:blob=fake_default_tls:tcp_ts=-1000",
+      "group": "auto"
+    },
+    {
+      "name": "Fake TLS + SYN flag",
+      "args": "--filter-tcp=80 --filter-l7=http --payload=http_req --lua-desync=fake:blob=fake_default_http:tcp_md5 --lua-desync=multisplit:pos=method+2 --new --filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=fake:blob=fake_default_tls:tcp_flags_set=SYN",
+      "group": "auto"
+    },
+    {
+      "name": "Fake zero-payload + md5",
+      "args": "--filter-tcp=80 --filter-l7=http --payload=http_req --lua-desync=fake:blob=fake_default_http:tcp_md5 --lua-desync=multisplit:pos=method+2 --new --filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=fake:blob=0x00000000:tcp_md5",
+      "group": "auto"
+    },
+    {
+      "name": "Fake md5 + split @2",
+      "args": "--filter-tcp=80 --filter-l7=http --payload=http_req --lua-desync=fake:blob=fake_default_http:tcp_md5 --lua-desync=multisplit:pos=method+2 --new --filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=fake:blob=fake_default_tls:tcp_md5 --lua-desync=multisplit:pos=2",
+      "group": "auto"
+    },
+    {
+      "name": "Fake badsum + disorder @midsld",
+      "args": "--filter-tcp=80 --filter-l7=http --payload=http_req --lua-desync=fake:blob=fake_default_http:tcp_md5 --lua-desync=multisplit:pos=method+2 --new --filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=fake:blob=fake_default_tls:badsum --lua-desync=multidisorder:pos=midsld",
+      "group": "auto"
+    },
+    {
+      "name": "Fake bad-seq + disorder @1,midsld",
+      "args": "--filter-tcp=80 --filter-l7=http --payload=http_req --lua-desync=fake:blob=fake_default_http:tcp_md5 --lua-desync=multisplit:pos=method+2 --new --filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=fake:blob=fake_default_tls:tcp_seq=-3000 --lua-desync=multidisorder:pos=1,midsld",
+      "group": "auto"
+    },
+    {
+      "name": "Fake-in-split @2 (nodrop)",
+      "args": "--filter-tcp=80 --filter-l7=http --payload=http_req --lua-desync=fake:blob=fake_default_http:tcp_md5 --lua-desync=multisplit:pos=method+2 --new --filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=multisplit:blob=fake_default_tls:tcp_md5:pos=2:nodrop",
+      "group": "auto"
+    },
+    {
+      "name": "Wssize + split @1,midsld",
+      "args": "--filter-tcp=80 --filter-l7=http --payload=http_req --lua-desync=fake:blob=fake_default_http:tcp_md5 --lua-desync=multisplit:pos=method+2 --new --filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=wssize:wsize=1:scale=6 --lua-desync=multisplit:pos=1,midsld",
+      "group": "auto"
+    },
+    {
+      "name": "Syndata (TLS marker)",
+      "args": "--filter-tcp=80 --filter-l7=http --payload=http_req --lua-desync=fake:blob=fake_default_http:tcp_md5 --lua-desync=multisplit:pos=method+2 --new --filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=syndata:blob=0x1603",
+      "group": "auto"
+    }
+  ]
+}

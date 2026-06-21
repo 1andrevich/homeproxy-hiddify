@@ -82,14 +82,13 @@ else {
 
 const ipv6_support = uci.get(uciconfig, ucimain, 'ipv6_support') || '0';
 const byedpi_enabled = uci.get(uciconfig, ucimain, 'byedpi_enabled');
-/* ZAPRET DISABLED (commented out for safety until finalized). zapret_enabled forced
- * null so every `zapret_enabled === '1'` check below is false and zapret-out is never
- * emitted; route nodes set to 'zapret-out' fall back to direct-out. */
-const zapret_enabled = null;
 /* zapret: a `direct` outbound stamped with routing_mark; nft catches the mark and
  * sends the handshake to NFQUEUE where nfqws desyncs it. Separate from byedpi. */
-// const zapret_enabled = uci.get(uciconfig, ucimain, 'zapret_enabled');
-// const zapret_mark = uci.get(uciconfig, ucimain, 'zapret_mark') || '110';
+const zapret_enabled = uci.get(uciconfig, ucimain, 'zapret_enabled');
+const zapret_mark = uci.get(uciconfig, ucimain, 'zapret_mark') || '110';
+/* Opt-in: route call/voice UDP ports (50000-65530) to zapret-out instead of the proxy.
+ * Only honored when zapret_enabled === '1' (zapret-out exists). */
+const zapret_voice = uci.get(uciconfig, ucimain, 'zapret_voice') || '0';
 
 let main_node, main_udp_node, dedicated_udp_node, default_outbound, default_outbound_dns,
     domain_strategy, sniff_override, dns_server, china_dns_server, russia_dns_server,
@@ -332,10 +331,10 @@ function xhttp_download(node) {
 		insecure: strToBool(node.xhttp_download_insecure),
 		alpn: node.xhttp_download_alpn ? (type(node.xhttp_download_alpn) === 'array' ? node.xhttp_download_alpn : split(node.xhttp_download_alpn, ',')) : null,
 		/* Reality requires uTLS in sing-box (see the main-TLS block) — default the
-		 * fingerprint to 'chrome' when reality is on but the node carries none. */
+		 * fingerprint to 'edge' when reality is on but the node carries none. */
 		utls: (!isEmpty(node.xhttp_download_fp) || sec === 'reality') ? {
 			enabled: true,
-			fingerprint: !isEmpty(node.xhttp_download_fp) ? node.xhttp_download_fp : 'chrome'
+			fingerprint: !isEmpty(node.xhttp_download_fp) ? node.xhttp_download_fp : 'edge'
 		} : null,
 		reality: (sec === 'reality') ? {
 			enabled: true,
@@ -474,11 +473,11 @@ function generate_outbound(node) {
 			/* Reality REQUIRES uTLS in sing-box ("uTLS is required by reality client"
 			 * is a FATAL that crash-loops the whole service; hiddify-core defaults it
 			 * silently). So when reality is on we always emit utls, defaulting the
-			 * fingerprint to 'chrome' if the node (e.g. a sub-imported reality node)
+			 * fingerprint to 'edge' if the node (e.g. a sub-imported reality node)
 			 * didn't carry one. */
 			utls: (!isEmpty(node.tls_utls) || node.tls_reality === '1') ? {
 				enabled: true,
-				fingerprint: !isEmpty(node.tls_utls) ? node.tls_utls : 'chrome'
+				fingerprint: !isEmpty(node.tls_utls) ? node.tls_utls : 'edge'
 			} : null,
 			reality: (node.tls_reality === '1') ? {
 				enabled: true,
@@ -1339,9 +1338,14 @@ config.route = {
 			inbound: 'dns-in',
 			action: 'hijack-dns'
 		},
-		is_singbox ? {
+		{
+			/* Explicit sniff action — emit for BOTH cores. hiddify-core's legacy inbound
+			 * `sniff: true` does NOT sniff QUIC (TLS works, QUIC doesn't), so without this
+			 * route action QUIC carries no SNI and can't be domain-routed (e.g. YouTube
+			 * video → zapret-out fell through to direct). Device-confirmed on hiddify-core
+			 * 1.13.1; both cores support the action. */
 			action: 'sniff'
-		} : null
+		}
 	],
 	rule_set: [],
 	auto_detect_interface: isEmpty(default_interface) ? true : null,
@@ -1463,6 +1467,19 @@ if (!isEmpty(main_node)) {
 				outbound: 'direct-out'
 			});
 		}
+
+		/* Zapret Discord voice (opt-in): send Discord's voice-server UDP ranges
+		 * (19294-19344, 50000-50100 — from flowseal/zapret-discord-youtube) to zapret-out
+		 * BEFORE proxy_calls, so Discord voice is desynced via Zapret instead of proxied.
+		 * Emitted ONLY when Zapret is on (so zapret-out exists) — when Zapret is off this
+		 * rule disappears and proxy_calls handles these ports as before. Works on either core. */
+		if (zapret_enabled === '1' && zapret_voice === '1')
+			push(config.route.rules, {
+				network: 'udp',
+				port_range: ['19294:19344', '50000:50100'],
+				action: 'route',
+				outbound: 'zapret-out'
+			});
 
 		if (proxy_calls === '1') {
 			push(config.route.rules, {
@@ -1730,12 +1747,11 @@ if (byedpi_enabled === '1') {
 }
 /* ByeDPI outbound end */
 
-/* ZAPRET DISABLED — outbound emission commented out for safety until finalized.
- * zapret outbound: a plain direct dialer stamped with routing_mark. sing-box egresses
+/* zapret outbound: a plain direct dialer stamped with routing_mark. sing-box egresses
  * the selected (e.g. YouTube) flows directly but tagged with zapret_mark; nft catches
  * that mark and feeds the handshake to NFQUEUE where nfqws (running separately) desyncs
  * the DPI. routing_mark OVERRIDES the global default_mark, so firewall_post.ut adds a
- * matching loop-avoidance return for zapret_mark.
+ * matching loop-avoidance return for zapret_mark. */
 if (zapret_enabled === '1') {
 	push(config.outbounds, {
 		type: 'direct',
@@ -1743,7 +1759,7 @@ if (zapret_enabled === '1') {
 		routing_mark: strToInt(zapret_mark)
 	});
 }
- * zapret outbound end */
+/* zapret outbound end */
 
 /* Experimental start */
 config.experimental = {

@@ -90,18 +90,10 @@ const byedpi_gid = uci.get(cfgname, 'infra', 'byedpi_gid') || '8181';
  * like self_mark does, and (b) be steered into NFQUEUE so nfqws can desync the handshake.
  * nfqws reinjects its fake packets carrying its own desync mark (0x40000000) — those must
  * also escape the redirect, and must NOT be re-queued. */
-/* ZAPRET DISABLED (commented out for safety until the feature is finalized; the
- * proxy_banned_ru UDP-tproxy gate change below is kept). zapret_enabled forced '0'
- * so every {% if (zapret_enabled === '1') %} block below stays inert. */
-const zapret_enabled = '0';
-// const zapret_enabled = uci.get(cfgname, 'config', 'zapret_enabled') || '0';
-// const zapret_mark = uci.get(cfgname, 'config', 'zapret_mark') || '110';
-// const zapret_qnum = uci.get(cfgname, 'config', 'zapret_qnum') || '200';
-// const zapret_dport = uci.get(cfgname, 'config', 'zapret_dport') || '443';
-/* QUIC (UDP/443) desync is opt-in: it only fires if the flow is actually marked by
- * sing-box (so the queue counter climbing also proves QUIC rode zapret-out, not direct). */
-// const zapret_quic = uci.get(cfgname, 'config', 'zapret_quic') || '0';
-// const zapret_desync_mark = '0x40000000';   /* nfqws DESYNC_MARK (its reinjected fakes) */
+const zapret_enabled = uci.get(cfgname, 'config', 'zapret_enabled') || '0';
+const zapret_mark = uci.get(cfgname, 'config', 'zapret_mark') || '110';
+const zapret_qnum = uci.get(cfgname, 'config', 'zapret_qnum') || '200';
+const zapret_desync_mark = '0x40000000';   /* nfqws DESYNC_MARK (its reinjected fakes) */
 
 if (match(proxy_mode, /redirect/)) {
 	self_mark = uci.get(cfgname, 'infra', 'self_mark') || '100';
@@ -335,12 +327,10 @@ chain homeproxy_redirect_lanac {
 
 chain homeproxy_redirect {
 	meta mark {{ self_mark }} counter return
-	{# ZAPRET DISABLED — sibling loop-avoidance returns commented out
 	{% if (zapret_enabled === '1'): %}
 	meta mark {{ zapret_mark }} counter return
 	meta mark and {{ zapret_desync_mark }} != 0 counter return
 	{% endif /* zapret_enabled */ %}
-	#}
 
 	ip daddr @homeproxy_wan_proxy_addr_v4 counter goto homeproxy_redirect_proxy_port
 	{% if (ipv6_support === '1'): %}
@@ -408,19 +398,21 @@ chain homeproxy_output_redir {
 }
 {% endif %}
 
-{# ZAPRET DISABLED — NFQUEUE chain for zapret-marked flows commented out
-   (feeds the first handshake packets of zapret-marked flows to nfqws; `bypass`
-   lets traffic through unharmed if nfqws isn't listening on the queue)
+{# NFQUEUE chain: feed ALL Zapret-marked (mark 110) flows to nfqws2 — any port, TCP
+   and UDP — and let the strategy's own --filter-tcp/--filter-udp profiles decide what
+   to desync (the rest passes through via `bypass`). This mirrors how a list→outbound
+   rule routes all matching traffic: once sing-box marks a flow for zapret-out, the
+   queue feeds it, regardless of port (so discord.media on 2053/8443, voice UDP, QUIC,
+   etc. all work with no per-port firewall rules). `ct original packets 1-12` caps it
+   to each flow's handshake; nfqws's reinjected fakes carry DESYNC_MARK (not mark 110)
+   so they are never re-queued. #}
 {% if (zapret_enabled === '1'): %}
 chain homeproxy_zapret_queue {
 	type filter hook postrouting priority mangle; policy accept;
-	meta mark {{ zapret_mark }} meta l4proto tcp tcp dport {{ zapret_dport }} ct original packets 1-12 counter queue num {{ zapret_qnum }} bypass
-	{% if (zapret_quic === '1'): %}
-	meta mark {{ zapret_mark }} meta l4proto udp udp dport {{ zapret_dport }} ct original packets 1-12 counter queue num {{ zapret_qnum }} bypass
-	{% endif %}
+	meta mark {{ zapret_mark }} meta l4proto tcp ct original packets 1-12 counter queue num {{ zapret_qnum }} bypass
+	meta mark {{ zapret_mark }} meta l4proto udp ct original packets 1-12 counter queue num {{ zapret_qnum }} bypass
 }
 {% endif %}
-#}
 
 {# UDP tproxy #}
 {% if (match(proxy_mode, /tproxy/) && (outbound_udp_node !== 'nil' || routing_mode === 'custom' || routing_mode === 'proxy_banned_ru')): %}
@@ -546,12 +538,10 @@ chain homeproxy_mangle_output {
 	meta skgid {{ byedpi_gid }} counter return
 	{% endif %}
 	meta mark {{ self_mark }} counter return
-	{# ZAPRET DISABLED — sibling loop-avoidance returns commented out
 	{% if (zapret_enabled === '1'): %}
 	meta mark {{ zapret_mark }} counter return
 	meta mark and {{ zapret_desync_mark }} != 0 counter return
 	{% endif /* zapret_enabled */ %}
-	#}
 
 	ip daddr @homeproxy_wan_proxy_addr_v4 counter goto homeproxy_mangle_mark
 	{% if (ipv6_support === '1'): %}

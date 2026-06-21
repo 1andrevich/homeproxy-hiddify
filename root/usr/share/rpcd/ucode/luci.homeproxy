@@ -995,6 +995,133 @@ const methods = {
 		}
 	},
 
+	zapret_status: {
+		call: function(req) {
+			const installed = !!access('/opt/zapret2/nfq2/nfqws2');
+			let version = null;
+			if (installed) {
+				if (access('/usr/bin/apk')) {
+					const fd = popen('apk info zapret2 2>/dev/null | head -1');
+					if (fd) {
+						const out = trim(fd.read('all'));
+						fd.close();
+						const m = match(out, /zapret2-([0-9][0-9.]*)/);
+						if (m) version = m[1];
+					}
+				} else if (access('/bin/opkg')) {
+					const fd = popen('opkg status zapret2 2>/dev/null');
+					if (fd) {
+						const out = fd.read('all');
+						fd.close();
+						const m = match(out, /Version: ([0-9][0-9.]*)/);
+						if (m) version = m[1];
+					}
+				}
+			}
+			let running = false;
+			const fd2 = popen('pidof nfqws2 2>/dev/null');
+			if (fd2) {
+				running = length(trim(fd2.read('all'))) > 0;
+				fd2.close();
+			}
+			let pkg_manager = null;
+			if (access('/usr/bin/apk') || access('/sbin/apk') || access('/usr/sbin/apk')) pkg_manager = 'apk';
+			else if (access('/bin/opkg') || access('/usr/bin/opkg')) pkg_manager = 'opkg';
+			let arch = null;
+			const afd = popen("awk -F\\' '/DISTRIB_ARCH/ {print $2}' /etc/openwrt_release 2>/dev/null");
+			if (afd) { arch = trim(afd.read('all')); afd.close(); }
+			return { installed, version, running, pkg_manager, arch };
+		}
+	},
+
+	zapret_prepare_install: {
+		call: function(req) {
+			let pkg_manager = null;
+			if (access('/usr/bin/apk') || access('/sbin/apk') || access('/usr/sbin/apk')) pkg_manager = 'apk';
+			else if (access('/bin/opkg') || access('/usr/bin/opkg')) pkg_manager = 'opkg';
+			if (!pkg_manager)
+				return { error: 'No supported package manager (apk/opkg)' };
+
+			let arch = null;
+			const afd = popen("awk -F\\' '/DISTRIB_ARCH/ {print $2}' /etc/openwrt_release 2>/dev/null");
+			if (afd) { arch = trim(afd.read('all')); afd.close(); }
+			if (!length(arch))
+				return { error: 'Cannot detect architecture' };
+
+			/* Asset names are version-less, so no GitHub API call is needed —
+			 * releases/latest/download/<name> resolves to the newest release. */
+			const ext = (pkg_manager === 'apk') ? 'apk' : 'ipk';
+			const dl_url = `https://github.com/1andrevich/zapret2-openwrt/releases/latest/download/zapret2_${arch}.${ext}`;
+			const tmp_path = `/tmp/zapret2_${arch}.${ext}`;
+
+			return { dl_url, tmp_path, pkg_manager };
+		}
+	},
+
+	zapret_install_pkg: {
+		args: { tmp_path: 'tmp_path', pkg_manager: 'pkg_manager' },
+		call: function(req) {
+			const tmp_path = req.args?.tmp_path;
+			const pkg_manager = req.args?.pkg_manager;
+			if (!tmp_path || !pkg_manager)
+				return { result: false, error: 'Missing arguments' };
+			if (!access(tmp_path))
+				return { result: false, error: 'Package file not found' };
+			let ret;
+			if (pkg_manager === 'apk') {
+				system('wget -qO /tmp/zapret2-1andrevich.pub https://github.com/1andrevich/zapret2-openwrt/releases/latest/download/zapret2-1andrevich.pub 2>/dev/null && cp /tmp/zapret2-1andrevich.pub /etc/apk/keys/ 2>/dev/null; rm -f /tmp/zapret2-1andrevich.pub');
+				ret = system(`apk add ${shellquote(tmp_path)}`);
+			} else {
+				system('opkg update 2>/dev/null');
+				ret = system(`opkg install ${shellquote(tmp_path)}`);
+			}
+			system(`rm -f ${shellquote(tmp_path)}`);
+			if (ret === 0) {
+				/* Keep the package's own service out of the way — HomeProxy runs its own
+				 * nfqws2 instance (qnum 200) and installs the NFQUEUE rule itself. */
+				system('/etc/init.d/zapret2 stop 2>/dev/null; true');
+				system('/etc/init.d/zapret2 disable 2>/dev/null; true');
+			}
+			return { result: ret === 0 };
+		}
+	},
+
+	zapret_remove: {
+		call: function(req) {
+			system("uci set homeproxy.config.zapret_enabled='0'; uci commit homeproxy 2>/dev/null; true");
+			system('/etc/init.d/zapret2 stop 2>/dev/null; /etc/init.d/zapret2 disable 2>/dev/null; true');
+			system('/etc/init.d/homeproxy reload 2>/dev/null; true');
+			system('pkill -f nfqws2 2>/dev/null; true');
+			let ret;
+			if (access('/usr/bin/apk'))
+				ret = system('apk del zapret2');
+			else if (access('/bin/opkg'))
+				ret = system('opkg remove zapret2');
+			else
+				return { result: false, error: 'No package manager' };
+			return { result: ret === 0 };
+		}
+	},
+
+	zapret_strategy_test: {
+		args: { cmd_opts: 'cmd_opts' },
+		call: function(req) {
+			if (!access('/opt/zapret2/nfq2/nfqws2'))
+				return { output: '{"ok":0,"total":0,"error":"zapret2 not installed"}' };
+			const cmd_opts = req.args?.cmd_opts || '';
+			/* The tester script runs a candidate nfqws2 on a temp queue scoped to the
+			 * test IPs, probes the TLS handshakes, and prints one JSON line. It self-
+			 * tears-down (trap + 30s watchdog), so live traffic/queue is never left
+			 * touched. We just relay its JSON for the UI to parse. */
+			const fd = popen(`sh /etc/homeproxy/scripts/zapret_test.sh ${shellquote(cmd_opts)} 2>/dev/null`);
+			let out = '';
+			if (fd) { out = trim(fd.read('all')); fd.close(); }
+			if (!length(out))
+				out = '{"ok":0,"total":0,"error":"tester produced no output"}';
+			return { output: out };
+		}
+	},
+
 	byedpi_strategy_test: {
 		args: { cmd_opts: 'cmd_opts', port: 'port' },
 		call: function(req) {

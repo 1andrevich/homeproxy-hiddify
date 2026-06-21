@@ -211,6 +211,45 @@ start_service() {
 		fi
 	fi
 
+	# Zapret (nfqws2): HomeProxy runs its OWN nfqws2 on a dedicated NFQUEUE. Which flows
+	# reach the queue is decided upstream by sing-box (zapret-out routing_mark) + nft
+	# (firewall_post.ut), so nfqws2 runs WITHOUT hostlists — it desyncs whatever it's fed.
+	# The zapret2 package only supplies the binary + lua; its own service/firewall stays
+	# disabled so it can't fight us for the queue or install conflicting nft rules.
+	local zapret_enabled zapret_cmd_opts zapret_qnum zapret_default_opts
+	config_get_bool zapret_enabled "config" "zapret_enabled" "0"
+	if [ "$zapret_enabled" = "1" ] && [ -x "/opt/zapret2/nfq2/nfqws2" ]; then
+		config_get zapret_qnum "config" "zapret_qnum" "200"
+		# Default strategy = zapret2's shipped recipe minus hostlists, TCP http+tls only.
+		# The strategy is the single source of truth: if it has a --filter-udp profile,
+		# firewall_post.ut queues QUIC to it automatically; if not, QUIC is left alone.
+		zapret_default_opts="--filter-tcp=80 --filter-l7=http --payload=http_req --lua-desync=fake:blob=fake_default_http:tcp_md5 --lua-desync=multisplit:pos=method+2 --new --filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=fake:blob=fake_default_tls:tcp_md5:tcp_seq=-10000 --lua-desync=multidisorder:pos=1,midsld"
+		config_get zapret_cmd_opts "config" "zapret_cmd_opts" "$zapret_default_opts"
+
+		/etc/init.d/zapret2 stop 2>/dev/null; /etc/init.d/zapret2 disable 2>/dev/null; true
+
+		procd_open_instance "zapret"
+		# Fixed args: drop privileges to daemon, tag reinjected fakes with DESYNC_MARK
+		# 0x40000000 (firewall_post.ut lets that mark escape the redirect and not be
+		# re-queued), and load the lua desync library (nfqws2 reads the shipped .gz directly).
+		procd_set_param command /opt/zapret2/nfq2/nfqws2 \
+			--qnum="$zapret_qnum" \
+			--user=daemon \
+			--fwmark=0x40000000 \
+			--lua-init=@/opt/zapret2/lua/zapret-lib.lua \
+			--lua-init=@/opt/zapret2/lua/zapret-antidpi.lua \
+			--lua-init=@/opt/zapret2/lua/zapret-auto.lua
+		# Strategy opts: quote-aware split so a value with spaces survives intact. The string
+		# is the admin's own root-owned UCI option (argument parsing, not a trust boundary);
+		# leading -- guards an option-like first token. Same rationale as ByeDPI above.
+		eval "set -- $zapret_cmd_opts"
+		for _arg in "$@"; do
+			procd_append_param command "$_arg"
+		done
+		procd_set_param respawn
+		procd_close_instance
+	fi
+
 	# Subscription auto-update cron. This install half was dropped in the init rewrite
 	# (commit 4f3511f) while the stop_service cleanup below was kept, leaving the UI
 	# "Auto update" checkbox wired to nothing. Restored verbatim from upstream: when
