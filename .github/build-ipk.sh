@@ -109,6 +109,8 @@ default_prerm' > "$TEMP_DIR/pre-deinstall"
 		--info "depends:libc firewall4 ucode-mod-digest" \
 		--info "provides:luci-app-homeproxy" \
 		--info "provides:luci-app-homeproxy-hiddify" \
+		--info "replaces:luci-app-homeproxy" \
+		--info "replaces:luci-app-homeproxy-hiddify" \
 		${APK_SIGN_KEY:+--sign-key "$APK_SIGN_KEY"} \
 		--files "$TEMP_PKG_DIR" \
 		--output "$TEMP_DIR/${PKG_NAME}_${PKG_VERSION}.apk"
@@ -152,11 +154,16 @@ PYEOF
 		IPK_DEPS="libc, firewall4, kmod-nft-tproxy, ucode-mod-digest"
 	fi
 
+	# Rename handling (ipk): do NOT Provides the old names. opkg treats an installed
+	# package that is also Provided as *satisfying* the dependency and then never
+	# fires Conflicts — so old + new would coexist. Dropping Provides and keeping
+	# Conflicts+Replaces makes opkg cleanly replace the old pkg. (Nothing depends on
+	# the old names: the i18n packages depend on $PKG_NAME.) The apk path uses the
+	# Alpine rename idiom instead: provides + replaces (see the apk mkpkg call above).
 	cat > "$TEMP_PKG_DIR/CONTROL/control" <<-EOF
 		Package: $PKG_NAME
 		Version: $PKG_VERSION
 		Depends: $IPK_DEPS
-		Provides: luci-app-homeproxy luci-app-homeproxy-hiddify
 		Conflicts: luci-app-homeproxy luci-app-homeproxy-hiddify
 		Replaces: luci-app-homeproxy luci-app-homeproxy-hiddify
 		Source: https://github.com/1andrevich/homeproxy-hiddify
