@@ -671,8 +671,7 @@ return view.extend({
 
 		o = s.taboption('routing', form.Flag, 'zapret_enabled', _('Enable Zapret'),
 			_('An alternative to ByeDPI: another free way to unblock throttled or blocked sites (YouTube, Discord…) without a VPN subscription. ' +
-			  'It does the same job a different way — your traffic still stays direct and is NOT encrypted, so your ISP can see which sites you visit but can no longer throttle or block them. ' +
-			  'Practical difference: Zapret can also unblock video and calls (e.g. YouTube video) that ByeDPI does not handle. ' +
+			  'Practical difference from ByeDPI: Zapret can work with the QUIC protocol. ' +
 			  'Finding a working strategy is individual and depends on your ISP\'s restrictions. ' +
 			  'Installed automatically on first enable.'));
 		o.default = o.disabled;

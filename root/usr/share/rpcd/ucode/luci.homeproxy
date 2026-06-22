@@ -730,13 +730,32 @@ const methods = {
 				fd.close();
 			}
 
+			/* UDP TPROXY chains: the full mangle chain plus its _port/_mark companions,
+			 * so the counter on the "tproxy → core" rule (UDP into HomeProxy) is visible
+			 * alongside the rules that return UDP before it. These chains only exist when
+			 * the UDP-tproxy firewall block was emitted (proxy_mode=tproxy + a UDP node). */
+			let udp_lines = [];
+			let uchains = ['homeproxy_mangle_tproxy_port', 'homeproxy_mangle_mark', 'homeproxy_mangle_tproxy'];
+			for (let ch in uchains) {
+				fd = popen('nft list chain inet fw4 ' + ch + ' 2>/dev/null');
+				if (fd) {
+					for (let line = fd.read('line'); length(line); line = fd.read('line')) {
+						const l = trim(line);
+						if (length(l) > 0)
+							push(udp_lines, l);
+					}
+					fd.close();
+				}
+			}
+
 			return {
 				nft_present: nft_present,
 				nft_rules:   join('\n', nft_lines),
 				uci_firewall: join('\n', uci_lines),
 				zapret_enabled: zapret_enabled,
 				zapret_running: zapret_running,
-				zapret_queue: join('\n', zq_lines)
+				zapret_queue: join('\n', zq_lines),
+				udp_tproxy: join('\n', udp_lines)
 			};
 		}
 	},

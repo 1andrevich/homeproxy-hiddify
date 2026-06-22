@@ -421,6 +421,10 @@ function buildNftSection(view) {
 					E('div', { 'class': 'diag-label' }, _('Matched lines in fw4')),
 					pre(ret.nft_rules)
 				]) : null,
+				ret.udp_tproxy ? E('div', {}, [
+					E('div', { 'class': 'diag-label' }, _('UDP TPROXY counters (UDP into HomeProxy)')),
+					pre(ret.udp_tproxy)
+				]) : null,
 				ret.uci_firewall ? E('div', {}, [
 					E('div', { 'class': 'diag-label' }, _('UCI firewall settings')),
 					pre(ret.uci_firewall)

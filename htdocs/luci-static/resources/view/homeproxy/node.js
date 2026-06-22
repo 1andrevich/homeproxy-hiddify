@@ -2705,6 +2705,7 @@ return view.extend({
 			});
 
 			let cmdOptsOpt = null;
+			let presetSelEl = null;
 			function applyPreset(idx) {
 				if (!ZAPRET_PRESETS[idx]) return;
 				const val = ZAPRET_PRESETS[idx].args;
@@ -2716,6 +2717,7 @@ return view.extend({
 					const el = document.querySelector('[name*=".zapret_cmd_opts"]');
 					if (el) { el.value = val; el.dispatchEvent(new Event('change', { bubbles: true })); }
 				}
+				if (presetSelEl) presetSelEl.value = String(idx);
 			}
 
 			/* Preset picker — DummyValue, never stored; it just fills zapret_cmd_opts and
@@ -2727,6 +2729,7 @@ return view.extend({
 				for (let i = 0; i < ZAPRET_PRESETS.length; i++)
 					if (ZAPRET_PRESETS[i].args === cur) { curIdx = i; break; }
 				const sel = E('select', { 'class': 'cbi-input-select', 'style': 'max-width:100%' });
+				presetSelEl = sel;
 				sel.appendChild(E('option', { value: '', selected: curIdx < 0 ? '' : null },
 					curIdx < 0 ? _('— custom / select a preset —') : _('— select a preset —')));
 				/* Group into two optgroups but keep the flat index as the option value

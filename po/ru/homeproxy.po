@@ -4298,8 +4298,8 @@ msgstr "Направлять голосовые UDP-порты Discord (19294–
 msgid "Enable Zapret"
 msgstr "Включить Zapret"
 
-msgid "An alternative to ByeDPI: another free way to unblock throttled or blocked sites (YouTube, Discord…) without a VPN subscription. It does the same job a different way — your traffic still stays direct and is NOT encrypted, so your ISP can see which sites you visit but can no longer throttle or block them. Practical difference: Zapret can also unblock video and calls (e.g. YouTube video) that ByeDPI does not handle. Finding a working strategy is individual and depends on your ISP's restrictions. Installed automatically on first enable."
-msgstr "Альтернатива ByeDPI: ещё один бесплатный способ разблокировать замедлённые или заблокированные сайты (YouTube, Discord…) без VPN-подписки. Делает ту же работу иначе — трафик по-прежнему идёт напрямую и НЕ шифруется, поэтому провайдер видит, какие сайты вы посещаете, но больше не может их замедлять или блокировать. Практическое отличие: Zapret умеет разблокировать видео и звонки (например, видео на YouTube), с которыми ByeDPI не справляется. Подбор рабочей стратегии индивидуален и зависит от ограничений провайдера. Устанавливается автоматически при первом включении."
+msgid "An alternative to ByeDPI: another free way to unblock throttled or blocked sites (YouTube, Discord…) without a VPN subscription. Practical difference from ByeDPI: Zapret can work with the QUIC protocol. Finding a working strategy is individual and depends on your ISP's restrictions. Installed automatically on first enable."
+msgstr "Альтернатива ByeDPI: ещё один бесплатный способ разблокировать замедлённые или заблокированные сайты (YouTube, Discord…) без VPN-подписки. Практическое отличие от ByeDPI: Zapret умеет работать с протоколом QUIC. Подбор рабочей стратегии индивидуален и зависит от ограничений провайдера. Устанавливается автоматически при первом включении."
 
 msgid "No package manager found. Install zapret2 manually from the Status page."
 msgstr "Менеджер пакетов не найден. Установите zapret2 вручную со страницы «Статус»."
