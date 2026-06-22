@@ -3,11 +3,12 @@
 <a href="https://t.me/one_andrevich"><img src="https://img.shields.io/badge/Telegram-Join-blue?style=flat-square&logo=telegram" alt="Telegram"></a>
 # Re:HomeProxy
 
-A modern multi-core proxy platform powered by [hiddify-core](https://github.com/hiddify/hiddify-core). A fork of ImmortalWrt HomeProxy.
+A modern multi-core proxy platform powered by [hiddify-core](https://github.com/hiddify/hiddify-core) and [sing-box-extended](https://github.com/shtorm-7/sing-box-extended). 
+A fork of [ImmortalWrt HomeProxy](https://github.com/immortalwrt/homeproxy).
 
 ## Overview
 
-Re:HomeProxy is a feature-rich proxy management system, a fresh take on ImmortalWrt's HomeProxy. It runs on a choice of cores ([hiddify-core](https://github.com/hiddify/hiddify-core) or [sing-box-extended](https://github.com/shtorm-7/sing-box-extended)), adds a built-in DPI-bypass for un-throttling sites without a VPN, ready-made Russia routing rules, and a one-click core installer — all from the LuCI web interface.
+Re:HomeProxy is a feature-rich proxy management system, a fresh take on ImmortalWrt's HomeProxy. It runs on a choice of cores ([hiddify-core](https://github.com/hiddify/hiddify-core) or [sing-box-extended](https://github.com/shtorm-7/sing-box-extended)), adds a built-in DPI-bypass based on [Zapret2](https://github.com/bol-van/zapret2) and [ByeDPI](https://github.com/hufrea/byedpi) for un-throttling sites without a VPN, ready-made Russia routing rules, and a one-click core installer — all from the LuCI web interface.
 
 ## Key Features
 
@@ -22,33 +23,21 @@ Re:HomeProxy is a feature-rich proxy management system, a fresh take on Immortal
 - **Diagnostics** — a built-in page to check core/system health, inspect ports, and generate a shareable report.
 - **Modern web interface** — clean, responsive LuCI UI with node management, ACL traffic routing, and NFT rule control.
 
-## ⚠️ Early Stage Project
-
-This project is currently in an **early stage of development**. The web UI configuration is still being developed and will be improved in future versions. 
-
 
 ## Prerequisites
 
 - OpenWRT / ImmortalWrt 24.10 or higher (opkg)
 - OpenWRT / ImmortalWrt 25.12 or higher (apk)
 
+Optionally legacy build for 23.05 is available in Releases
+
 ## Installation
 
-*~80 MB of free space recommended. Tight on storage? Install the LuCI app first, then use its **Core Management** page (Services → Re:HomeProxy → Status) to install a core — it auto-picks a build that fits, including a compact build for small devices.*
+*~40 MB of free space recommended. Tight on storage? Install the LuCI app first, then use its **Core Management** page (Services → Re:HomeProxy → Status) to install a core — it auto-picks a build that fits, including a compact build for small devices.*
 
 ### OpenWRT 25.12+ (APK)
 
-#### 1. Install *hiddify-core* package
-
-```sh
-wget -O /tmp/homeproxy-hiddify.pub https://github.com/1andrevich/homeproxy-hiddify/releases/latest/download/homeproxy-hiddify.pub
-cp /tmp/homeproxy-hiddify.pub /etc/apk/keys/
-wget -O /tmp/hiddify-core.apk "https://github.com/1andrevich/hiddify-core/releases/latest/download/hiddify-core_$(. /etc/os-release; echo "$OPENWRT_ARCH").apk"
-apk update
-apk add /tmp/hiddify-core.apk
-```
-
-#### 2. Install *luci-app-re-homeproxy* package
+#### 1. Install *luci-app-re-homeproxy* package
 
 ```sh
 wget -O /tmp/homeproxy-hiddify.pub https://github.com/1andrevich/homeproxy-hiddify/releases/latest/download/homeproxy-hiddify.pub
@@ -59,24 +48,18 @@ apk add /tmp/luci-app-re-homeproxy.apk
 
 Once the key is in `/etc/apk/keys/` it is trusted permanently — no flag needed for future updates.
 
----
+#### 2. Navigate to Core & Services tab and install Components of your choice
 
 ### OpenWRT 24.10 (opkg)
 
-#### 1. Install *hiddify-core* package
-
-```sh
-wget -O /tmp/hiddify-core.ipk "https://github.com/1andrevich/hiddify-core/releases/latest/download/hiddify-core_$(. /etc/os-release; echo "$OPENWRT_ARCH").ipk"
-opkg update
-opkg install /tmp/hiddify-core.ipk
-```
-
-#### 2. Install *luci-app-re-homeproxy* package
+#### 1. Install *luci-app-re-homeproxy* package
 
 ```sh
 wget -O /tmp/luci-app-re-homeproxy.ipk "$(wget -qO- 'https://api.github.com/repos/1andrevich/homeproxy-hiddify/releases' | grep -o 'https://github\.com/[^"]*luci-app-re-homeproxy[^"]*\.ipk' | head -1)"
 opkg install /tmp/luci-app-re-homeproxy.ipk
 ```
+
+#### 2. Navigate to Core & Services tab and install Components of your choice
 
 ### Optional 
 
