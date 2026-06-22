@@ -2748,7 +2748,7 @@ return view.extend({
 					E('label', { 'class': 'cbi-value-title' }, _('Strategy preset')),
 					E('div', { 'class': 'cbi-value-field' }, [ sel,
 						E('div', { 'class': 'cbi-value-description' }, _('Fills the strategy below. Use the tester to find one that works on your ISP. ' +
-							'Based on <a href="https://github.com/bol-van/zapret" target="_blank">bol-van/zapret</a> (nfqws2/blockcheck2) and ' +
+							'Based on <a href="https://github.com/bol-van/zapret2" target="_blank">bol-van/zapret2</a> (nfqws2/blockcheck2) and ' +
 							'<a href="https://github.com/flowseal/zapret-discord-youtube" target="_blank">flowseal/zapret-discord-youtube</a> (MIT). ' +
 							'Packages by <a href="https://github.com/1andrevich/zapret2-openwrt" target="_blank">1andrevich/zapret2-openwrt</a>.')) ])
 				]);

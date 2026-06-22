@@ -4253,8 +4253,8 @@ msgstr "Рекомендуемые"
 msgid "Full-test pool"
 msgstr "Полный набор для проверки"
 
-msgid "Fills the strategy below. Use the tester to find one that works on your ISP. Based on <a href=\"https://github.com/bol-van/zapret\" target=\"_blank\">bol-van/zapret</a> (nfqws2/blockcheck2) and <a href=\"https://github.com/flowseal/zapret-discord-youtube\" target=\"_blank\">flowseal/zapret-discord-youtube</a> (MIT). Packages by <a href=\"https://github.com/1andrevich/zapret2-openwrt\" target=\"_blank\">1andrevich/zapret2-openwrt</a>."
-msgstr "Заполняет поле стратегии ниже. Используйте тест, чтобы найти рабочую для вашего провайдера. На основе <a href=\"https://github.com/bol-van/zapret\" target=\"_blank\">bol-van/zapret</a> (nfqws2/blockcheck2) и <a href=\"https://github.com/flowseal/zapret-discord-youtube\" target=\"_blank\">flowseal/zapret-discord-youtube</a> (MIT). Пакеты: <a href=\"https://github.com/1andrevich/zapret2-openwrt\" target=\"_blank\">1andrevich/zapret2-openwrt</a>."
+msgid "Fills the strategy below. Use the tester to find one that works on your ISP. Based on <a href=\"https://github.com/bol-van/zapret2\" target=\"_blank\">bol-van/zapret2</a> (nfqws2/blockcheck2) and <a href=\"https://github.com/flowseal/zapret-discord-youtube\" target=\"_blank\">flowseal/zapret-discord-youtube</a> (MIT). Packages by <a href=\"https://github.com/1andrevich/zapret2-openwrt\" target=\"_blank\">1andrevich/zapret2-openwrt</a>."
+msgstr "Заполняет поле стратегии ниже. Используйте тест, чтобы найти рабочую для вашего провайдера. На основе <a href=\"https://github.com/bol-van/zapret2\" target=\"_blank\">bol-van/zapret2</a> (nfqws2/blockcheck2) и <a href=\"https://github.com/flowseal/zapret-discord-youtube\" target=\"_blank\">flowseal/zapret-discord-youtube</a> (MIT). Пакеты: <a href=\"https://github.com/1andrevich/zapret2-openwrt\" target=\"_blank\">1andrevich/zapret2-openwrt</a>."
 
 msgid "Desync strategy"
 msgstr "Стратегия рассинхронизации (desync)"
