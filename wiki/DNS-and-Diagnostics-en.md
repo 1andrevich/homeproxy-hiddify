@@ -44,7 +44,7 @@ The **Diagnostics** page (Services → Re:HomeProxy → Diagnostics) runs live c
 
 | Card | What it shows |
 |------|---------------|
-| **Connectivity** | Reachability of test sites (Baidu, Google, YouTube, Yandex, Speedtest) and your **Direct IP** vs **Proxy IP** — the two should differ when traffic is actually proxied. Also shows the **Active Node**. |
+| **Connectivity** | Reachability of test sites. On **hiddify-core** it also shows your **Direct IP** vs **Proxy IP** (the two should differ when traffic is actually proxied); on **sing-box-extended** it shows the live **Active Node** instead, because sing-box can't report the exit IP. |
 | **Core & System** | Whether the core (hiddify-core / sing-box-extended) and ByeDPI are installed, the active binary, version, whether they're running (with PID), and listening ports. Includes a **Restart Service** button. |
 | **Configuration** | Whether the generated core config is **valid**, its size, and counts of inbounds / outbounds / rules. |
 | **DNS Tests** | Checks that DNS resolution works through the configured resolvers. |
@@ -53,7 +53,7 @@ The **Diagnostics** page (Services → Re:HomeProxy → Diagnostics) runs live c
 
 ### Reading the results
 
-- **Direct IP == Proxy IP** → traffic isn't being proxied (check main node / routing mode / access control).
+- **Direct IP == Proxy IP** (hiddify-core) → traffic isn't being proxied (check main node / routing mode / access control). On sing-box-extended, confirm the **Active Node** row shows your chosen node instead.
 - **Core not running** → use **Restart Service**; if status shows all `?`, the rpcd backend is stale (`/etc/init.d/rpcd restart`, wait ~2 s).
 - **Config invalid** → a node or rule is malformed; the report names the error.
 - **Zapret counters not incrementing** → the strategy/queue isn't catching traffic — see [Zapret](Zapret-en).

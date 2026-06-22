@@ -2,7 +2,7 @@
 
 # Core Management
 
-Re:HomeProxy is **multi-core**: the LuCI app is the interface, and a separate **core** binary does the actual proxying. You install, update, and switch cores from **Services → Re:HomeProxy → Status → Core Management** — no SSH required.
+Re:HomeProxy is **multi-core**: the LuCI app is the interface, and a separate **core** binary does the actual proxying. You install, update, and switch cores from **Services → Re:HomeProxy → Core & Tools → Core management** — no SSH required.
 
 ---
 
@@ -11,11 +11,11 @@ Re:HomeProxy is **multi-core**: the LuCI app is the interface, and a separate **
 | | **hiddify-core** (default) | **sing-box-extended** |
 |---|---|---|
 | Engine | Fork of sing-box by the Hiddify team | Fork of sing-box with extra build tags |
-| Footprint | Lighter; a **compact build** exists for small devices | Larger (~76 MB installed) |
+| Footprint | Lighter; a **compact build** exists for small devices | Larger (~26 MB installed) |
 | Protocols | Hiddify-app protocols, TLS fragment, XHTTP, Mieru, etc. | The widest protocol set… |
 | **AmneziaWG / WARP** | ❌ **Not supported** | ✅ **Supported** |
 
-**Rule of thumb:** if you need **AmneziaWG/WARP**, or want the broadest protocol coverage and have ~80 MB free, choose **sing-box-extended**. Otherwise **hiddify-core** is the lighter default and is the only one with a compact build for tight-storage routers.
+**Rule of thumb:** if you need **AmneziaWG/WARP**, or want the broadest protocol coverage and have ~40 MB free, choose **sing-box-extended**. Otherwise **hiddify-core** is the lighter default and is the only one with a compact build for tight-storage routers.
 
 Which protocols appear in the node editor depends on the core you install — see [Supported Protocols](Supported-Protocols-en).
 
@@ -43,8 +43,8 @@ The compact (UPX-compressed) build of hiddify-core is much smaller on flash, but
 
 | Free on `/overlay` | What installs |
 |--------------------|---------------|
-| ~80 MB+ | hiddify-core or sing-box-extended (full build) |
-| ~25–80 MB | hiddify-core (compact build, if RAM allows) |
+| ~40 MB+ | hiddify-core or sing-box-extended (full build) |
+| ~25–40 MB | hiddify-core (compact build, if RAM allows) |
 | < ~25 MB | Not enough — free space, or bake the core into a custom firmware image |
 
 > On a **compressing** overlay (jffs2/ubifs) the full build needs less free space than the raw figure, because the filesystem compresses it. The installer accounts for this automatically — trust its check over the table above.
@@ -56,8 +56,19 @@ Tight on flash but building your own image? Large cores fit comfortably when **b
 ## Switching cores and updating
 
 - **Update:** press **Install** again — it fetches the latest release and reinstalls.
-- **Switch cores:** install the other core; if both are present, Re:HomeProxy uses your **preferred core** setting. The config generator and the service honour the same preference, so the generated config always matches the core that will run it.
-- **Version / status:** Core Management shows the installed core and version. If it shows all `?`, the backend (rpcd) is stale — restart it (`/etc/init.d/rpcd restart`) and reload the page.
+- **Switch cores:** install the other core; if both are present, Re:HomeProxy uses your **Preferred core** setting (on **Client → Routing Settings**). The config generator and the service honour the same preference, so the generated config always matches the core that will run it.
+- **Custom / external core:** instead of the managed install you can point Re:HomeProxy at a **self-provided core binary** (a build you compiled, or a version not in Releases) — it detects and uses it. Advanced setups only.
+- **Version / status:** the **Core management** section shows the installed core and version. If it shows all `?`, the backend (rpcd) is stale — restart it (`/etc/init.d/rpcd restart`) and reload the page.
+
+---
+
+## Resources & updates
+
+The **Core & Tools** tab also has a **Resources management** section for the data files routing depends on — the GeoIP / Geosite databases and the RU rule-sets:
+
+- **Check update** fetches the latest rule-set and geo data on demand.
+- The RU routing lists also **self-refresh** on a schedule, so in normal use you don't need to touch this.
+- **Subscriptions** update separately — on demand from the Subscriptions tab, or automatically on a cron; see [Subscriptions & Node Import](Subscriptions-en).
 
 ---
 

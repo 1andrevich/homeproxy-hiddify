@@ -13,9 +13,9 @@ Re:HomeProxy is a feature-rich proxy management system, a fresh take on Immortal
 ## Key Features
 
 - **Multi-core engine** — run on **hiddify-core** or **sing-box-extended**, your choice per device. The built-in **Core Management** page installs and updates the core for you and automatically picks the right build for your available storage (with a compact build for tight-storage devices).
-- **Wide protocol support** — Naive, Mieru, Hysteria, SOCKS, Shadowsocks, ShadowTLS, Tor, Trojan, VLESS (XHTTP), VMess, WireGuard, **AmneziaWG / WARP** (sing-box-extended), SSH and more.
+- **Wide protocol support** — Naive, Mieru, Hysteria, SOCKS, Shadowsocks, ShadowTLS, Trojan, VLESS (XHTTP), VMess, WireGuard, **AmneziaWG / WARP** (sing-box-extended), SSH and more.
 - **Two built-in DPI-bypass engines** — un-throttle and unblock sites (e.g. YouTube, Discord) **without any VPN subscription**:
-  - **ByeDPI** ([hufrea/byedpi](https://github.com/hufrea/byedpi)) — a SOCKS-level desync proxy, with 40 ready-made strategy presets and a multi-site **strategy tester** that shows which setting actually works on your ISP.
+  - **ByeDPI** ([hufrea/byedpi](https://github.com/hufrea/byedpi)) — a SOCKS-level desync proxy, with 47 ready-made strategy presets and a multi-site **strategy tester** that shows which setting actually works on your ISP.
   - **Zapret 2** ([bol-van/zapret2](https://github.com/bol-van/zapret2), nfqws2) — a packet-level NFQUEUE desync that mangles the handshake in-place. Selected per routing rule (e.g. send only YouTube/Discord through it), with curated presets, optional Discord-voice desync, and its own scoped tester.
 - **URLTest auto-selection** — automatically routes through the fastest reachable node and fails over when one goes down.
 - **Russia routing rules** — one-click RU Proxy Rules (Russia Inside, Re:Filter) with curated domain/IP lists, so only blocked destinations go through the proxy.
@@ -33,7 +33,7 @@ Optionally legacy build for 23.05 is available in Releases
 
 ## Installation
 
-*~40 MB of free space recommended. Tight on storage? Install the LuCI app first, then use its **Core Management** page (Services → Re:HomeProxy → Status) to install a core — it auto-picks a build that fits, including a compact build for small devices.*
+*~40 MB of free space recommended. Tight on storage? Install the LuCI app first, then use its **Core & Tools** tab (Services → Re:HomeProxy → Core & Tools) to install a core — it auto-picks a build that fits, including a compact build for small devices.*
 
 ### OpenWRT 25.12+ (APK)
 
@@ -48,7 +48,13 @@ apk add /tmp/luci-app-re-homeproxy.apk
 
 Once the key is in `/etc/apk/keys/` it is trusted permanently — no flag needed for future updates.
 
-#### 2. Navigate to Core & Services tab and install Components of your choice
+#### 2. Install components from the **Core & Tools** tab
+
+Open **Services → Re:HomeProxy → Core & Tools** and install what you need — the installer auto-picks a build that fits your storage:
+
+- **Proxy core** *(required, pick one)* — [hiddify-core](https://github.com/hiddify/hiddify-core) (default) or [sing-box-extended](https://github.com/shtorm-7/sing-box-extended) (adds AmneziaWG / WARP and the widest protocol set). See **[Core Management](../../wiki/Core-Management-en)**.
+- **ByeDPI** *(optional)* — SOCKS-level DPI bypass that un-throttles sites without a VPN, with 40 presets and a built-in strategy tester. See **[ByeDPI](../../wiki/ByeDPI-en)**.
+- **Zapret 2** *(optional)* — packet-level (nfqws2) DPI bypass selected per routing rule, with curated presets and optional Discord-voice desync. See **[Zapret](../../wiki/Zapret-en)**.
 
 ### OpenWRT 24.10 (opkg)
 
@@ -59,7 +65,13 @@ wget -O /tmp/luci-app-re-homeproxy.ipk "$(wget -qO- 'https://api.github.com/repo
 opkg install /tmp/luci-app-re-homeproxy.ipk
 ```
 
-#### 2. Navigate to Core & Services tab and install Components of your choice
+#### 2. Install components from the **Core & Tools** tab
+
+Open **Services → Re:HomeProxy → Core & Tools** and install what you need — the installer auto-picks a build that fits your storage:
+
+- **Proxy core** *(required, pick one)* — [hiddify-core](https://github.com/hiddify/hiddify-core) (default) or [sing-box-extended](https://github.com/shtorm-7/sing-box-extended) (adds AmneziaWG / WARP and the widest protocol set). See **[Core Management](../../wiki/Core-Management-en)**.
+- **ByeDPI** *(optional)* — SOCKS-level DPI bypass that un-throttles sites without a VPN, with 40 presets and a built-in strategy tester. See **[ByeDPI](../../wiki/ByeDPI-en)**.
+- **Zapret 2** *(optional)* — packet-level (nfqws2) DPI bypass selected per routing rule, with curated presets and optional Discord-voice desync. See **[Zapret](../../wiki/Zapret-en)**.
 
 ### Optional 
 
@@ -73,7 +85,7 @@ If using "Custom JSON" — see the **[Custom JSON Config](../../wiki/Custom-JSON
 /etc/init.d/homeproxy start
 ```
 
-The service will auto-start on boot. Monitor logs at **Services → Re:HomeProxy → Status**.
+The service will auto-start on boot. Monitor logs at **Services → Re:HomeProxy → Core & Tools**.
 
 ## Documentation
 
@@ -84,9 +96,11 @@ Full guides live in the **[Wiki](../../wiki/Home)**:
 - **[Supported Protocols](../../wiki/Supported-Protocols-en)** — every protocol, transport, and the build tags each needs
 - **[Subscriptions & Node Import](../../wiki/Subscriptions-en)** — share links, .conf, Amnezia `vpn://` (AmneziaWG/Xray), subscriptions, base64
 - **[Routing & Access Control](../../wiki/Routing-and-Access-Control-en)** — routing modes, RU Proxy Rules, per-device access control
+- **[Server Settings](../../wiki/Server-Settings-en)** — run the router as a proxy server (inbounds, types, TLS/ACME)
 - **[DNS & Diagnostics](../../wiki/DNS-and-Diagnostics-en)** — clean vs secure DNS, IPv6 leaks, and the Diagnostics page
 - **[ByeDPI](../../wiki/ByeDPI-en)** — SOCKS-level DPI bypass, strategy presets and the tester
 - **[Zapret](../../wiki/Zapret-en)** — packet-level (nfqws2) DPI bypass, presets, Discord-voice and the tester
+- **[Custom Routing](../../wiki/Custom-Routing-en)** — UI routing nodes + rules (match by domain/IP/port/protocol/process)
 - **[Custom JSON Config](../../wiki/Custom-JSON-Config-en)** — raw hiddify-core config routing mode
 - **[Troubleshooting](../../wiki/Troubleshooting-en)** — common errors and fixes
 
@@ -106,7 +120,7 @@ Re:HomeProxy stands on the work of many upstream projects. The LuCI app is GPL-l
 
 **Protocols** — implemented by the cores above (see [Supported Protocols](../../wiki/Supported-Protocols-en)):
 
-Naive, Mieru, Hysteria/Hysteria2, TUIC, SOCKS, Shadowsocks/Shadowsocks 2022, ShadowTLS, AnyTLS, Tor, Trojan, VLESS (Reality, XHTTP), VMess, WireGuard, AmneziaWG/WARP, SSH.
+Naive, Mieru, Hysteria/Hysteria2, TUIC, SOCKS, Shadowsocks/Shadowsocks 2022, ShadowTLS, AnyTLS, Trojan, VLESS (Reality, XHTTP), VMess, WireGuard, AmneziaWG/WARP, SSH.
 
 **Routing lists**
 - [Re:Filter](https://github.com/1andrevich/re-filter) — RKN-registry domain + IP blocklist

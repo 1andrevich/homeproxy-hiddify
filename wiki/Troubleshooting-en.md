@@ -74,13 +74,13 @@ If `opkg` itself cannot reach the internet, download the `.ipk` or `.apk` file o
 
 ---
 
-## No Internet Access When HomeProxy Is Enabled (mwan3 Conflict)
+## No Internet Access When Re:HomeProxy Is Enabled (mwan3 Conflict)
 
-**Symptom:** Ping and DNS work, but HTTP/HTTPS traffic fails when HomeProxy is enabled. Stopping mwan3 restores connectivity.
+**Symptom:** Ping and DNS work, but HTTP/HTTPS traffic fails when Re:HomeProxy is enabled. Stopping mwan3 restores connectivity.
 
-**Cause:** mwan3 uses fwmarks and policy routing to steer traffic between WAN interfaces. When hiddify-core makes outbound connections, mwan3 can intercept and misroute them.
+**Cause:** mwan3 uses fwmarks and policy routing to steer traffic between WAN interfaces. When the proxy core makes outbound connections, mwan3 can intercept and misroute them.
 
-**Fix:** Tell the OS to skip mwan3's routing logic for traffic already handled by HomeProxy (marked `0x64`).
+**Fix:** Tell the OS to skip mwan3's routing logic for traffic already handled by Re:HomeProxy (marked `0x64`).
 
 Add the following rule as a persistent firewall include:
 
@@ -106,6 +106,8 @@ To verify the rule is active:
 iptables -t mangle -L OUTPUT -n --line-numbers | head -5
 ```
 The `0x64` mark rule should appear as line 1.
+
+> This fix deliberately uses `iptables` because **mwan3** operates at the iptables layer. On a fw4 / nftables system it still applies through the iptables-nft compatibility shim — it does not conflict with Re:HomeProxy's nft chains.
 
 ---
 

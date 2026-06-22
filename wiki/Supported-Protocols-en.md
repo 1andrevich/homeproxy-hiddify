@@ -2,15 +2,28 @@
 
 # Supported Protocols
 
-Re:HomeProxy runs on a choice of cores: [hiddify-core](https://github.com/hiddify/hiddify-core) (default) or [sing-box-extended](https://github.com/shtorm-7/sing-box-extended) — both forks of [sing-box](https://sing-box.sagernet.org) with additional protocols and features not available upstream. The protocols shown in the node editor depend on **which core you installed** and how it was compiled on your device. You choose and install the core on the **Core Management** page (Services → Re:HomeProxy → Status).
+Re:HomeProxy runs on a choice of cores: [hiddify-core](https://github.com/hiddify/hiddify-core) (default) or [sing-box-extended](https://github.com/shtorm-7/sing-box-extended) — both forks of [sing-box](https://sing-box.sagernet.org) with additional protocols and features not available upstream. The protocols shown in the node editor depend on **which core you installed** and how it was compiled on your device. You choose and install the core on the **Core management** section (Services → Re:HomeProxy → Core & Tools).
 
 ---
 
-## hiddify-core Exclusive Features
+## Filling in the node editor
 
-These capabilities are present in hiddify-core but not in upstream sing-box:
+When you add a node by hand, the editor exposes the underlying **sing-box outbound** options — TLS (including **Reality**, **uTLS** fingerprints, **ECH**), the transport (**gRPC / WebSocket / HTTP / HTTPUpgrade / XHTTP**), and **multiplex**. Rather than duplicate sing-box's reference here, match each field to your server using the upstream docs:
 
-### TLS Fragmentation (`tls_fragment`)
+- [Outbound reference](https://sing-box.sagernet.org/configuration/outbound/) — every outbound type and its fields
+- [TLS (shared)](https://sing-box.sagernet.org/configuration/shared/tls/) — Reality, uTLS, ECH, ALPN
+- [V2Ray transports](https://sing-box.sagernet.org/configuration/shared/v2ray-transport/) — gRPC / WS / HTTP / HTTPUpgrade
+- [Multiplex](https://sing-box.sagernet.org/configuration/shared/multiplex/)
+
+Most users never fill these by hand — importing a share link or subscription sets them for you (see [Subscriptions & Node Import](Subscriptions-en)).
+
+---
+
+## Extended-core features (not in upstream sing-box)
+
+Both cores are sing-box forks that add features missing from upstream. Some are **hiddify-core only**; others are in **both** hiddify-core and sing-box-extended (noted per item):
+
+### TLS Fragmentation (`tls_fragment`) *(hiddify-core only)*
 Splits the TLS ClientHello handshake across multiple TCP packets so that the SNI (Server Name Indication) field — which reveals the destination domain — arrives in separate fragments. DPI systems that inspect only whole packets to identify and block domains cannot reassemble the SNI in time, so the connection passes through undetected.
 
 **Fragment modes:**
@@ -29,11 +42,11 @@ Can be applied to any protocol that uses TLS (VLESS, VMess, Trojan, etc.).
 
 *Source: [How the TLS Trick works and its usage — hiddify.com](https://hiddify.com/manager/basic-concepts-and-troubleshooting/How-the-TLS-Trick-works-and-its-usage/#tls-fragment)*
 
-### XHTTP Transport
-A modern HTTP-based transport for VLESS designed for CDN compatibility and multiplexing. Not available in upstream sing-box. See the VLESS section below.
+### XHTTP Transport *(both cores)*
+A modern HTTP-based transport for VLESS designed for CDN compatibility and multiplexing. Not in upstream sing-box, but available on **both** hiddify-core and sing-box-extended. See the VLESS section below.
 
-### Additional Protocols
-MieruTCP, MieruUDP, and extended NaïveProxy variants (see below).
+### Additional Protocols *(both cores)*
+MieruTCP / MieruUDP and extended NaïveProxy variants — available on **both** cores (see below).
 
 ---
 
@@ -86,9 +99,9 @@ A lightweight successor to VMess without the extra encryption layer (relies on t
 | gRPC | **Yes** | CDN-friendly |
 | HTTP/2 | No | Multiplexed connections |
 | HTTPUpgrade | **Yes** | Lightweight HTTP upgrade handshake |
-| **XHTTP** | **Yes** | hiddify-core exclusive — see below |
+| **XHTTP** | **Yes** | Not in upstream sing-box; on both cores — see below |
 
-**XHTTP** is a hiddify-core exclusive transport for VLESS. It uses chunked HTTP transfers over a single or multiplexed connection, designed specifically for CDN compatibility and to avoid patterns detectable as non-browser traffic. Upstream sing-box does not support XHTTP.
+**XHTTP** is an extended transport for VLESS, available on **both** hiddify-core and sing-box-extended (but not upstream sing-box). It uses chunked HTTP transfers over a single or multiplexed connection, designed specifically for CDN compatibility and to avoid patterns detectable as non-browser traffic.
 
 ### VMess
 The original V2Ray protocol. Includes its own encryption on top of the transport layer. Slightly more overhead than VLESS but very widely deployed.
@@ -153,10 +166,10 @@ An obfuscated variant of WireGuard. It adds junk packets and randomised handshak
 
 ---
 
-## Requires `with_quic` (hiddify-core extension)
+## Mieru — requires `with_quic`
 
 ### MieruTCP / MieruUDP
-Anti-censorship protocol developed independently of sing-box, added to hiddify-core. Uses fully randomized traffic patterns with no identifiable headers or handshakes, making it very difficult to detect or classify by DPI.
+Anti-censorship protocol developed independently of sing-box, added by the extended cores (hiddify-core **and** sing-box-extended). Uses fully randomized traffic patterns with no identifiable headers or handshakes, making it very difficult to detect or classify by DPI.
 
 - **MieruTCP** — TCP transport variant
 - **MieruUDP** — UDP transport variant; higher throughput, requires UDP access
@@ -174,15 +187,17 @@ DNS tunneling protocol — tunnels proxy traffic inside DNS queries and response
 
 ## How to Check What Your Build Supports
 
+Run the version command for **whichever core you installed**:
+
 ```sh
-hiddify-core version
+hiddify-core version    # if you run hiddify-core
+sing-box version        # if you run sing-box-extended
 ```
 
 Look at the `Tags:` line. Protocols that require a specific tag will only appear in the node editor if that tag is present.
 
 Example:
 ```
-hiddify-core version v2.x.x
 Tags: with_quic,with_wireguard,with_gvisor,with_naive_outbound,...
 ```
 

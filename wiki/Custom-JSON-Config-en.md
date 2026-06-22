@@ -2,9 +2,9 @@
 
 # Custom JSON Config
 
-**Custom JSON** is a routing mode that lets you bypass HomeProxy's UCI-based configuration entirely and supply a raw [sing-box](https://sing-box.sagernet.org) / hiddify-core JSON config directly. It is intended for advanced users who need fine-grained control that the web UI does not expose.
+**Custom JSON** is a routing mode that lets you bypass Re:HomeProxy's UCI-based configuration entirely and supply a raw [sing-box](https://sing-box.sagernet.org) / hiddify-core JSON config directly. It is intended for advanced users who need fine-grained control that the web UI does not expose.
 
-To enable it, go to **HomeProxy → Client → Routing Settings** and set **Routing Mode** to **Custom JSON**.
+To enable it, go to **Re:HomeProxy → Client → Routing Settings** and set **Routing Mode** to **Custom JSON**.
 
 ---
 
@@ -98,8 +98,8 @@ This is illustrative only — adjust inbound type/port, outbound settings, and r
 ## Tips
 
 - **Validate before saving.** An invalid JSON config will silently fail to apply. Use a JSON validator before pasting — syntax errors will not be reported in the UI. After saving, check the log (see below) to confirm the config loaded correctly.
-- **Logs.** If the config applies but traffic does not work, check the hiddify-core log in **HomeProxy → Log** or via SSH: `tail -f /var/run/homeproxy/hiddify-c.log`.
-- **Inbound ports.** HomeProxy's firewall rules expect specific ports. If you change inbound ports in a custom config, the nftables redirect rules will not match and traffic will not reach your inbound. The default inbound configuration used by HomeProxy is:
+- **Logs.** If the config applies but traffic does not work, check the core log in **Re:HomeProxy → Core & Tools** or via SSH: `tail -f /var/run/homeproxy/hiddify-c.log`.
+- **Inbound ports.** Re:HomeProxy's firewall rules expect specific ports. If you change inbound ports in a custom config, the nftables redirect rules will not match and traffic will not reach your inbound. The default inbound configuration used by Re:HomeProxy is:
 
   ```json
   "inbounds": [

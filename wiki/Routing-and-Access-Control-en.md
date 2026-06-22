@@ -24,34 +24,55 @@ Set on **Client → Routing → Routing mode**:
 
 **Proxy mode** — how traffic is intercepted: `Redirect TCP`, `Redirect TCP + TProxy UDP` (default), `Redirect TCP + Tun UDP`, or full `Tun TCP/UDP` (TUN modes need `kmod-tun`).
 
+### Main node and a separate UDP node
+
+On the **Routing Settings** tab, **Main node** sets where traffic exits (a specific node, or **URLTest** to auto-pick the fastest with its own pool, test interval and tolerance).
+
+By default UDP follows the main node. Set **Main UDP node** to send **UDP/QUIC out a different node** than TCP — useful when your main node handles UDP poorly (or not at all), or when you want QUIC/voice on a node that's better at it. It has its own URLTest pool too. Leave it on *Same as main node* if you don't need the split.
+
 ---
 
-## RU Proxy Rules (Russia mode)
+## Russia (Proxy Banned) — the full UI
 
-The **RU Proxy Rules** tab is where you choose *what* to proxy in `proxy_banned_ru` mode. **The default route is Direct** — only what you add here is proxied.
+`proxy_banned_ru` is the default RU mode: **everything is direct except what you explicitly proxy.** When it is selected, the **Routing** tab gains the fields below and an extra **RU Proxy Rules** tab appears.
 
-Each rule = a **Source list** + a **Node** to send it through. Rules are applied with automatic priority:
+### Routing tab (in this mode)
 
-1. **Smaller service lists** first (YouTube, Discord, Telegram, Twitter/X, TikTok, Meta, Roblox, anime, HDRezka, Google AI/Play, Cloudflare/CloudFront, OVH/Hetzner/DigitalOcean, news, adult, GeoBlock, HODCA…).
+| Field | What it does |
+|-------|--------------|
+| **Russia DNS server** 🔓 | Resolves Russian/normal domains **directly** (not through the proxy). Default *Yandex (77.88.8.8)*; also SkyDNS, Comss.one, and plain-UDP Cloudflare/Google. |
+| **Secure DNS server** 🔒 | Resolves **blocked** domains **through the proxy** over encrypted DNS (DoH/DoT), so your ISP can't see those lookups. Default *Cloudflare DoH*; also Quad9 / AdGuard / Google (DoH and DoT). See [DNS & Diagnostics](DNS-and-Diagnostics-en). |
+| **Proxy calls** 📞 | Route VoIP call ports (WhatsApp, Telegram, FaceTime…) through the proxy. Off by default. |
+| **Do not proxify torrents** 🧲 | Force BitTorrent traffic (protocol + common ports) direct. Off by default. |
+| **Advanced custom rules** 👨‍💻 | Reveal the **Routing Nodes** and **Routing Rules** tabs (see below). Off by default. |
+| **Routing ports** | Limit which destination ports are proxied (e.g. *Common ports only* keeps P2P direct). |
+| **Proxy mode** | How traffic is intercepted — see [Routing modes](#routing-modes) above. |
+
+### RU Proxy Rules tab
+
+This is where you choose *what* to proxy. **The default route is Direct** — only the rules you add here are proxied. Each rule = a **Source list** ⤵️ + a **Node** 🔗 to send it through, applied with automatic priority:
+
+1. **Smaller service lists** first — YouTube, Twitter/X, TikTok, Telegram, Discord, Roblox, Meta (Facebook/Instagram), Google AI, Google Play, anime, HDRezka, international news, adult, GeoBlock, HODCA, and cloud/CDN ranges (Cloudflare, CloudFront, OVH, Hetzner, DigitalOcean).
 2. **Russia Inside** (1000+ domains, by itdoginfo) — the in-Russia must-have set.
 3. **Re:Filter** (60000+ domains + 25000+ IPs) — the Roskomnadzor blocklist.
 
-The lists themselves are community-maintained and **self-refresh** on the router; you only pick which to enable.
+The lists are community-maintained and **self-refresh** on the router; you only pick which to enable. (Adding the same source twice is flagged — only the first rule takes effect.)
 
-### Per-rule node target
-
-For each rule the **Node** can be:
+**Per-rule Node** 🔗 can be:
 
 - **Same as main node** — use your main proxy.
-- **Separate URLTest** — auto-select among a chosen set of nodes (with test interval/tolerance).
+- **Separate URLTest** — auto-select among a chosen set of nodes, with its own **URLTest nodes**, **Test interval** (default 180 s) and **Test tolerance** (default 150 ms).
 - **A specific node**.
 - **ByeDPI** or **Zapret** — send that list through a DPI-bypass instead of a VPN node (e.g. YouTube via [ByeDPI](ByeDPI-en) / [Zapret](Zapret-en) to save VPN bandwidth).
 
-### Handy toggles
+### Advanced custom rules (optional)
 
-- **Proxy calls 📞** — route VoIP ports (WhatsApp, Telegram, FaceTime…) through the proxy.
-- **Do not proxify torrents 🧲** — force BitTorrent traffic direct.
-- **Advanced custom rules 👨‍💻** — reveals the **Routing Nodes** and **Routing Rules** tabs for fine-grained custom rules on top of the RU presets.
+Enabling **Advanced custom rules** 👨‍💻 layers two extra tabs on top of the RU presets:
+
+- **Routing Nodes** — define named outbounds (a node, a URLTest group, or a chained **Outbound**), each with its own **Domain resolver** (including the Russia 🔓 / Secure 🔒 servers) and **Domain strategy**.
+- **Routing Rules** — match traffic by domain / IP / port / protocol and send it to one of those routing nodes.
+
+Full reference for both tabs (and the standalone **Custom routing** mode): **[Custom Routing](Custom-Routing-en)**.
 
 ---
 
@@ -84,6 +105,6 @@ Free-form domain lists that are always proxied or always direct — useful for o
 
 - In Russia mode, start with **Russia Inside + Re:Filter** enabled; add per-service lists only if a specific site still misbehaves.
 - If a site is *throttled* (slow) rather than *blocked* (unreachable), route it through [ByeDPI](ByeDPI-en) or [Zapret](Zapret-en) instead of the VPN.
-- Use the [Diagnostics](DNS-and-Diagnostics-en) page's **Direct IP vs Proxy IP** to confirm a device/destination is actually being proxied.
+- Use the [Diagnostics](DNS-and-Diagnostics-en) page to confirm traffic is actually being proxied — **Direct IP vs Proxy IP** on hiddify-core, or the **Active Node** row on sing-box-extended.
 
 See also: [Getting Started](Getting-Started-en) · [Subscriptions & Node Import](Subscriptions-en) · [DNS & Diagnostics](DNS-and-Diagnostics-en) · [Troubleshooting](Troubleshooting-en)

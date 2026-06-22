@@ -10,7 +10,7 @@ This page walks you from a fresh install to a working connection. It assumes Re:
 
 ## Step 1 — Install a core
 
-The LuCI app is only the interface; a separate **core** binary does the proxying. Open **Status → Core Management** and install one:
+The LuCI app is only the interface; a separate **core** binary does the proxying. Open **Core & Tools → Core management** and install one:
 
 - **hiddify-core** (default) — lighter, has a compact build for small routers.
 - **sing-box-extended** — needed for AmneziaWG/WARP and the widest protocol set.
@@ -68,7 +68,7 @@ Press **Save & Apply**. Then start the service (it also auto-starts on boot):
 /etc/init.d/homeproxy start
 ```
 
-Watch the log at **Status**.
+Watch the log at **Core & Tools**.
 
 ---
 
@@ -76,7 +76,7 @@ Watch the log at **Status**.
 
 Open the **Diagnostics** page and run the checks:
 
-- **Connectivity** — confirms reachability of test sites and shows your **Direct IP** vs **Proxy IP** (they should differ when traffic is proxied).
+- **Connectivity** — confirms reachability of test sites. On **hiddify-core** it shows your **Direct IP** vs **Proxy IP** (they should differ when traffic is proxied); on **sing-box-extended** it shows the live **Active Node** instead (sing-box can't report the exit IP).
 - **Core & System** — confirms the core is installed and running.
 - **Configuration** — confirms the generated config is valid.
 

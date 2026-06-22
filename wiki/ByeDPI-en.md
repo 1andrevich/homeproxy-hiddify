@@ -34,7 +34,7 @@ That's all that's needed for the engine. Re:HomeProxy starts `ciadpi` for you an
 
 ## Strategies and presets
 
-A "strategy" is the set of command-line options ByeDPI uses to mangle the handshake. There is no universal best strategy — **what works depends on your ISP's DPI**. Re:HomeProxy ships **40 ready-made presets** grouped by technique:
+A "strategy" is the set of command-line options ByeDPI uses to mangle the handshake. There is no universal best strategy — **what works depends on your ISP's DPI**. Re:HomeProxy ships **47 ready-made presets** grouped by technique (named by group letter, e.g. `C3`, `I1`):
 
 | Group | Examples | Idea |
 |-------|----------|------|
@@ -51,11 +51,11 @@ A "strategy" is the set of command-line options ByeDPI uses to mangle the handsh
 
 You can also pick **Custom** and type your own option string.
 
-### Recommended starting point: preset 31 (adaptive)
+### Recommended starting point: preset I1 (adaptive)
 
-**Preset 31 — "Auto SSL Error Fallback"** (`--fake -1 --ttl 8 --auto=ssl_err --fake -1 --ttl 5`) is the safest default, **especially for YouTube**.
+**Preset I1 — "Auto SSL Error Fallback"** (`--fake -1 --ttl 8 --auto=ssl_err --fake -1 --ttl 5`) is the safest default, **especially for YouTube**.
 
-Why adaptive matters: a **fixed** fake-TTL strategy (presets 6–10) works for *far* servers but corrupts the handshake on *near* CDN/edge servers — e.g. some YouTube video segments served from a local Google cache. A fixed strategy that fails on near servers not only stalls the page, it can produce a storm of failed-handshake retries that **fills the router's connection-tracking table and freezes SSH/LuCI**. The adaptive `--auto=ssl_err` strategy retries per-connection when it sees a TLS error, so it self-corrects across near *and* far destinations.
+Why adaptive matters: a **fixed** fake-TTL strategy (the Fake-TTL group, presets C1–C5) works for *far* servers but corrupts the handshake on *near* CDN/edge servers — e.g. some YouTube video segments served from a local Google cache. A fixed strategy that fails on near servers not only stalls the page, it can produce a storm of failed-handshake retries that **fills the router's connection-tracking table and freezes SSH/LuCI**. The adaptive `--auto=ssl_err` strategy retries per-connection when it sees a TLS error, so it self-corrects across near *and* far destinations.
 
 ---
 
@@ -69,7 +69,7 @@ Because the right strategy is ISP-specific, the ByeDPI section includes a **test
   - `●●●●` = all four reachable with that strategy; `●●○○` = far sites work but near sites fail (a sign the strategy is destination-sensitive, like a fixed fake-TTL).
 - **Test current** — tests only the strategy currently in the command field and shows full site names with ✓ / ✗.
 
-Pick a strategy that scores **all-green (`●●●●`)** for your network. If several do, prefer an adaptive one (31/32).
+Pick a strategy that scores **all-green (`●●●●`)** for your network. If several do, prefer an adaptive one (I1/I2).
 
 > The tester runs ByeDPI on a separate temporary port, so it does not disturb live traffic.
 
@@ -95,7 +95,7 @@ ByeDPI is a desync, not a tunnel, so DNS does **not** go through it. When ByeDPI
 | Symptom | Likely cause / fix |
 |---------|--------------------|
 | A site still loads slowly | The strategy isn't right for your ISP — run **Test all strategies** and pick an all-green one. |
-| YouTube buffers on a fixed fake-TTL preset | Switch to the adaptive **preset 31**; fixed TTL stalls on near Google cache nodes. |
+| YouTube buffers on a fixed fake-TTL preset | Switch to an adaptive preset (**I1/I2**); fixed TTL stalls on near Google cache nodes. |
 | Router/LuCI/SSH becomes laggy | A destination-sensitive strategy is causing retry storms — switch to an adaptive preset. |
 | A site is unreachable, not just slow | It may be IP-blocked, not throttled — ByeDPI can't help; use a proxy/VPN node for it. |
 
