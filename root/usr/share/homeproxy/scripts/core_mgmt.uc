@@ -160,9 +160,17 @@ if (action === 'info') {
 						 * SIGBUS" trap: never offer a build the device can't actually hold/run. */
 						let chosen = variant;
 						let note = null;
+						/* UPX-compressed binaries are crash-prone (SIGILL on startup) on these
+						 * soft-float MIPS targets, so never AUTO-pick the compact build there —
+						 * fall back to standard, or error cleanly. An explicit variant='upx'
+						 * override is still honored (advanced users). Non-MIPS arches (incl.
+						 * aarch64 like MT7622) are unaffected. */
+						const mips_no_auto_upx = (arch === 'mipsel_24kc' || arch === 'mips_24kc');
 						if (chosen !== 'standard' && chosen !== 'upx') {
 							if (overlay_free_kb >= full_need)
 								chosen = 'standard';
+							else if (mips_no_auto_upx)
+								chosen = null;   /* don't squeeze a crash-prone compact build onto tight-flash MIPS */
 							else if (overlay_free_kb >= COMPACT_OVERLAY_KB && ram_free_kb >= COMPACT_RAM_KB) {
 								chosen = 'upx';
 								note = 'Limited storage — installing the compact build (decompresses into RAM at launch).';
@@ -171,7 +179,9 @@ if (action === 'info') {
 						}
 
 						if (!chosen) {
-							result = (overlay_free_kb >= COMPACT_OVERLAY_KB)
+							result = mips_no_auto_upx
+								? { error: `Not enough overlay for the full build: ${overlay_free_kb} KB free, need ~${full_need} KB. The compact build is not offered on MIPS (UPX is unreliable there). Free up space, or bake the core into a custom firmware image.` }
+								: (overlay_free_kb >= COMPACT_OVERLAY_KB)
 								? { error: `Device too constrained: ${overlay_free_kb} KB free overlay (full build needs ~${full_need}) and only ${ram_free_kb} KB free RAM (compact build needs ~${COMPACT_RAM_KB}). Use sing-box-extended instead.` }
 								: { error: `Not enough storage: ${overlay_free_kb} KB free overlay, need at least ~${COMPACT_OVERLAY_KB} KB (~25 MB).` };
 						} else {

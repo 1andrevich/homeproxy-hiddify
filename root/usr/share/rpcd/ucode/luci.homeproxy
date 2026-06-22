@@ -429,7 +429,8 @@ const methods = {
 		}
 	},
 	clash_active_node: {
-		call: function() {
+		args: { tag: 'tag' },
+		call: function(req) {
 			const fd = popen('wget -qO- --timeout=3 http://127.0.0.1:9090/proxies');
 			if (!fd)
 				return { error: 'failed to run wget' };
@@ -449,6 +450,18 @@ const methods = {
 				const h = proxies[name]?.history;
 				return (h && length(h)) ? h[length(h) - 1].delay : null;
 			};
+
+			/* Focused query: resolve a specific group/leaf (e.g. 'main-udp-out' for the
+			 * dedicated UDP node) instead of following GLOBAL. */
+			const wantTag = req?.args?.tag;
+			if (wantTag) {
+				const p = proxies[wantTag];
+				if (!p)
+					return { error: 'no active proxy node' };
+				if ((p.type === 'URLTest' || p.type === 'Fallback' || p.type === 'Selector') && p.now)
+					return { node: p.now, type: proxies[p.now]?.type || null, delay: lastDelay(p.now), group: wantTag, group_type: p.type };
+				return { node: wantTag, type: p.type || null, delay: lastDelay(wantTag), group: null, group_type: null };
+			}
 
 			/* Follow GLOBAL -> proxy group -> leaf node */
 			let groupName = null;

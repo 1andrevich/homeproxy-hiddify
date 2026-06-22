@@ -153,6 +153,9 @@ msgstr "Допустимый размер полезной нагрузки ук
 msgid "Active Node"
 msgstr "Активный узел"
 
+msgid "Active UDP Node"
+msgstr "Активный UDP-узел"
+
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "No active node"
 msgstr "Нет активного узла"
@@ -4295,8 +4298,8 @@ msgstr "Направлять голосовые UDP-порты Discord (19294–
 msgid "Enable Zapret"
 msgstr "Включить Zapret"
 
-msgid "An alternative to ByeDPI: another free way to unblock throttled or blocked sites (YouTube, Discord…) without a VPN subscription. It does the same job a different way — your traffic still stays direct and is NOT encrypted, so your ISP can see which sites you visit but can no longer throttle or block them. Practical difference: Zapret can also unblock video and calls (e.g. YouTube video) that ByeDPI does not handle. The two don't compete — if one doesn't fully unblock your sites, try the other; what works depends on your ISP. Pick \"Zapret\" for specific sites in the rules below, then fine-tune it in the Zapret tab on the Node page. Installed automatically on first enable."
-msgstr "Альтернатива ByeDPI: ещё один бесплатный способ разблокировать замедлённые или заблокированные сайты (YouTube, Discord…) без VPN-подписки. Делает ту же работу иначе — трафик по-прежнему идёт напрямую и НЕ шифруется, поэтому провайдер видит, какие сайты вы посещаете, но больше не может их замедлять или блокировать. Практическое отличие: Zapret умеет разблокировать видео и звонки (например, видео на YouTube), с которыми ByeDPI не справляется. Они не конкурируют — если один не разблокирует ваши сайты полностью, попробуйте другой; что сработает, зависит от провайдера. Выберите «Zapret» для нужных сайтов в правилах ниже, затем донастройте во вкладке Zapret на странице узла. Устанавливается автоматически при первом включении."
+msgid "An alternative to ByeDPI: another free way to unblock throttled or blocked sites (YouTube, Discord…) without a VPN subscription. It does the same job a different way — your traffic still stays direct and is NOT encrypted, so your ISP can see which sites you visit but can no longer throttle or block them. Practical difference: Zapret can also unblock video and calls (e.g. YouTube video) that ByeDPI does not handle. Finding a working strategy is individual and depends on your ISP's restrictions. Installed automatically on first enable."
+msgstr "Альтернатива ByeDPI: ещё один бесплатный способ разблокировать замедлённые или заблокированные сайты (YouTube, Discord…) без VPN-подписки. Делает ту же работу иначе — трафик по-прежнему идёт напрямую и НЕ шифруется, поэтому провайдер видит, какие сайты вы посещаете, но больше не может их замедлять или блокировать. Практическое отличие: Zapret умеет разблокировать видео и звонки (например, видео на YouTube), с которыми ByeDPI не справляется. Подбор рабочей стратегии индивидуален и зависит от ограничений провайдера. Устанавливается автоматически при первом включении."
 
 msgid "No package manager found. Install zapret2 manually from the Status page."
 msgstr "Менеджер пакетов не найден. Установите zapret2 вручную со страницы «Статус»."
@@ -4346,3 +4349,20 @@ msgstr "Счётчики NFQUEUE Zapret (метка 110 → очередь)"
 # --- Zapret NFQUEUE kmod guard ---
 msgid "Zapret is installed, but the NFQUEUE kernel module (kmod-nft-queue) is missing. Enabling it now could break the firewall. Reinstall Zapret or install kmod-nft-queue first."
 msgstr "Zapret установлен, но отсутствует модуль ядра NFQUEUE (kmod-nft-queue). Включение сейчас может сломать firewall. Сначала переустановите Zapret или установите kmod-nft-queue."
+
+# --- Zapret 2 management card (Status page) + diagnostics ---
+msgid "Zapret 2 running"
+msgstr "Zapret 2 работает"
+
+msgid "Packet-level (NFQUEUE) DPI bypass by <a href=\"https://github.com/bol-van/zapret2\" target=\"_blank\">bol-van</a> (nfqws2). Packages by <a href=\"https://github.com/1andrevich/zapret2-openwrt\" target=\"_blank\">1andrevich/zapret2-openwrt</a>. Configure in the Node Settings → Zapret tab."
+msgstr "Обход DPI на уровне пакетов (NFQUEUE) от <a href=\"https://github.com/bol-van/zapret2\" target=\"_blank\">bol-van</a> (nfqws2). Пакеты: <a href=\"https://github.com/1andrevich/zapret2-openwrt\" target=\"_blank\">1andrevich/zapret2-openwrt</a>. Настройки: вкладка Настройки узлов → Zapret."
+
+msgid "Installed, but kmod-nft-queue is missing — Zapret cannot intercept traffic without it."
+msgstr "Установлено, но отсутствует kmod-nft-queue — без него Zapret не сможет перехватывать трафик."
+
+msgid "Warning: kmod-nft-queue is not installed — Zapret cannot intercept traffic without it."
+msgstr "Внимание: kmod-nft-queue не установлен — без него Zapret не сможет перехватывать трафик."
+
+# Section heading grouping ByeDPI + Zapret — kept verbatim (brand-like coinage, like the old "ByeDPI" heading)
+msgid "AntiDPI"
+msgstr "AntiDPI"

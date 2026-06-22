@@ -698,7 +698,9 @@ if (!isEmpty(main_node)) {
 		 * corrupted by the desync; udp:// can't do socks UDP-over-TCP), and it adds no privacy
 		 * since ByeDPI egresses direct anyway. So for ByeDPI, secure-dns goes direct — DoH/DoT
 		 * is already encrypted/un-poisonable, it just must not pass through the desync. */
-		const secure_dns_detour = (main_node === 'byedpi-out') ? 'direct-out' : 'main-out';
+		/* ByeDPI and Zapret both egress direct (not a tunnel), so secure-dns must go
+		 * direct too — a DoH/DoT query can't ride a desync. */
+		const secure_dns_detour = (main_node === 'byedpi-out' || main_node === 'zapret-out') ? 'direct-out' : 'main-out';
 		push(config.dns.servers, {
 			tag: 'russia-dns',
 			detour: self_mark ? 'direct-out' : null,
@@ -1152,6 +1154,19 @@ if (!isEmpty(main_node)) {
 			});
 		else
 			push(config.outbounds, { type: 'direct', tag: 'main-out' });
+	} else if (main_node === 'zapret-out') {
+		/* Zapret as main node: egress direct but stamped with the Zapret routing_mark, so
+		 * nft feeds the handshake to nfqws2 (desync everything, no proxy — the Zapret
+		 * equivalent of standalone ByeDPI). Synthetic tag; fall back to plain direct if
+		 * Zapret is disabled so the config stays valid. */
+		if (zapret_enabled === '1')
+			push(config.outbounds, {
+				type: 'direct',
+				tag: 'main-out',
+				routing_mark: strToInt(zapret_mark)
+			});
+		else
+			push(config.outbounds, { type: 'direct', tag: 'main-out' });
 	} else {
 		const main_node_cfg = uci.get_all(uciconfig, main_node) || {};
 		if (main_node_cfg.type in ['wireguard', 'amneziawg']) {
@@ -1186,6 +1201,17 @@ if (!isEmpty(main_node)) {
 				server: '127.0.0.1',
 				server_port: 5335,
 				udp_over_tcp: (uci.get(uciconfig, ucimain, 'byedpi_udp_over_tcp') !== '0') || null
+			});
+		else
+			push(config.outbounds, { type: 'direct', tag: 'main-udp-out' });
+	} else if (dedicated_udp_node && main_udp_node === 'zapret-out') {
+		/* Zapret as dedicated UDP node — direct egress + Zapret mark; nfqws2 desyncs
+		 * UDP/QUIC too (unlike ByeDPI). Synthetic tag, fall back to plain direct. */
+		if (zapret_enabled === '1')
+			push(config.outbounds, {
+				type: 'direct',
+				tag: 'main-udp-out',
+				routing_mark: strToInt(zapret_mark)
 			});
 		else
 			push(config.outbounds, { type: 'direct', tag: 'main-udp-out' });

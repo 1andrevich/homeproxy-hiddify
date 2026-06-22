@@ -331,6 +331,31 @@ const callByeDPIRemove = rpc.declare({
 	expect: { '': {} }
 });
 
+const callZapretStatus = rpc.declare({
+	object: 'luci.homeproxy',
+	method: 'zapret_status',
+	expect: { '': {} }
+});
+
+const callZapretPrepareInstall = rpc.declare({
+	object: 'luci.homeproxy',
+	method: 'zapret_prepare_install',
+	expect: { '': {} }
+});
+
+const callZapretInstallPkg = rpc.declare({
+	object: 'luci.homeproxy',
+	method: 'zapret_install_pkg',
+	params: ['tmp_path', 'pkg_manager'],
+	expect: { '': {} }
+});
+
+const callZapretRemove = rpc.declare({
+	object: 'luci.homeproxy',
+	method: 'zapret_remove',
+	expect: { '': {} }
+});
+
 function buildByeDPICard(byedpi, isMainNode) {
 	let installed = byedpi?.installed || false;
 	let version   = byedpi?.version   || null;
@@ -434,6 +459,120 @@ function buildByeDPICard(byedpi, isMainNode) {
 			_('Local SOCKS5 DPI bypass proxy by <a href="https://github.com/hufrea/byedpi" target="_blank">hufrea</a>. ' +
 			  'Packages by <a href="https://github.com/1andrevich/ByeDPI-OpenWrt" target="_blank">1andrevich/ByeDPI-OpenWrt</a>. ' +
 			  'Configure in the Client → ByeDPI tab.'))
+	]);
+}
+
+function buildZapretCard(zapret) {
+	let installed = zapret?.installed || false;
+	let version   = zapret?.version   || null;
+	const running    = zapret?.running    || false;
+	const pkgMgr     = zapret?.pkg_manager || null;
+	let kmodOk       = (zapret?.kmod_ok != null) ? zapret.kmod_ok : true;
+	const canInstall = !!pkgMgr;
+
+	const statusEl = E('strong', {
+		style: installed ? 'color:green' : 'color:gray'
+	}, installed ? (version ? 'v' + version : _('Installed')) : _('Not installed'));
+
+	const runEl = E('span', {
+		style: 'margin-left:6px; font-size:0.9em; color:' + (running ? 'green' : 'gray')
+	}, running ? _('running') : _('stopped'));
+
+	const msgEl = E('span', { style: 'margin-left:8px; font-size:0.9em' }, '');
+	const setMsg = (txt, color) => { msgEl.textContent = txt; msgEl.style.color = color || 'gray'; };
+
+	const installBtn = E('button', {
+		class: 'btn cbi-button cbi-button-action',
+		style: 'margin-left:4px',
+		disabled: !canInstall || null,
+		title: canInstall ? '' : _('No supported package manager detected'),
+		click: async function() {
+			const prevInstalled = installed;
+			const prevVersion   = version;
+			installBtn.disabled = true;
+			removeBtn.disabled  = true;
+			statusEl.textContent = _('Installing...');
+			statusEl.style.color = 'gray';
+
+			const fail = (msg) => {
+				installed = prevInstalled;
+				version   = prevVersion;
+				statusEl.textContent = installed ? (version ? 'v' + version : _('Installed')) : _('Not installed');
+				statusEl.style.color = installed ? 'green' : 'gray';
+				installBtn.disabled = false;
+				removeBtn.disabled  = !installed;
+				setMsg(msg, 'red');
+			};
+
+			setMsg(_('Checking requirements...'), 'gray');
+			const prep = await L.resolveDefault(callZapretPrepareInstall(), {});
+			if (prep.error) return fail(prep.error);
+
+			setMsg(_('Downloading...'), 'gray');
+			const dl = await L.resolveDefault(callCoreDownload(prep.dl_url, prep.tmp_path), {});
+			if (!dl.result) return fail(dl.error || _('Download failed'));
+
+			setMsg(_('Installing package...'), 'gray');
+			const inst = await L.resolveDefault(callZapretInstallPkg(prep.tmp_path, prep.pkg_manager), {});
+			if (!inst.result) return fail(inst.error || _('Installation failed'));
+
+			const fresh = await L.resolveDefault(callZapretStatus(), {});
+			installed = fresh.installed || false;
+			version   = fresh.version   || null;
+			kmodOk    = (fresh.kmod_ok != null) ? fresh.kmod_ok : true;
+			statusEl.textContent = installed ? (version ? 'v' + version : _('Installed')) : _('Unknown');
+			statusEl.style.color = installed ? 'green' : 'gray';
+			installBtn.textContent = _('Update');
+			installBtn.disabled = false;
+			removeBtn.disabled  = false;
+			if (installed && !kmodOk)
+				setMsg(_('Installed, but kmod-nft-queue is missing — Zapret cannot intercept traffic without it.'), 'red');
+			else
+				setMsg(_('Installed successfully'), 'green');
+		}
+	}, [ installed ? _('Update') : _('Install') ]);
+
+	const removeBtn = E('button', {
+		class: 'btn cbi-button cbi-button-negative',
+		style: 'margin-left:4px',
+		disabled: !installed || null,
+		click: async function() {
+			removeBtn.disabled  = true;
+			installBtn.disabled = true;
+			setMsg(_('Removing...'), 'gray');
+			const ret = await L.resolveDefault(callZapretRemove(), {});
+			installBtn.disabled = false;
+			if (ret.result) {
+				installed = false;
+				version   = null;
+				statusEl.textContent = _('Not installed');
+				statusEl.style.color = 'gray';
+				installBtn.textContent = _('Install');
+				setMsg(_('Removed successfully'), 'green');
+			} else {
+				removeBtn.disabled = false;
+				setMsg(ret.error || _('Removal failed'), 'red');
+			}
+		}
+	}, [ _('Remove') ]);
+
+	/* nfqws2's NFQUEUE rule needs kmod-nft-queue; warn up-front if it's missing. */
+	if (installed && !kmodOk)
+		setMsg(_('Warning: kmod-nft-queue is not installed — Zapret cannot intercept traffic without it.'), 'red');
+
+	return E('div', { style: 'margin-bottom:12px; padding:8px 10px; border:1px solid #ddd; border-radius:4px' }, [
+		E('div', { style: 'display:flex; align-items:center; flex-wrap:wrap; gap:6px' }, [
+			E('strong', {}, 'nfqws2 (Zapret 2)'),
+			statusEl,
+			runEl,
+			installBtn,
+			removeBtn,
+			msgEl
+		]),
+		E('div', { style: 'margin-top:4px; font-size:0.9em; color:#666' },
+			_('Packet-level (NFQUEUE) DPI bypass by <a href="https://github.com/bol-van/zapret2" target="_blank">bol-van</a> (nfqws2). ' +
+			  'Packages by <a href="https://github.com/1andrevich/zapret2-openwrt" target="_blank">1andrevich/zapret2-openwrt</a>. ' +
+			  'Configure in the Node Settings → Zapret tab.'))
 	]);
 }
 
@@ -685,11 +824,12 @@ return view.extend({
 			L.resolveDefault(callCoreInfo(), {}),
 			uci.load('homeproxy'),
 			L.resolveDefault(callByeDPIStatus(), {}),
-			L.resolveDefault(callCurlStatus(), {})
+			L.resolveDefault(callCurlStatus(), {}),
+			L.resolveDefault(callZapretStatus(), {})
 		]);
 	},
 
-	render([features, coreInfo, _uci, byedpiStatus, curlStatus]) {
+	render([features, coreInfo, _uci, byedpiStatus, curlStatus, zapretStatus]) {
 		const routingMode = uci.get('homeproxy', 'config', 'routing_mode') || '';
 		const isRuMode = routingMode === 'proxy_banned_ru';
 		let m, s, o;
@@ -823,7 +963,7 @@ return view.extend({
 		o = s.option(form.DummyValue, '_core_singbox');
 		o.default = buildCoreCard('singbox', coreInfo);
 
-		s = m.section(form.NamedSection, 'config', 'homeproxy', _('ByeDPI'));
+		s = m.section(form.NamedSection, 'config', 'homeproxy', _('AntiDPI'));
 		s.anonymous = true;
 
 		o = s.option(form.DummyValue, '_byedpi_card');
@@ -831,6 +971,9 @@ return view.extend({
 
 		o = s.option(form.DummyValue, '_curl_card', _('ByeDPI strategy tester'));
 		o.default = buildCurlCard(curlStatus);
+
+		o = s.option(form.DummyValue, '_zapret_card');
+		o.default = buildZapretCard(zapretStatus);
 
 		s = m.section(form.NamedSection, 'config', 'homeproxy');
 		s.anonymous = true;

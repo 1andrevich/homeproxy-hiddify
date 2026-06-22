@@ -87,6 +87,7 @@ const callIpInfo = rpc.declare({
 const callActiveNode = rpc.declare({
 	object: 'luci.homeproxy',
 	method: 'clash_active_node',
+	params: ['tag'],
 	expect: { '': {} }
 });
 
@@ -96,6 +97,17 @@ function resolveTag(tag) {
 	if (m) {
 		const label = uci.get('homeproxy', m[1], 'label');
 		if (label) return label;
+	}
+	/* Fixed aggregate tags → name the configured node behind them. */
+	const specials = { 'main-out': 'main_node', 'main-udp-out': 'main_udp_node' };
+	if (specials[tag]) {
+		const v = uci.get('homeproxy', 'config', specials[tag]);
+		if (v === 'byedpi-out') return 'ByeDPI';
+		if (v === 'zapret-out') return 'Zapret';
+		if (v && !['urltest', 'same', 'nil', ''].includes(v)) {
+			const label = uci.get('homeproxy', v, 'label');
+			if (label) return label;
+		}
 	}
 	return tag;
 }
@@ -178,10 +190,12 @@ function buildConnectivitySection(view, coreType) {
 
 	/* Active node — live status (which node sing-box has selected), auto-updating;
 	 * sing-box can't report exit IP, so this stands in for the IP rows. */
-	function activeNodeRow() {
+	/* Live active-node row. `tag` selects which outbound group to resolve:
+	   undefined → the main (TCP) node via GLOBAL; 'main-udp-out' → the dedicated UDP node. */
+	function activeNodeRow(labelText, tag) {
 		const resultEl = E('span', { 'class': 'diag-gray' }, '—');
 		poll.add(L.bind(function() {
-			return L.resolveDefault(callActiveNode(), {}).then(function(ret) {
+			return L.resolveDefault(callActiveNode(tag), {}).then(function(ret) {
 				if (ret && !ret.error && ret.node) {
 					const type  = ret.type ? ' (' + ret.type + ')' : '';
 					/* Same 4-colour scheme as the status/client pages: 65535 ms is the
@@ -199,7 +213,7 @@ function buildConnectivitySection(view, coreType) {
 				}
 			});
 		}));
-		return E('div', { 'class': 'diag-row' }, [ E('span', { 'class': 'diag-label' }, _('Active Node')), resultEl ]);
+		return E('div', { 'class': 'diag-row' }, [ E('span', { 'class': 'diag-label' }, labelText), resultEl ]);
 	}
 
 	const rows = [
@@ -215,8 +229,16 @@ function buildConnectivitySection(view, coreType) {
 		rows.push(ipRow(_('Direct IP'), 'direct'));
 		rows.push(ipRow(_('Proxy IP'),  'proxy'));
 	} else if (coreType === 'singbox') {
-		rows.push(activeNodeRow());
+		rows.push(activeNodeRow(_('Active Node')));
 	}
+
+	/* Dedicated UDP node — only the modes that expose "Main UDP node" in the UI set it
+	   (Global + the 3 China modes; custom/proxy_banned_ru never do, and 'redirect' proxy
+	   mode has no UDP path). Show which node currently carries UDP in those cases. */
+	const udpNode   = uci.get('homeproxy', 'config', 'main_udp_node');
+	const proxyMode = uci.get('homeproxy', 'config', 'proxy_mode');
+	if (udpNode && !['nil', 'same', ''].includes(udpNode) && proxyMode !== 'redirect')
+		rows.push(activeNodeRow(_('Active UDP Node'), 'main-udp-out'));
 
 	return {
 		el: sectionCard(_('Connectivity'), 'diag-connectivity', rows),
@@ -244,10 +266,12 @@ function buildCoreSection(view) {
 				row(_('Hiddify-core'),    statusBadge(ret.hiddify_installed, ret.hiddify_installed ? _('installed') : _('not found'))),
 				row(_('sing-box'),        statusBadge(ret.singbox_installed,  ret.singbox_installed  ? _('installed') : _('not found'))),
 				row(_('ByeDPI'),          statusBadge(ret.byedpi_installed,   ret.byedpi_installed   ? _('installed') : _('not found'))),
+				row(_('Zapret 2'),        statusBadge(ret.zapret_installed,   ret.zapret_installed   ? _('installed') : _('not found'))),
 				ret.binary ? row(_('Active binary'), E('code', {}, ret.binary)) : null,
 				ret.version ? row(_('Version'), E('span', { 'class': 'diag-pre', 'style': 'max-height:5em' }, ret.version)) : null,
 				row(_('Running'),         statusBadge(ret.running, ret.running ? _('yes') + (ret.pid ? ' (PID ' + ret.pid + ')' : '') : _('no'))),
 				ret.byedpi_installed ? row(_('ByeDPI running'), statusBadge(ret.byedpi_running, ret.byedpi_running ? _('yes') + (ret.byedpi_pid ? ' (PID ' + ret.byedpi_pid + ')' : '') : _('no'))) : null,
+				ret.zapret_installed ? row(_('Zapret 2 running'), statusBadge(ret.zapret_running, ret.zapret_running ? _('yes') + (ret.zapret_pid ? ' (PID ' + ret.zapret_pid + ')' : '') : _('no'))) : null,
 				row(_('Listening ports'), E('div', {}, portLines))
 			].filter(Boolean));
 		});

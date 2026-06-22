@@ -194,6 +194,7 @@ return view.extend({
 		for (let i in proxy_nodes)
 			o.value(i, proxy_nodes[i]);
 		o.value('byedpi-out', _('ByeDPI'));
+		o.value('zapret-out', _('Zapret'));
 		o.default = 'nil';
 		o.depends({'routing_mode': /^((?!custom).)+$/});
 		o.rmempty = false;
@@ -262,6 +263,7 @@ return view.extend({
 		for (let i in proxy_nodes)
 			o.value(i, proxy_nodes[i]);
 		o.value('byedpi-out', _('ByeDPI'));
+		o.value('zapret-out', _('Zapret'));
 		o.default = 'nil';
 		o.depends({'routing_mode': /^((?!custom|proxy_banned_ru).)+$/, 'proxy_mode': /^((?!redirect$).)+$/});
 		o.rmempty = false;
@@ -671,8 +673,8 @@ return view.extend({
 			_('An alternative to ByeDPI: another free way to unblock throttled or blocked sites (YouTube, Discord…) without a VPN subscription. ' +
 			  'It does the same job a different way — your traffic still stays direct and is NOT encrypted, so your ISP can see which sites you visit but can no longer throttle or block them. ' +
 			  'Practical difference: Zapret can also unblock video and calls (e.g. YouTube video) that ByeDPI does not handle. ' +
-			  'The two don\'t compete — if one doesn\'t fully unblock your sites, try the other; what works depends on your ISP. ' +
-			  'Pick "Zapret" for specific sites in the rules below, then fine-tune it in the Zapret tab on the Node page. Installed automatically on first enable.'));
+			  'Finding a working strategy is individual and depends on your ISP\'s restrictions. ' +
+			  'Installed automatically on first enable.'));
 		o.default = o.disabled;
 		o.rmempty = false;
 		(function(opt) {
