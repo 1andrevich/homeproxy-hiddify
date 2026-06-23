@@ -342,6 +342,28 @@ msgstr ""
 msgid "China DNS server"
 msgstr ""
 
+msgid "Iran DNS server"
+msgstr ""
+
+msgid "DNS (direct)"
+msgstr ""
+
+msgid "The Domain Name Server for resolving Iran Domestic domains only. Your Internet Provider sees these queries in plain text."
+msgstr ""
+
+msgid "China"
+msgstr ""
+
+msgid "Iran"
+msgstr ""
+
+msgid ""
+"Default route is through the proxy. %s domains and IPs (geosite + geoip) "
+"automatically go Direct. Rules added here are per-service overrides applied "
+"before that baseline — e.g. force a specific service Direct, or send it "
+"through a separate node."
+msgstr ""
+
 #: htdocs/luci-static/resources/view/homeproxy/status.js:244
 msgid "China IPv4 list version"
 msgstr ""
@@ -939,6 +961,10 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js:260
 msgid "GitHub token"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js:261
+msgid "Used to check for ByeDPI and Zapret updates. Without a token, GitHub limits anonymous requests to 60/hour. Create at github.com → Settings → Developer settings → Personal access tokens (no scopes needed)."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:256
@@ -3214,6 +3240,22 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Russia (Proxy Banned)"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "China (bypass mainland)"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Iran (bypass domestic)"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Proxy Rules"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Region DNS"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js

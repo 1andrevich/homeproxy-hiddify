@@ -347,6 +347,27 @@ msgstr "检查更新"
 msgid "China DNS server"
 msgstr "国内 DNS 服务器"
 
+msgid "Iran DNS server"
+msgstr "伊朗 DNS 服务器"
+
+msgid "The Domain Name Server for resolving Iran Domestic domains only. Your Internet Provider sees these queries in plain text."
+msgstr "仅用于解析伊朗国内域名的 DNS 服务器。您的互联网服务商可以明文看到这些查询。"
+
+msgid "China"
+msgstr "中国"
+
+msgid "Iran"
+msgstr "伊朗"
+
+msgid ""
+"Default route is through the proxy. %s domains and IPs (geosite + geoip) "
+"automatically go Direct. Rules added here are per-service overrides applied "
+"before that baseline — e.g. force a specific service Direct, or send it "
+"through a separate node."
+msgstr ""
+"默认路由经由代理。%s 的域名和 IP（geosite + geoip）自动直连。此处添加的规则为按"
+"服务的覆盖规则，先于该基线生效——例如强制某个服务直连，或经由单独的节点。"
+
 #: htdocs/luci-static/resources/view/homeproxy/status.js:244
 msgid "China IPv4 list version"
 msgstr "国内 IPv4 库版本"
@@ -957,6 +978,10 @@ msgstr "生成"
 #: htdocs/luci-static/resources/view/homeproxy/status.js:260
 msgid "GitHub token"
 msgstr "GitHub 令牌"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js:261
+msgid "Used to check for ByeDPI and Zapret updates. Without a token, GitHub limits anonymous requests to 60/hour. Create at github.com → Settings → Developer settings → Personal access tokens (no scopes needed)."
+msgstr "用于检查 ByeDPI 和 Zapret 的更新。没有令牌时，GitHub 将匿名请求限制为每小时 60 次。创建方式：github.com → Settings → Developer settings → Personal access tokens（无需任何权限）。"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:256
 msgid "Global"
@@ -3332,6 +3357,22 @@ msgid "Russia (Proxy Banned)"
 msgstr "俄罗斯（代理封锁站点）"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "China (bypass mainland)"
+msgstr "中国（绕过大陆）"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Iran (bypass domestic)"
+msgstr "伊朗（绕过国内）"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Proxy Rules"
+msgstr "代理规则"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Region DNS"
+msgstr "区域 DNS"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Russia DNS server"
 msgstr "俄罗斯 DNS 服务器"
 
@@ -3647,6 +3688,9 @@ msgstr "DNS 测试仅适用于俄罗斯路由模式。"
 #: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
 msgid "Russia DNS"
 msgstr "俄罗斯 DNS"
+
+msgid "DNS (direct)"
+msgstr "DNS（直连）"
 
 #: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
 msgid "Server"

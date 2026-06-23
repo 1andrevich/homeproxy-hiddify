@@ -10,7 +10,7 @@ const cfgname = 'homeproxy';
 const uci = cursor();
 uci.load(cfgname);
 
-const routing_mode = uci.get(cfgname, 'config', 'routing_mode') || 'bypass_mainland_china',
+const routing_mode = uci.get(cfgname, 'config', 'routing_mode') || 'proxy_banned_ru',
       proxy_mode = uci.get(cfgname, 'config', 'proxy_mode') || 'redirect_tproxy';
 
 let outbound_node, tun_name;

@@ -233,8 +233,8 @@ function buildConnectivitySection(view, coreType) {
 	}
 
 	/* Dedicated UDP node — only the modes that expose "Main UDP node" in the UI set it
-	   (Global + the 3 China modes; custom/proxy_banned_ru never do, and 'redirect' proxy
-	   mode has no UDP path). Show which node currently carries UDP in those cases. */
+	   (Global + the bypass_cn/bypass_ir reverse modes; proxy_banned_ru/custom don't, and
+	   'redirect' proxy mode has no UDP path). Show which node currently carries UDP. */
 	const udpNode   = uci.get('homeproxy', 'config', 'main_udp_node');
 	const proxyMode = uci.get('homeproxy', 'config', 'proxy_mode');
 	if (udpNode && !['nil', 'same', ''].includes(udpNode) && proxyMode !== 'redirect')
@@ -377,14 +377,16 @@ function buildDnsSection(view) {
 				return;
 			}
 
+			const regionDomain = ret.region_domain || '?';
 			dom.content(resultsEl, [
-				E('div', { 'style': 'font-weight:bold; margin:.4em 0 .2em' }, _('Russia DNS')),
-				row(_('Server'), E('code', {}, ret.russia_server || '?')),
-				row('mail.ru', statusBadge(ret.russia_ok,
-					ret.russia_ok ? _('Resolved') : _('No answer — check server address'))),
-				ret.russia_output ? E('div', {}, [
-					E('div', { 'class': 'diag-label' }, 'nslookup mail.ru'),
-					pre(ret.russia_output)
+				E('div', { 'style': 'font-weight:bold; margin:.4em 0 .2em' },
+					(ret.region_label ? ret.region_label + ' ' : '') + _('DNS (direct)')),
+				row(_('Server'), E('code', {}, ret.region_server || '?')),
+				row(regionDomain, statusBadge(ret.region_ok,
+					ret.region_ok ? _('Resolved') : _('No answer — check server address'))),
+				ret.region_output ? E('div', {}, [
+					E('div', { 'class': 'diag-label' }, 'nslookup ' + regionDomain),
+					pre(ret.region_output)
 				]) : null,
 
 				E('div', { 'style': 'font-weight:bold; margin:.8em 0 .2em' }, _('Secure DNS')),

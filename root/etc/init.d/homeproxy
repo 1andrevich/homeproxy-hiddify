@@ -73,7 +73,7 @@ start_service() {
 	fi
 
 	local routing_mode proxy_mode
-	config_get routing_mode "config" "routing_mode" "bypass_mainland_china"
+	config_get routing_mode "config" "routing_mode" "proxy_banned_ru"
 	config_get proxy_mode "config" "proxy_mode" "redirect_tproxy"
 
 	# Write core info for LuCI
@@ -105,22 +105,13 @@ start_service() {
 	mkdir -p "$DNSMASQ_DIR"
 	echo -e "conf-dir=$DNSMASQ_DIR" > "$DNSMASQ_DIR/../dnsmasq-homeproxy.conf"
 	case "$routing_mode" in
-	"bypass_mainland_china"|"custom"|"custom_json"|"global"|"proxy_banned_ru")
+	"bypass_cn"|"bypass_ir"|"custom"|"custom_json"|"global"|"proxy_banned_ru")
+		# All modes do DNS inside sing-box; dnsmasq just redirects to its inbound.
 		cat <<-EOF >> "$DNSMASQ_DIR/redirect-dns.conf"
 			no-poll
 			no-resolv
 			server=127.0.0.1#$dns_port
 		EOF
-		;;
-	"gfwlist")
-		local gfw_nftset_v6
-		[ "$ipv6_support" -eq "0" ] || gfw_nftset_v6=",6#inet#fw4#homeproxy_gfw_list_v6"
-		sed -r -e "s/(.*)/server=\/\1\/127.0.0.1#$dns_port\nnftset=\/\1\\/4#inet#fw4#homeproxy_gfw_list_v4$gfw_nftset_v6/g" \
-			"$HP_DIR/resources/gfw_list.txt" > "$DNSMASQ_DIR/gfw_list.conf"
-		;;
-	"proxy_mainland_china")
-		sed -r -e "s/(.*)/server=\/\1\/127.0.0.1#$dns_port/g" \
-			"$HP_DIR/resources/china_list.txt" > "$DNSMASQ_DIR/china_list.conf"
 		;;
 	esac
 	/etc/init.d/dnsmasq restart >"/dev/null" 2>&1
@@ -298,8 +289,6 @@ stop_service() {
 		nft delete chain inet fw4 "$i"
 	done 2>"/dev/null"
 	for i in "homeproxy_local_addr_v4" "homeproxy_local_addr_v6" \
-		 "homeproxy_gfw_list_v4" "homeproxy_gfw_list_v6" \
-		 "homeproxy_mainland_addr_v4" "homeproxy_mainland_addr_v6" \
 		 "homeproxy_wan_proxy_addr_v4" "homeproxy_wan_proxy_addr_v6" \
 		 "homeproxy_wan_direct_addr_v4" "homeproxy_wan_direct_addr_v6" \
 		 "homeproxy_routing_port"; do

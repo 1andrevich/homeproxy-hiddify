@@ -318,24 +318,6 @@ const methods = {
 		}
 	},
 
-	resources_get_version: {
-		args: { type: 'type' },
-		call: function(req) {
-			const version = trim(readfile(`${HP_DIR}/resources/${req.args?.type}.ver`));
-			return { version: version, error: error() };
-		}
-	},
-	resources_update: {
-		args: { type: 'type' },
-		call: function(req) {
-			if (req.args?.type) {
-				const type = shellquote(req.args?.type);
-				const exit_code = system(`${HP_DIR}/scripts/update_resources.sh ${type}`);
-				return { status: exit_code };
-			} else
-				return { status: 255, error: 'illegal type' };
-		}
-	},
 	clash_ip_info: {
 		call: function() {
 			const fd = popen('wget -qO- --timeout=3 http://127.0.0.1:9090/proxies');
@@ -641,29 +623,39 @@ const methods = {
 			if (!fd) return { skip: true };
 			const mode = trim(fd.read('all'));
 			fd.close();
-			if (mode !== 'proxy_banned_ru') return { skip: true };
 
-			/* Get russia-dns server address from running config */
+			/* The DNS test runs in every selective mode. Region is data: the resolver
+			 * tag and the domestic anchor domain (must be in the region's geosite so it
+			 * routes to the region resolver) differ; the secure-dns test is shared. */
+			const REGION_DIAG = {
+				proxy_banned_ru: { tag: 'russia-dns', label: 'Russia', domain: 'mail.ru' },
+				bypass_cn:       { tag: 'region-dns', label: 'China',  domain: 'baidu.com' },
+				bypass_ir:       { tag: 'region-dns', label: 'Iran',   domain: 'aparat.com' }
+			};
+			const rd = REGION_DIAG[mode];
+			if (!rd) return { skip: true };
+
+			/* Get the region resolver + secure-dns server address from running config */
 			const content = readfile(RUN_DIR + '/hiddify-c.json');
 			if (!content) return { error: 'Config not found — is the service running?' };
 			let cfg;
 			try { cfg = json(content); } catch(e) { return { error: 'Config parse error' }; }
 
-			let russia_server = null;
+			let region_server = null;
 			let secure_server = null;
 			const dns_servers = (cfg.dns || {}).servers || [];
 			for (let s in dns_servers) {
-				if (s.tag === 'russia-dns') russia_server = s.server || s.address;
+				if (s.tag === rd.tag) region_server = s.server || s.address;
 				if (s.tag === 'secure-dns') secure_server = s.server || s.address;
 			}
-			if (!russia_server) return { error: 'russia-dns server not found in config — regenerate and restart' };
+			if (!region_server) return { error: rd.tag + ' server not found in config — regenerate and restart' };
 
-			/* Test 1: mail.ru via default resolver — if HomeProxy routes it to russia-dns, it resolves */
-			let russia_ok = false;
-			let russia_out = '';
-			fd = popen('nslookup mail.ru 2>&1');
-			if (fd) { russia_out = trim(fd.read('all')); fd.close(); }
-			russia_ok = !!match(russia_out, /Name:/);
+			/* Test 1: domestic anchor via default resolver — if HomeProxy routes it to the region resolver, it resolves */
+			let region_ok = false;
+			let region_out = '';
+			fd = popen('nslookup ' + rd.domain + ' 2>&1');
+			if (fd) { region_out = trim(fd.read('all')); fd.close(); }
+			region_ok = !!match(region_out, /Name:/);
 
 			/* Test 2: andrevi.ch via default resolver — HomeProxy routes to secure-dns via proxy */
 			let secure_ok = false;
@@ -673,11 +665,13 @@ const methods = {
 			secure_ok = !!match(secure_out, /Name:/);
 
 			return {
-				russia_server: russia_server,
-				russia_ok:     russia_ok,
-				russia_output: russia_out,
+				region_label:  rd.label,
+				region_domain: rd.domain,
+				region_server: region_server,
+				region_ok:     region_ok,
+				region_output: region_out,
 				secure_server: secure_server,
-				bootstrap:     russia_server,
+				bootstrap:     region_server,
 				secure_ok:     secure_ok,
 				secure_output: secure_out
 			};
@@ -903,24 +897,30 @@ const methods = {
 			if (mode_fd) {
 				const routing_mode = trim(mode_fd.read('all'));
 				mode_fd.close();
-				if (routing_mode === 'proxy_banned_ru') {
-					let russia_server = null;
+				const REGION_DIAG = {
+					proxy_banned_ru: { tag: 'russia-dns', label: 'Russia', domain: 'mail.ru' },
+					bypass_cn:       { tag: 'region-dns', label: 'China',  domain: 'baidu.com' },
+					bypass_ir:       { tag: 'region-dns', label: 'Iran',   domain: 'aparat.com' }
+				};
+				const rd = REGION_DIAG[routing_mode];
+				if (rd) {
+					let region_server = null;
 					let secure_server = null;
 					const dns_servers = ((() => { try { return json(readfile(RUN_DIR + '/hiddify-c.json')); } catch(e) { return {}; } })().dns || {}).servers || [];
 					for (let s in dns_servers) {
-						if (s.tag === 'russia-dns') russia_server = s.server || s.address;
+						if (s.tag === rd.tag) region_server = s.server || s.address;
 						if (s.tag === 'secure-dns') secure_server = s.server || s.address;
 					}
-					add('Mode: proxy_banned_ru');
-					add('Russia DNS server: ' + (russia_server || 'not found'));
+					add('Mode: ' + routing_mode);
+					add(rd.label + ' DNS server: ' + (region_server || 'not found'));
 					add('Secure DNS server: ' + (secure_server || 'not found'));
-					add('Bootstrap: ' + (russia_server || 'not found'));
-					let dns_fd = popen('nslookup mail.ru 2>&1');
-					if (dns_fd) { add('nslookup mail.ru:\n' + trim(dns_fd.read('all'))); dns_fd.close(); }
+					add('Bootstrap: ' + (region_server || 'not found'));
+					let dns_fd = popen('nslookup ' + rd.domain + ' 2>&1');
+					if (dns_fd) { add('nslookup ' + rd.domain + ':\n' + trim(dns_fd.read('all'))); dns_fd.close(); }
 					dns_fd = popen('nslookup andrevi.ch 2>&1');
 					if (dns_fd) { add('nslookup andrevi.ch:\n' + trim(dns_fd.read('all'))); dns_fd.close(); }
 				} else {
-					add('Mode: ' + routing_mode + ' (DNS test only runs in proxy_banned_ru)');
+					add('Mode: ' + routing_mode + ' (DNS test runs in selective modes only)');
 				}
 			}
 			add('');

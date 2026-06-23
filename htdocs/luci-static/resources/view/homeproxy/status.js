@@ -126,59 +126,6 @@ function getConnStat(o, site) {
 	]);
 }
 
-function getResVersion(o, type) {
-	const callResVersion = rpc.declare({
-		object: 'luci.homeproxy',
-		method: 'resources_get_version',
-		params: ['type'],
-		expect: { '': {} }
-	});
-
-	const callResUpdate = rpc.declare({
-		object: 'luci.homeproxy',
-		method: 'resources_update',
-		params: ['type'],
-		expect: { '': {} }
-	});
-
-	return L.resolveDefault(callResVersion(type), {}).then((res) => {
-		let spanTemp = E('div', { 'style': 'cbi-value-field' }, [
-			E('button', {
-				'class': 'btn cbi-button cbi-button-action',
-				'click': ui.createHandlerFn(this, () => {
-					return L.resolveDefault(callResUpdate(type), {}).then((res) => {
-						switch (res.status) {
-						case 0:
-							o.description = _('Successfully updated.');
-							break;
-						case 1:
-							o.description = _('Update failed.');
-							break;
-						case 2:
-							o.description = _('Already in updating.');
-							break;
-						case 3:
-							o.description = _('Already at the latest version.');
-							break;
-						default:
-							o.description = _('Unknown error.');
-							break;
-						}
-
-						return o.map.reset();
-					});
-				})
-			}, [ _('Check update') ]),
-			' ',
-			E('strong', { 'style': (res.error ? 'color:red' : 'color:green') },
-				[ res.error ? 'not found' : res.version ]
-			),
-		]);
-
-		o.default = spanTemp;
-	});
-}
-
 function getRuntimeLog(o, name, _option_index, section_id, _in_table) {
 	const filename = o.option.split('_')[1];
 
@@ -894,27 +841,13 @@ return view.extend({
 			o.default = E('strong', { 'style': 'color:green' }, coreName + coreVer + coreCustomSuffix);
 		}
 
-		if (!isRuMode) {
-			o = s.option(form.DummyValue, '_china_ip4_version', _('China IPv4 list version'));
-			o.cfgvalue = L.bind(getResVersion, this, o, 'china_ip4');
-			o.rawhtml = true;
-
-			o = s.option(form.DummyValue, '_china_ip6_version', _('China IPv6 list version'));
-			o.cfgvalue = L.bind(getResVersion, this, o, 'china_ip6');
-			o.rawhtml = true;
-
-			o = s.option(form.DummyValue, '_china_list_version', _('China list version'));
-			o.cfgvalue = L.bind(getResVersion, this, o, 'china_list');
-			o.rawhtml = true;
-
-			o = s.option(form.DummyValue, '_gfw_list_version', _('GFW list version'));
-			o.cfgvalue = L.bind(getResVersion, this, o, 'gfw_list');
-			o.rawhtml = true;
-		}
+		/* Region rule-sets (geosite/geoip .srs) are versioned and refreshed by the core itself,
+		 * so there are no local list-version files to display here. */
 
 
 		if (!isRuMode) {
 			o = s.option(form.Value, 'github_token', _('GitHub token'));
+			o.description = _('Used to check for ByeDPI and Zapret updates. Without a token, GitHub limits anonymous requests to 60/hour. Create at github.com → Settings → Developer settings → Personal access tokens (no scopes needed).');
 			o.password = true;
 			o.renderWidget = function() {
 				let node = form.Value.prototype.renderWidget.apply(this, arguments);

@@ -5,8 +5,7 @@
 
 SCRIPTS_DIR="/etc/homeproxy/scripts"
 
-for i in "china_ip4" "china_ip6" "gfw_list" "china_list"; do
-	"$SCRIPTS_DIR"/update_resources.sh "$i"
-done
+# Region rule-sets (geosite/geoip .srs) are remote sing-box rule_sets — the core downloads
+# and refreshes them itself (update_interval). No firewall list files to cron-update anymore.
 
 "$SCRIPTS_DIR"/update_subscriptions.uc

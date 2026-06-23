@@ -44,11 +44,36 @@ const uciruleset = 'ruleset';
 const uciserver = 'server';
 const ucirurule = 'proxy_ru_rule';
 
-const routing_mode = uci.get(uciconfig, ucimain, 'routing_mode') || 'bypass_mainland_china';
+const routing_mode = uci.get(uciconfig, ucimain, 'routing_mode') || 'proxy_banned_ru';
+
+/* Selective routing is ONE engine; the region is data.
+ *   forward (blocklist): default direct, lists -> proxy.            proxy_banned_ru (RU)
+ *   reverse (bypass):    default proxy, region -> direct, overrides. bypass_cn / bypass_ir
+ * Adding a country = one REGION row + a routing_mode value + a client.js entry. */
+const REGION = {
+	cn: {
+		geosite:     'https://fastly.jsdelivr.net/gh/1715173329/sing-geosite@rule-set-unstable/geosite-geolocation-cn.srs',
+		geoip:       'https://fastly.jsdelivr.net/gh/1715173329/IPCIDR-CHINA@rule-set/cn.srs',
+		geosite_non: 'https://fastly.jsdelivr.net/gh/1715173329/sing-geosite@rule-set-unstable/geosite-geolocation-!cn.srs',
+		local_dns:   { type: 'udp', server: '223.5.5.5' },	/* AliDNS */
+		guard:       true					/* geoip fallback + !cn guard (China list is non-exhaustive) */
+	},
+	ir: {
+		geosite:     'https://fastly.jsdelivr.net/gh/Chocolate4U/Iran-sing-box-rules@rule-set/geosite-ir.srs',
+		geoip:       'https://fastly.jsdelivr.net/gh/Chocolate4U/Iran-sing-box-rules@rule-set/geoip-ir.srs',
+		geosite_non: null,
+		local_dns:   { type: 'udp', server: '178.22.122.100' },	/* Shecan (default; overridable via iran_dns_server) — stable public IPs, not ISP-delegated */
+		guard:       false					/* Iran configs use the simple scheme, no geoip fallback */
+	}
+};
+const MODE_REGION = { bypass_cn: 'cn', bypass_ir: 'ir' };
+function is_bypass_mode(m) { return m in ['bypass_cn', 'bypass_ir']; }
+function is_selective_mode(m) { return m === 'proxy_banned_ru' || is_bypass_mode(m); }
+function region_of(m) { return MODE_REGION[m]; }
 
 let wan_dns = ubus.call('network.interface', 'status', {'interface': 'wan'})?.['dns-server']?.[0];
 if (!wan_dns)
-	wan_dns = (routing_mode in ['proxy_mainland_china', 'global']) ? '8.8.8.8' : '223.5.5.5';
+	wan_dns = '8.8.8.8';	/* ultimate fallback for the remote/bootstrap resolver; region-local DNS comes from REGION */
 
 const dns_port = uci.get(uciconfig, uciinfra, 'dns_port') || '5333';
 
@@ -91,7 +116,7 @@ const zapret_mark = uci.get(uciconfig, ucimain, 'zapret_mark') || '110';
 const zapret_voice = uci.get(uciconfig, ucimain, 'zapret_voice') || '0';
 
 let main_node, main_udp_node, dedicated_udp_node, default_outbound, default_outbound_dns,
-    domain_strategy, sniff_override, dns_server, china_dns_server, russia_dns_server,
+    domain_strategy, sniff_override, dns_server, china_dns_server, iran_dns_server, russia_dns_server,
     secure_dns_server, proxy_calls, no_proxy_torrents, show_advanced_rules, dns_default_strategy, dns_default_server, dns_disable_cache,
     dns_disable_cache_expire, dns_independent_cache, dns_client_subnet, cache_file_store_rdrc,
     cache_file_rdrc_timeout, direct_domain_list, proxy_domain_list;
@@ -109,20 +134,30 @@ if (routing_mode !== 'custom') {
 	if (isEmpty(dns_server) || dns_server === 'wan')
 		dns_server = wan_dns;
 
-	if (routing_mode === 'bypass_mainland_china') {
+	/* Region local resolver: optional UCI override, else the stable default from REGION
+	 * (AliDNS for CN, Shecan for IR). 'wan'/empty falls back to that default. */
+	if (routing_mode === 'bypass_cn') {
 		china_dns_server = uci.get(uciconfig, ucimain, 'china_dns_server');
 		if (isEmpty(china_dns_server) || type(china_dns_server) !== 'string' || china_dns_server === 'wan')
-			china_dns_server = wan_dns;
+			china_dns_server = REGION.cn.local_dns.server;
+	}
+	if (routing_mode === 'bypass_ir') {
+		iran_dns_server = uci.get(uciconfig, ucimain, 'iran_dns_server');
+		if (isEmpty(iran_dns_server) || type(iran_dns_server) !== 'string' || iran_dns_server === 'wan')
+			iran_dns_server = REGION.ir.local_dns.server;
 	}
 
-	if (routing_mode === 'proxy_banned_ru') {
-		russia_dns_server = uci.get(uciconfig, ucimain, 'russia_dns_server') || '77.88.8.8';
+	/* Shared selective knobs (forward RU + reverse CN/IR): remote DoH + exceptions.
+	 * Reverse modes ride the same engine, so they get secure-dns/overrides for free. */
+	if (is_selective_mode(routing_mode)) {
 		secure_dns_server = uci.get(uciconfig, ucimain, 'secure_dns_server') || 'https://cloudflare-dns.com/dns-query';
 		domain_strategy = uci.get(uciconfig, ucimain, 'domain_strategy');
 		proxy_calls = uci.get(uciconfig, ucimain, 'proxy_calls');
 		no_proxy_torrents = uci.get(uciconfig, ucimain, 'no_proxy_torrents');
 		show_advanced_rules = uci.get(uciconfig, ucimain, 'show_advanced_rules');
 	}
+	if (routing_mode === 'proxy_banned_ru')
+		russia_dns_server = uci.get(uciconfig, ucimain, 'russia_dns_server') || '77.88.8.8';
 
 	dns_default_strategy = (ipv6_support !== '1') ? 'ipv4_only' : null;
 
@@ -616,10 +651,13 @@ function get_resolver(cfg) {
 	switch (cfg) {
 	case 'default-dns':
 	case 'system-dns':
-	/* Built-in proxy_banned_ru resolvers — already emitted with these literal tags,
+	/* Built-in selective-mode resolvers — emitted with these literal tags (forward RU:
+	 * russia-dns/secure-dns; reverse CN/IR: region-dns/secure-dns; global: main-dns),
 	 * so a custom DNS rule may target them directly (don't prefix as a cfg-*-dns). */
 	case 'russia-dns':
 	case 'secure-dns':
+	case 'region-dns':
+	case 'main-dns':
 		return cfg;
 	default:
 		return 'cfg-' + cfg + '-dns';
@@ -746,8 +784,77 @@ if (!isEmpty(main_node)) {
 				action: 'route',
 				server: 'secure-dns'
 			});
+	} else if (is_bypass_mode(routing_mode)) {
+		/* Reverse (bypass) mode: default route is PROXY; region traffic carved out to direct.
+		 * DNS mirrors it -- proxied (default) resolves via DoH-through-tunnel (anti-pollution +
+		 * hides queries from the ISP/operator); region domains resolve via the local resolver
+		 * (correct domestic CDN, fast, shutdown-resilient). One engine, region is data. */
+		const r = region_of(routing_mode);
+		const region = REGION[r];
+
+		/* Region-local resolver (direct egress): user-chosen server (china_dns_server /
+		 * iran_dns_server), defaulting to the REGION baseline (AliDNS CN / Shecan IR). */
+		const region_dns_server = (r === 'cn') ? china_dns_server : iran_dns_server;
+		push(config.dns.servers, {
+			tag: 'region-dns',
+			detour: self_mark ? 'direct-out' : null,
+			...parse_dnsserver(region_dns_server)
+		});
+		/* Remote/default resolver: DoH through the tunnel, bootstrapped via region-dns.
+		 * NOTE (Iran validation): bootstrapping a DoH *hostname* via the local resolver can be
+		 * poisoned by the ISP -- if confirmed in-country, set secure_dns_server to an IP-literal
+		 * DoH (e.g. https://1.1.1.1/dns-query) so no bootstrap is needed. */
+		push(config.dns.servers, {
+			tag: 'secure-dns',
+			domain_resolver: {
+				server: 'region-dns',
+				strategy: (ipv6_support !== '1') ? 'ipv4_only' : null
+			},
+			detour: 'main-out',
+			...parse_dnsserver(secure_dns_server, 'tcp')
+		});
+		config.dns.final = 'secure-dns';
+
+		/* Custom direct list -> region-dns */
+		if (length(direct_domain_list))
+			push(config.dns.rules, {
+				rule_set: 'direct-domain',
+				action: 'route',
+				server: 'region-dns'
+			});
+
+		/* Filter out SVCB/HTTPS queries for proxied custom domains */
+		if (length(proxy_domain_list))
+			push(config.dns.rules, {
+				rule_set: 'proxy-domain',
+				query_type: [64, 65],
+				action: 'reject'
+			});
+
+		/* Region domains -> region-dns (local) */
+		push(config.dns.rules, {
+			rule_set: 'geosite-' + r,
+			action: 'route',
+			server: 'region-dns',
+			strategy: 'prefer_ipv6'
+		});
+
+		/* Optional geoip fallback + non-region guard. CN: list non-exhaustive, catch unlisted
+		 * domestic by IP. IR: off -- Iran configs use the simple scheme. */
+		if (region.guard)
+			push(config.dns.rules, {
+				type: 'logical',
+				mode: 'and',
+				rules: [
+					{ rule_set: 'geosite-non' + r, invert: true },
+					{ rule_set: 'geoip-' + r }
+				],
+				action: 'route',
+				server: 'region-dns',
+				strategy: 'prefer_ipv6'
+			});
 	} else {
-		/* Main DNS */
+		/* Global (proxy everything): plain remote DNS through the tunnel. No region carve-out. */
 		push(config.dns.servers, {
 			tag: 'main-dns',
 			domain_resolver: {
@@ -763,58 +870,15 @@ if (!isEmpty(main_node)) {
 			push(config.dns.rules, {
 				rule_set: 'direct-domain',
 				action: 'route',
-				server: (routing_mode === 'bypass_mainland_china') ? 'china-dns' : 'default-dns'
+				server: 'default-dns'
 			});
 
-		/* Filter out SVCB/HTTPS queries for "exquisite" Apple devices */
-		if (routing_mode === 'gfwlist' || length(proxy_domain_list))
+		if (length(proxy_domain_list))
 			push(config.dns.rules, {
-				rule_set: (routing_mode !== 'gfwlist') ? 'proxy-domain' : null,
+				rule_set: 'proxy-domain',
 				query_type: [64, 65],
 				action: 'reject'
 			});
-
-		if (routing_mode === 'bypass_mainland_china') {
-			push(config.dns.servers, {
-				tag: 'china-dns',
-				domain_resolver: {
-					server: 'default-dns',
-					strategy: 'prefer_ipv6'
-				},
-				detour: self_mark ? 'direct-out' : null,
-				...parse_dnsserver(china_dns_server)
-			});
-
-			if (length(proxy_domain_list))
-				push(config.dns.rules, {
-					rule_set: 'proxy-domain',
-					action: 'route',
-					server: 'main-dns'
-				});
-
-			push(config.dns.rules, {
-				rule_set: 'geosite-cn',
-				action: 'route',
-				server: 'china-dns',
-				strategy: 'prefer_ipv6'
-			});
-			push(config.dns.rules, {
-				type: 'logical',
-				mode: 'and',
-				rules: [
-					{
-						rule_set: 'geosite-noncn',
-						invert: true
-					},
-					{
-						rule_set: 'geoip-cn'
-					}
-				],
-				action: 'route',
-				server: 'china-dns',
-				strategy: 'prefer_ipv6'
-			});
-		}
 	}
 } else if (!isEmpty(default_outbound)) {
 	/* DNS servers */
@@ -1383,7 +1447,7 @@ config.route = {
 if (!isEmpty(main_node)) {
 	/* Avoid DNS loop */
 	/* sing-box-extended supports action object; hiddify-core (standard sing-box 1.12) expects a string tag */
-	const default_resolver_server = (routing_mode === 'bypass_mainland_china') ? 'china-dns' :
+	const default_resolver_server = is_bypass_mode(routing_mode) ? 'region-dns' :
 	                                (routing_mode === 'proxy_banned_ru') ? 'russia-dns' : 'default-dns';
 	config.route.default_domain_resolver = is_singbox ? {
 		action: 'route',
@@ -1399,8 +1463,10 @@ if (!isEmpty(main_node)) {
 			outbound: 'direct-out'
 		});
 
-	/* Main UDP out (not used in proxy_banned_ru — would proxy all UDP traffic) */
-	if (dedicated_udp_node && routing_mode !== 'proxy_banned_ru')
+	/* Main UDP out — only in `global` here (everything proxied, no carve-outs, order moot).
+	 * In selective modes (RU/reverse) the UDP-node rule is emitted LAST, after the region
+	 * baseline + per-service overrides, so domestic/override UDP isn't swept into it. */
+	if (dedicated_udp_node && routing_mode === 'global')
 		push(config.route.rules, {
 			network: 'udp',
 			action: 'route',
@@ -1434,8 +1500,9 @@ if (!isEmpty(main_node)) {
 			]
 		});
 
-	if (routing_mode === 'proxy_banned_ru') {
-		/* Resolve domains before routing — prevents the proxy server from doing its own DNS resolution */
+	if (is_selective_mode(routing_mode)) {
+		/* Resolve domains before routing — prevents the proxy server from doing its own DNS
+		 * resolution, and (reverse) lets the geoip baseline match by IP. */
 		push(config.route.rules, {
 			action: 'resolve',
 			strategy: (ipv6_support !== '1') ? 'ipv4_only' : null
@@ -1658,30 +1725,54 @@ if (!isEmpty(main_node)) {
 					});
 			}
 		}
+		/* Reverse: region baseline -> direct (lowest priority, AFTER per-service overrides).
+		 * MUST include geoip (IP) so non-sniffable UDP / no-SNI gets the direct decision. */
+		if (is_bypass_mode(routing_mode)) {
+			push(config.route.rules, {
+				rule_set: [ 'geosite-' + region_of(routing_mode), 'geoip-' + region_of(routing_mode) ],
+				action: 'route',
+				outbound: 'direct-out'
+			});
+			/* Proxied-UDP default node, after baseline+overrides so domestic/override UDP isn't swept in. */
+			if (dedicated_udp_node)
+				push(config.route.rules, {
+					network: 'udp',
+					action: 'route',
+					outbound: 'main-udp-out'
+				});
+		}
 	}
 
-	if (routing_mode === 'bypass_mainland_china') {
+	if (is_bypass_mode(routing_mode)) {
+		/* Region rule-sets (.srs). Direct-bootstrap: download direct so a not-yet-up proxy
+		 * can't deadlock rule-set init at startup. geosite_non only when guard is on (CN). */
+		const r = region_of(routing_mode);
+		const region = REGION[r];
 		push(config.route.rule_set, {
 			type: 'remote',
-			tag: 'geoip-cn',
+			tag: 'geoip-' + r,
 			format: 'binary',
-			url: 'https://fastly.jsdelivr.net/gh/1715173329/IPCIDR-CHINA@rule-set/cn.srs',
-			download_detour: 'main-out'
+			url: region.geoip,
+			download_detour: 'direct-out',
+			update_interval: '1d'
 		});
 		push(config.route.rule_set, {
 			type: 'remote',
-			tag: 'geosite-cn',
+			tag: 'geosite-' + r,
 			format: 'binary',
-			url: 'https://fastly.jsdelivr.net/gh/1715173329/sing-geosite@rule-set-unstable/geosite-geolocation-cn.srs',
-			download_detour: 'main-out'
+			url: region.geosite,
+			download_detour: 'direct-out',
+			update_interval: '1d'
 		});
-		push(config.route.rule_set, {
-			type: 'remote',
-			tag: 'geosite-noncn',
-			format: 'binary',
-			url: 'https://fastly.jsdelivr.net/gh/1715173329/sing-geosite@rule-set-unstable/geosite-geolocation-!cn.srs',
-			download_detour: 'main-out'
-		});
+		if (region.guard)
+			push(config.route.rule_set, {
+				type: 'remote',
+				tag: 'geosite-non' + r,
+				format: 'binary',
+				url: region.geosite_non,
+				download_detour: 'direct-out',
+				update_interval: '1d'
+			});
 	}
 
 	if (isEmpty(config.route.rule_set))
@@ -1793,7 +1884,7 @@ config.experimental = {
 		external_controller: '127.0.0.1:9090'
 	}
 };
-if (routing_mode in ['bypass_mainland_china', 'proxy_banned_ru', 'custom']) {
+if (is_selective_mode(routing_mode) || routing_mode === 'custom') {
 	config.experimental.cache_file = {
 		enabled: true,
 		path: RUN_DIR + '/cache.db',
