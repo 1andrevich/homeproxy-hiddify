@@ -168,7 +168,7 @@ const methods = {
 				url = 'https://www.google.com';
 				break;
 			case 'yandex':
-				url = 'https://www.yandex.ru';
+				url = 'https://ya.ru';
 				break;
 			case 'speedtest':
 				url = 'https://www.speedtest.net';
@@ -934,7 +934,7 @@ const methods = {
 				['Baidu',     'https://www.baidu.com'],
 				['Google',    'https://www.google.com'],
 				['YouTube',   'https://www.youtube.com'],
-				['Yandex',    'https://www.yandex.ru'],
+				['Yandex',    'https://ya.ru'],
 				['Speedtest', 'https://www.speedtest.net']
 			];
 			for (let site in conn_sites) {
