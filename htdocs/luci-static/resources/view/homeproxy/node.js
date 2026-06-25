@@ -2800,11 +2800,24 @@ return view.extend({
 				const btn = E('button', {
 					'class': 'btn cbi-button cbi-button-action',
 					'click': ui.createHandlerFn(this, async () => {
-						const el = document.querySelector('[name*=".zapret_cmd_opts"]');
-						const opts = el ? el.value.trim() : '';
+						/* Read the strategy the SAME way the preset picker writes it (the
+						 * widget), with a uci fallback — a raw querySelector can grab the
+						 * wrong/no input and return '' → nfqws2 runs with no desync → every
+						 * handshake is blocked → a false 0/4. The full test never had this
+						 * because it uses the preset definitions directly. */
+						const w = cmdOptsOpt ? cmdOptsOpt.getUIElement(section_id) : null;
+						let opts = (w && w.getValue() != null) ? String(w.getValue())
+							: (uci.get('homeproxy', 'config', 'zapret_cmd_opts') || '');
+						opts = opts.trim();
 						btn.disabled = true;
 						msgEl.style.color = 'gray';
 						msgEl.textContent = _('Testing...');
+						if (!opts) {
+							btn.disabled = false;
+							msgEl.style.color = 'red';
+							msgEl.textContent = _('No strategy set — pick a preset or enter options first');
+							return;
+						}
 						const r0 = await resolveHosts();
 						if (!r0.ok) {
 							btn.disabled = false;

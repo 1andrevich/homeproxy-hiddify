@@ -28,7 +28,15 @@ endef
 
 define Package/luci-app-re-homeproxy/postinst
 #!/bin/sh
-[ -n "$$IPKG_INSTROOT" ] || kill -HUP $$(pidof rpcd) 2>/dev/null
+# Full restart, NOT kill -HUP: SIGHUP only reloads ACLs/session, so rpcd keeps the
+# OLD ucode method set from /usr/share/rpcd/ucode/ until restarted. On every update
+# that shipped a new/changed method (e.g. zapret_resolve_hosts) the method would be
+# missing/stale until a manual `rpcd restart` — surfacing as "DNS not ready",
+# yellow "?" in diagnostics, "Unknown method", etc. A restart reloads methods + ACLs.
+# Detached + redirected and after a short delay so it (a) lets the install finish
+# first, and (b) doesn't block when the upgrade is driven THROUGH rpcd (LuCI Software
+# page): rpcd's popen() would otherwise wait on a child holding stdout open.
+[ -n "$$IPKG_INSTROOT" ] || ( sleep 2; /etc/init.d/rpcd restart ) >/dev/null 2>&1 &
 exit 0
 endef
 
