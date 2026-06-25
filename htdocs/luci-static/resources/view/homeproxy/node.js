@@ -2700,9 +2700,33 @@ return view.extend({
 			const callZapretTest = rpc.declare({
 				object: 'luci.homeproxy',
 				method: 'zapret_strategy_test',
-				params: ['cmd_opts'],
+				params: ['cmd_opts', 'ips'],
 				expect: { '': {} }
 			});
+
+			const callZapretResolve = rpc.declare({
+				object: 'luci.homeproxy',
+				method: 'zapret_resolve_hosts',
+				expect: { '': {} }
+			});
+
+			/* Resolve the 4 test hosts ONCE (bounded + retried server-side), via the
+			 * same secure-DNS/direct path production uses for these blocked domains, so
+			 * the IP is representative for the TLS-handshake probe. Returns
+			 * { ok, ips, error }; ips is the "tag=ip …" string fed to each candidate so
+			 * the full-test sweep doesn't re-hit DNS for all 36 candidates. A failure
+			 * here is the "DNS not ready right after Apply" case — surfaced as one
+			 * clear message instead of 36 ubus errors. */
+			function resolveHosts() {
+				return L.resolveDefault(callZapretResolve(), {}).then((ret) => {
+					let d = {};
+					try { d = JSON.parse(ret.output || '{}'); } catch (e) {}
+					if (!d.ok || !d.ips)
+						return { ok: false, error: d.error || _('DNS not ready — wait a few seconds after Apply and retry') };
+					const ips = Object.keys(d.ips).map((k) => k + '=' + d.ips[k]).join(' ');
+					return { ok: true, ips: ips };
+				}, () => ({ ok: false, error: _('rpc error') }));
+			}
 
 			let cmdOptsOpt = null;
 			let presetSelEl = null;
@@ -2775,13 +2799,20 @@ return view.extend({
 				const msgEl = E('span', { style: 'margin-left:8px; font-size:0.9em; color:gray' }, '');
 				const btn = E('button', {
 					'class': 'btn cbi-button cbi-button-action',
-					'click': ui.createHandlerFn(this, () => {
+					'click': ui.createHandlerFn(this, async () => {
 						const el = document.querySelector('[name*=".zapret_cmd_opts"]');
 						const opts = el ? el.value.trim() : '';
 						btn.disabled = true;
 						msgEl.style.color = 'gray';
 						msgEl.textContent = _('Testing...');
-						return L.resolveDefault(callZapretTest(opts), {}).then((ret) => {
+						const r0 = await resolveHosts();
+						if (!r0.ok) {
+							btn.disabled = false;
+							msgEl.style.color = 'red';
+							msgEl.textContent = r0.error;
+							return;
+						}
+						return L.resolveDefault(callZapretTest(opts, r0.ips), {}).then((ret) => {
 							btn.disabled = false;
 							let data = {};
 							try { data = JSON.parse(ret.output || '{}'); } catch (e) {}
@@ -2856,6 +2887,18 @@ return view.extend({
 					running = true; stop = false;
 					runBtn.disabled = true; stopBtn.disabled = false; stopBtn.style.display = '';
 					while (list.firstChild) list.removeChild(list.firstChild);
+					/* Resolve the test hosts ONCE up front and reuse the IPs for every
+					 * candidate. If DNS isn't ready (Apply just restarted it), stop with
+					 * one clear message instead of grinding out 36 failures. */
+					prog.style.color = 'gray';
+					prog.textContent = _('Resolving test hosts…');
+					const r0 = await resolveHosts();
+					if (!r0.ok) {
+						prog.style.color = '#cc3300';
+						prog.textContent = r0.error;
+						runBtn.disabled = false; stopBtn.style.display = 'none'; running = false;
+						return;
+					}
 					const N = ZAPRET_PRESETS.length;
 					let passed = 0;
 					for (let i = 0; i < N; i++) {
@@ -2865,7 +2908,7 @@ return view.extend({
 						prog.textContent = _('Testing %d/%d: %s').format(i + 1, N, p.name);
 						let data = {};
 						try {
-							const ret = await callZapretTest(p.args);
+							const ret = await callZapretTest(p.args, r0.ips);
 							data = JSON.parse(ret.output || '{}');
 						} catch (e) { data = { error: _('rpc error') }; }
 						if (data && data.ok > 0 && !data.error) passed++;

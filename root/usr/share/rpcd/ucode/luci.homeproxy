@@ -1217,17 +1217,36 @@ const methods = {
 		}
 	},
 
+	zapret_resolve_hosts: {
+		call: function(req) {
+			/* Resolve the tester's 4 fixed test hosts ONCE (bounded + retried), via
+			 * the router's normal resolver — the same secure-DNS/direct path the live
+			 * config uses for these blocked domains, so the IP stays representative for
+			 * the TLS probe. The full test calls this up front and feeds the IPs to
+			 * every candidate, so the sweep doesn't re-hit DNS 36×. */
+			const fd = popen(`sh /etc/homeproxy/scripts/zapret_resolve.sh 2>/dev/null`);
+			let out = '';
+			if (fd) { out = trim(fd.read('all')); fd.close(); }
+			if (!length(out))
+				out = '{"ok":0,"error":"resolver produced no output"}';
+			return { output: out };
+		}
+	},
+
 	zapret_strategy_test: {
-		args: { cmd_opts: 'cmd_opts' },
+		args: { cmd_opts: 'cmd_opts', ips: 'ips' },
 		call: function(req) {
 			if (!access('/opt/zapret2/nfq2/nfqws2'))
 				return { output: '{"ok":0,"total":0,"error":"zapret2 not installed"}' };
 			const cmd_opts = req.args?.cmd_opts || '';
+			/* Optional pre-resolved "tag=ip …" from zapret_resolve_hosts; if empty the
+			 * tester resolves the hosts itself (standalone call). */
+			const ips = req.args?.ips || '';
 			/* The tester script runs a candidate nfqws2 on a temp queue scoped to the
 			 * test IPs, probes the TLS handshakes, and prints one JSON line. It self-
 			 * tears-down (trap + 30s watchdog), so live traffic/queue is never left
 			 * touched. We just relay its JSON for the UI to parse. */
-			const fd = popen(`sh /etc/homeproxy/scripts/zapret_test.sh ${shellquote(cmd_opts)} 2>/dev/null`);
+			const fd = popen(`sh /etc/homeproxy/scripts/zapret_test.sh ${shellquote(cmd_opts)} ${shellquote(ips)} 2>/dev/null`);
 			let out = '';
 			if (fd) { out = trim(fd.read('all')); fd.close(); }
 			if (!length(out))

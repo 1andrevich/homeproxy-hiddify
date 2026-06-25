@@ -14,6 +14,8 @@
 # got the ClientHello past the DPI). HTTP status is irrelevant (a 404 is a pass).
 
 STRAT="$1"
+IPS_ARG="$2"                   # optional pre-resolved "tag=ip tag=ip …" (full-test
+                               # passes these so 36 candidates don't each re-hit DNS)
 QNUM=209                       # temp queue, distinct from the live 200
 DMARK=0x40000000               # nfqws2 DESYNC_MARK (its reinjected fakes)
 NFQWS=/opt/zapret2/nfq2/nfqws2
@@ -59,15 +61,25 @@ mkdir -p "$TMP" 2>/dev/null
 ( sleep 30; kill -TERM $$ 2>/dev/null ) >/dev/null 2>&1 &
 WATCH_PID=$!
 
-# 1. Resolve test hosts to one IPv4 each — BEFORE touching the firewall, so a slow
-#    resolver never runs while the redirect is modified.
+# 1. Test-host IPs — BEFORE touching the firewall, so a slow resolver never runs
+#    while the redirect is modified. Prefer IPs passed in via "$2" (the full-test
+#    sweep resolves ONCE up front via zapret_resolve.sh and reuses them for every
+#    candidate); fall back to resolving here for a standalone call.
 IPSET=""
-for h in $HOSTS; do
-	tag=${h%%|*}; host=${h##*|}
-	ip=$(nslookup "$host" 2>/dev/null | grep -oE '([0-9]{1,3}\.){3}[0-9]{1,3}' | grep -vE '^127\.' | tail -1)
-	echo "$ip" > "$TMP/ip_$tag"
-	[ -n "$ip" ] && IPSET="$IPSET $ip,"
-done
+if [ -n "$IPS_ARG" ]; then
+	for kv in $IPS_ARG; do
+		tag=${kv%%=*}; ip=${kv#*=}
+		[ -n "$tag" ] && echo "$ip" > "$TMP/ip_$tag"
+		[ -n "$ip" ] && IPSET="$IPSET$ip,"
+	done
+else
+	for h in $HOSTS; do
+		tag=${h%%|*}; host=${h##*|}
+		ip=$(nslookup "$host" 2>/dev/null | grep -oE '([0-9]{1,3}\.){3}[0-9]{1,3}' | grep -vE '^127\.' | tail -1)
+		echo "$ip" > "$TMP/ip_$tag"
+		[ -n "$ip" ] && IPSET="$IPSET$ip,"
+	done
+fi
 IPSET=$(echo "$IPSET" | sed 's/[[:space:]]//g; s/,$//')
 [ -z "$IPSET" ] && fail "could not resolve any test host"
 
