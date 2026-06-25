@@ -36,7 +36,20 @@ define Package/luci-app-re-homeproxy/postinst
 # Detached + redirected and after a short delay so it (a) lets the install finish
 # first, and (b) doesn't block when the upgrade is driven THROUGH rpcd (LuCI Software
 # page): rpcd's popen() would otherwise wait on a child holding stdout open.
-[ -n "$$IPKG_INSTROOT" ] || ( sleep 2; /etc/init.d/rpcd restart ) >/dev/null 2>&1 &
+#
+# MUST use setsid, not a bare `( … ) &`: a plain background subshell stays in the
+# postinst's process group, so when opkg/apk tears the install down it reaps the
+# still-sleeping child and the restart NEVER fires (methods stay stale → "DNS not
+# ready" / "Method not found" until a manual `rpcd restart`). setsid puts the
+# restarter in its own session, reparented to init, so it survives both the install
+# teardown AND rpcd's own stop. Fall back to the plain form only where setsid is
+# absent (rare; util-linux setsid ships on stock OpenWrt).
+[ -n "$$IPKG_INSTROOT" ] && exit 0
+if command -v setsid >/dev/null 2>&1; then
+	setsid sh -c 'sleep 3; /etc/init.d/rpcd restart' >/dev/null 2>&1 &
+else
+	( sleep 3; /etc/init.d/rpcd restart ) >/dev/null 2>&1 &
+fi
 exit 0
 endef
 
