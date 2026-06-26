@@ -1090,11 +1090,16 @@ const methods = {
 				ret = system(`opkg install ${shellquote(tmp_path)}`);
 			}
 			system(`rm -f ${shellquote(tmp_path)}`);
-			if (ret === 0) {
+			/* opkg/apk can exit non-zero on a SUCCESSFUL install (e.g. the package's
+			 * postinst starts its own service and that step fails while every file
+			 * still lands). Trust the installed binary (same probe as byedpi_status),
+			 * not the exit code. */
+			const installed = !!access('/usr/bin/ciadpi');
+			if (installed) {
 				system('/etc/init.d/ciadpi stop 2>/dev/null; true');
 				system('/etc/init.d/ciadpi disable 2>/dev/null; true');
 			}
-			return { result: ret === 0 };
+			return { result: installed };
 		}
 	},
 
@@ -1232,13 +1237,18 @@ const methods = {
 				ret = system(`opkg install ${shellquote(tmp_path)}`);
 			}
 			system(`rm -f ${shellquote(tmp_path)}`);
-			if (ret === 0) {
+			/* opkg/apk can exit non-zero on a SUCCESSFUL install (e.g. the package's
+			 * postinst starts its own service and that step fails while every file
+			 * still lands). Trust the installed binary (same probe as zapret_status),
+			 * not the exit code. */
+			const installed = !!access('/opt/zapret2/nfq2/nfqws2');
+			if (installed) {
 				/* Keep the package's own service out of the way — HomeProxy runs its own
 				 * nfqws2 instance (qnum 200) and installs the NFQUEUE rule itself. */
 				system('/etc/init.d/zapret2 stop 2>/dev/null; true');
 				system('/etc/init.d/zapret2 disable 2>/dev/null; true');
 			}
-			return { result: ret === 0 };
+			return { result: installed };
 		}
 	},
 
