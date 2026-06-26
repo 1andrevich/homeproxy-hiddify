@@ -3868,3 +3868,11 @@ msgstr "通过代理解析被封锁的域名——运营商无法看到您查询
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Default route is Direct. Added rules are proxied, with automatic priority:<br>1. Smaller lists (YouTube, Discord etc.)<br>2. <b>Russia Inside</b> — Russian services that must stay accessible (allows-list by itdoginfo)<br>3. <b>Re-filter</b> — community blocklist of domains and IPs banned in Russia (Roskomnadzor)"
 msgstr "默认路由为直连。已添加的规则走代理，优先级自动排列：<br>1. 小列表（YouTube、Discord 等）<br>2. <b>Russia Inside</b> — 必须保持可访问的俄罗斯服务（itdoginfo 白名单）<br>3. <b>Re-filter</b> — 俄罗斯被封锁域名和 IP 的社区黑名单（Roskomnadzor）"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js:2725
+msgid "DNS not ready — wait a few seconds after Apply and retry"
+msgstr "DNS 尚未就绪——点击“应用”后请稍候几秒再重试"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js:2907
+msgid "Resolving test hosts…"
+msgstr "正在解析测试主机…"

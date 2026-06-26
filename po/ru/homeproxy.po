@@ -4412,3 +4412,11 @@ msgstr "Внимание: kmod-nft-queue не установлен — без н
 # Section heading grouping ByeDPI + Zapret — kept verbatim (brand-like coinage, like the old "ByeDPI" heading)
 msgid "AntiDPI"
 msgstr "AntiDPI"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js:2725
+msgid "DNS not ready — wait a few seconds after Apply and retry"
+msgstr "DNS ещё не готов — подождите несколько секунд после нажатия «Применить» и повторите"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js:2907
+msgid "Resolving test hosts…"
+msgstr "Определяю адреса тестовых узлов…"

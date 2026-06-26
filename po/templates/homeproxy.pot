@@ -3634,3 +3634,11 @@ msgstr ""
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "Cannot remove: ByeDPI is selected as Main Node. Change Main Node first."
 msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js:2725
+msgid "DNS not ready — wait a few seconds after Apply and retry"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js:2907
+msgid "Resolving test hosts…"
+msgstr ""
