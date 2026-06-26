@@ -14,6 +14,27 @@ function shellquote(s) {
 	return `'${replace(s, "'", "'\\''")}'`;
 }
 
+/* Optional GitHub mirror (uci homeproxy.config.github_mirror), used ONLY as a
+ * FALLBACK: gh_fetch tries GitHub first and swaps to the mirror only if GitHub
+ * fails — a healthy GitHub is never bypassed. Mirrors core_mgmt.uc's helpers. */
+function gh_mirror_base() {
+	let base = null;
+	const fd = popen('uci -q get homeproxy.config.github_mirror 2>/dev/null');
+	if (fd) { base = trim(fd.read('all')); fd.close(); }
+	return (base && length(base)) ? replace(base, /\/+$/, '') : null;
+}
+
+function gh_fetch(url, dest, timeout_ms) {
+	let rc = system(`wget -qO ${shellquote(dest)} --timeout=15 ${shellquote(url)} 2>/dev/null`, timeout_ms);
+	if (rc !== 0) {
+		const base = gh_mirror_base();
+		const m = base ? match(url, /^https:\/\/github\.com(\/[^\/]+\/[^\/]+\/releases\/.+)$/) : null;
+		if (m)
+			rc = system(`wget -qO ${shellquote(dest)} --timeout=15 ${shellquote(base + m[1])} 2>/dev/null`, timeout_ms);
+	}
+	return rc;
+}
+
 function hasKernelModule(kmod) {
 	const modname = replace(replace(kmod, /\.ko$/, ''), /-/g, '_');
 	return !!access('/sys/module/' + modname);
@@ -1053,8 +1074,18 @@ const methods = {
 				return { result: false, error: 'Package file not found' };
 			let ret;
 			if (pkg_manager === 'apk') {
-				system('wget -qO /tmp/homeproxy-hiddify.pub https://github.com/1andrevich/homeproxy-hiddify/releases/latest/download/homeproxy-hiddify.pub 2>/dev/null && cp /tmp/homeproxy-hiddify.pub /etc/apk/keys/ 2>/dev/null; rm -f /tmp/homeproxy-hiddify.pub');
-				ret = system(`apk add ${shellquote(tmp_path)}`);
+				/* Signing key (see zapret_install_pkg): skip the GitHub fetch if it's
+				 * already present (a provisioning tool may pre-place it); otherwise
+				 * a SHORT-timeout best-effort wget so a throttled GitHub can't hang the
+				 * ubus call. Install trusted if the key is there, else --allow-untrusted. */
+				if (!access('/etc/apk/keys/homeproxy-hiddify.pub')) {
+					if (gh_fetch('https://github.com/1andrevich/homeproxy-hiddify/releases/latest/download/homeproxy-hiddify.pub', '/tmp/homeproxy-hiddify.pub', 20000) === 0)
+						system('[ -s /tmp/homeproxy-hiddify.pub ] && cp /tmp/homeproxy-hiddify.pub /etc/apk/keys/ 2>/dev/null; rm -f /tmp/homeproxy-hiddify.pub');
+				}
+				if (access('/etc/apk/keys/homeproxy-hiddify.pub'))
+					ret = system(`apk add ${shellquote(tmp_path)}`, 120000);
+				else
+					ret = system(`apk add --allow-untrusted ${shellquote(tmp_path)}`, 120000);
 			} else {
 				ret = system(`opkg install ${shellquote(tmp_path)}`);
 			}
@@ -1183,8 +1214,19 @@ const methods = {
 				return { result: false, error: 'Package file not found' };
 			let ret;
 			if (pkg_manager === 'apk') {
-				system('wget -qO /tmp/zapret2-1andrevich.pub https://github.com/1andrevich/zapret2-openwrt/releases/latest/download/zapret2-1andrevich.pub 2>/dev/null && cp /tmp/zapret2-1andrevich.pub /etc/apk/keys/ 2>/dev/null; rm -f /tmp/zapret2-1andrevich.pub');
-				ret = system(`apk add ${shellquote(tmp_path)}`);
+				/* Signing key: if it's ALREADY present (e.g. pre-placed by a provisioning
+				 * tool, or a prior install), skip the GitHub fetch entirely. Only
+				 * if it's missing do a SHORT-timeout best-effort wget — the old un-timed
+				 * one hung on a throttled GitHub until the ubus call timed out (exit 249).
+				 * Then install trusted if the key is there, else --allow-untrusted. */
+				if (!access('/etc/apk/keys/zapret2-1andrevich.pub')) {
+					if (gh_fetch('https://github.com/1andrevich/zapret2-openwrt/releases/latest/download/zapret2-1andrevich.pub', '/tmp/zapret2-1andrevich.pub', 20000) === 0)
+						system('[ -s /tmp/zapret2-1andrevich.pub ] && cp /tmp/zapret2-1andrevich.pub /etc/apk/keys/ 2>/dev/null; rm -f /tmp/zapret2-1andrevich.pub');
+				}
+				if (access('/etc/apk/keys/zapret2-1andrevich.pub'))
+					ret = system(`apk add ${shellquote(tmp_path)}`, 120000);
+				else
+					ret = system(`apk add --allow-untrusted ${shellquote(tmp_path)}`, 120000);
 			} else {
 				system('opkg update 2>/dev/null');
 				ret = system(`opkg install ${shellquote(tmp_path)}`);
