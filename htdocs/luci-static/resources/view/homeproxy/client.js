@@ -299,7 +299,7 @@ return view.extend({
 		o.value('117.50.10.10', _('ThreatBook Public DNS (117.50.10.10)'));
 		o.default = '8.8.8.8';
 		o.rmempty = false;
-		o.depends({'routing_mode': /^((?!custom|proxy_banned_ru).)+$/});
+		o.depends('routing_mode', 'global');
 		o.validate = function(section_id, value) {
 			if (section_id && !['wan'].includes(value)) {
 				if (!value)
@@ -332,8 +332,46 @@ return view.extend({
 		o.value('210.2.4.8', _('CNNIC Public DNS (210.2.4.8)'));
 		o.value('119.29.29.29', _('Tencent Public DNS (119.29.29.29)'));
 		o.value('117.50.10.10', _('ThreatBook Public DNS (117.50.10.10)'));
-		o.depends('routing_mode', 'bypass_mainland_china');
+		o.depends('routing_mode', 'bypass_cn');
 		o.default = '223.5.5.5';
+		o.rmempty = false;
+		o.validate = function(section_id, value) {
+			if (section_id && !['wan'].includes(value)) {
+				if (!value)
+					return _('Expecting: %s').format(_('non-empty value'));
+
+				try {
+					let url = new URL(value.replace(/^.*:\/\//, 'http://'));
+					if (stubValidator.apply('hostname', url.hostname))
+						return true;
+					else if (stubValidator.apply('ip4addr', url.hostname))
+						return true;
+					else if (stubValidator.apply('ip6addr', url.hostname.match(/^\[(.+)\]$/)?.[1]))
+						return true;
+					else
+						return _('Expecting: %s').format(_('valid DNS server address'));
+				} catch(e) {}
+
+				if (!stubValidator.apply('ipaddr', value))
+					return _('Expecting: %s').format(_('valid DNS server address'));
+			}
+
+			return true;
+		}
+
+		o = s.taboption('routing', form.Value, 'iran_dns_server', _('Iran DNS server'),
+			_('The Domain Name Server for resolving Iran Domestic domains only. Your Internet Provider sees these queries in plain text.'));
+		o.value('wan', _('WAN DNS (read from interface)'));
+		o.value('178.22.122.100', _('Shecan (178.22.122.100)'));
+		o.value('185.51.200.2', _('Shecan secondary (185.51.200.2)'));
+		o.value('78.157.42.100', _('Electro/Begzar (78.157.42.100)'));
+		o.value('78.157.42.101', _('Electro/Begzar secondary (78.157.42.101)'));
+		o.value('10.202.10.202', _('403.online (10.202.10.202)'));
+		o.value('10.202.10.102', _('403.online secondary (10.202.10.102)'));
+		o.value('10.202.10.10', _('Radar (10.202.10.10)'));
+		o.value('10.202.10.11', _('Radar secondary (10.202.10.11)'));
+		o.depends('routing_mode', 'bypass_ir');
+		o.default = '178.22.122.100';
 		o.rmempty = false;
 		o.validate = function(section_id, value) {
 			if (section_id && !['wan'].includes(value)) {
@@ -386,7 +424,7 @@ return view.extend({
 		o.value('tls://cloudflare-dns.com', _('Cloudflare DoT'));
 		o.value('tls://dns.quad9.net', _('Quad9 DoT'));
 		o.value('tls://dns.google', _('Google DoT'));
-		o.depends('routing_mode', 'proxy_banned_ru');
+		o.depends({'routing_mode': /^(proxy_banned_ru|bypass_cn|bypass_ir)$/});
 		o.default = 'https://cloudflare-dns.com/dns-query';
 		o.rmempty = false;
 		o.validate = function(section_id, value) {
@@ -404,37 +442,36 @@ return view.extend({
 		o = s.taboption('routing', form.Flag, 'proxy_calls',
 			_('Proxy calls') + ' 📞',
 			_('Route VoIP call ports (WhatsApp, Telegram, FaceTime, etc.) through the proxy.'));
-		o.depends('routing_mode', 'proxy_banned_ru');
-		o.default = o.disabled;
+		o.depends({'routing_mode': /^(proxy_banned_ru|bypass_cn|bypass_ir)$/});
+		o.default = o.enabled;
 		o.rmempty = false;
 
 		o = s.taboption('routing', form.Flag, 'no_proxy_torrents',
 			_('Do not proxify torrents') + ' 🧲',
 			_('Force torrent traffic (BitTorrent protocol + common ports) to bypass the proxy.'));
-		o.depends('routing_mode', 'proxy_banned_ru');
-		o.default = o.disabled;
+		o.depends({'routing_mode': /^(proxy_banned_ru|bypass_cn|bypass_ir)$/});
+		o.default = o.enabled;
 		o.rmempty = false;
 
 		o = s.taboption('routing', form.Flag, 'show_advanced_rules',
 			_('Advanced custom rules') + ' 👨‍💻',
 			_('Show Routing Nodes and Routing Rules tabs for additional custom rules.'));
-		o.depends('routing_mode', 'proxy_banned_ru');
+		o.depends({'routing_mode': /^(proxy_banned_ru|bypass_cn|bypass_ir)$/});
 		o.default = o.disabled;
 		o.rmempty = false;
 
 		o = s.taboption('routing', form.ListValue, 'routing_mode', _('Routing mode'));
 		o.value('proxy_banned_ru', _('Russia (Proxy Banned)'));
+		o.value('bypass_cn', _('China (bypass mainland)'));
+		o.value('bypass_ir', _('Iran (bypass domestic)'));
 		o.value('global', _('Global'));
 		o.value('custom', _('Custom routing'));
-		o.value('gfwlist', _('GFWList'));
-		o.value('bypass_mainland_china', _('Bypass mainland China'));
-		o.value('proxy_mainland_china', _('Only proxy mainland China'));
 		o.value('custom_json', _('Custom JSON'));
 		const _lang_section = (uci.sections('luci', 'internal') || []).find(s => s['.name'] === 'languages');
 		const _lang_codes = _lang_section ? Object.keys(_lang_section).filter(k => /^[a-z]/.test(k)) : [];
 		o.default = _lang_codes.includes('ru') ? 'proxy_banned_ru' :
-		            _lang_codes.some(k => k.startsWith('zh')) ? 'bypass_mainland_china' :
-		            _lang_codes.some(k => k !== 'en') ? 'custom' :
+		            _lang_codes.some(k => k.startsWith('zh')) ? 'bypass_cn' :
+		            _lang_codes.some(k => k.startsWith('fa')) ? 'bypass_ir' :
 		            'proxy_banned_ru';
 		o.rmempty = false;
 		o.onchange = function(ev, section_id, value) {
@@ -571,8 +608,12 @@ return view.extend({
 
 			this.value('default-dns', _('Default DNS (issued by WAN)'));
 			this.value('system-dns', _('System DNS'));
-			if (uci.get(data[0], 'config', 'routing_mode') === 'proxy_banned_ru') {
+			const _rm = uci.get(data[0], 'config', 'routing_mode');
+			if (_rm === 'proxy_banned_ru') {
 				this.value('russia-dns', _('Russia DNS server') + ' 🔓');
+				this.value('secure-dns', _('Secure DNS server') + ' 🔒');
+			} else if (/^bypass_(cn|ir)$/.test(_rm)) {
+				this.value('region-dns', _('Region DNS') + ' 🔓');
 				this.value('secure-dns', _('Secure DNS server') + ' 🔒');
 			}
 			uci.sections(data[0], 'dns_server', (res) => {
@@ -761,17 +802,25 @@ return view.extend({
 			};
 		})(o);
 
-		/* RU Proxy Rules start */
-		s.tab('ru_rules', _('RU Proxy Rules'));
+		/* Proxy Rules start (per-service overrides — RU forward + CN/IR reverse) */
+		s.tab('ru_rules', _('Proxy Rules'));
 		o = s.taboption('ru_rules', form.SectionValue, '_ru_rules', form.TypedSection, 'proxy_ru_rule');
-		o.depends('routing_mode', 'proxy_banned_ru');
+		o.depends({'routing_mode': /^(proxy_banned_ru|bypass_cn|bypass_ir)$/});
 
 		ss = o.subsection;
 		ss.addremove = true;
 		ss.anonymous = true;
 		ss.sortable = true;
 		ss.nodescriptions = true;
-		ss.description = _('Default route is Direct. Added rules are proxied, with automatic priority:<br>1. Smaller lists (YouTube, Discord etc.)<br>2. <b>Russia Inside</b> (1000+ domains, itdoginfo) — the in-Russia must-have set (YouTube, Discord, Telegram, Meta…) routed through the proxy<br>3. <b>Re-filter</b> (60000+ domains + 25000+ IPs) — community blocklist of domains and IPs banned in Russia (Roskomnadzor)');
+		/* Forward (RU) vs reverse (CN/IR) invert the meaning of these rules, so the
+		 * description must follow the current mode. */
+		const _rmode_rules = uci.get('homeproxy', 'config', 'routing_mode');
+		if (_rmode_rules === 'bypass_cn' || _rmode_rules === 'bypass_ir') {
+			const _region_name = (_rmode_rules === 'bypass_cn') ? _('China') : _('Iran');
+			ss.description = _('Default route is through the proxy. %s domains and IPs (geosite + geoip) automatically go Direct. Rules added here are per-service overrides applied before that baseline — e.g. force a specific service Direct, or send it through a separate node.').format(_region_name);
+		} else {
+			ss.description = _('Default route is Direct. Added rules are proxied, with automatic priority:<br>1. Smaller lists (YouTube, Discord etc.)<br>2. <b>Russia Inside</b> (1000+ domains, itdoginfo) — the in-Russia must-have set (YouTube, Discord, Telegram, Meta…) routed through the proxy<br>3. <b>Re-filter</b> (60000+ domains + 25000+ IPs) — community blocklist of domains and IPs banned in Russia (Roskomnadzor)');
+		}
 
 		so = ss.option(form.Flag, 'enabled', _('Enable'));
 		so.default = so.enabled;
@@ -779,8 +828,12 @@ return view.extend({
 		so.editable = true;
 
 		so = ss.option(form.ListValue, 'source', _('Source') + ' ⤵️');
-		so.value('refilter', _('Re-filter (Russia blocklist: 60000+ banned domains + 25000+ IPs)'));
-		so.value('russia-inside', _('itdoginfo/allow-domains - Russia Inside (1000+ entries)'));
+		/* Russia bulk lists are RU-forward only; CN/IR get geosite/geoip baked into the
+		 * engine baseline, so here they only need per-service overrides. */
+		if (_rmode_rules === 'proxy_banned_ru') {
+			so.value('refilter', _('Re-filter (Russia blocklist: 60000+ banned domains + 25000+ IPs)'));
+			so.value('russia-inside', _('itdoginfo/allow-domains - Russia Inside (1000+ entries)'));
+		}
 		so.value('youtube', _('YouTube'));
 		so.value('twitter', _('Twitter/X'));
 		so.value('tiktok', _('TikTok'));
@@ -848,7 +901,7 @@ return view.extend({
 		s.tab('routing_node', _('Routing Nodes'));
 		o = s.taboption('routing_node', form.SectionValue, '_routing_node', form.GridSection, 'routing_node');
 		o.depends('routing_mode', 'custom');
-		o.depends({'routing_mode': 'proxy_banned_ru', 'show_advanced_rules': '1'});
+		o.depends({'routing_mode': /^(proxy_banned_ru|bypass_cn|bypass_ir)$/, 'show_advanced_rules': '1'});
 
 		ss = o.subsection;
 		ss.addremove = true;
@@ -890,8 +943,12 @@ return view.extend({
 			this.value('', _('Default'));
 			this.value('default-dns', _('Default DNS (issued by WAN)'));
 			this.value('system-dns', _('System DNS'));
-			if (uci.get(data[0], 'config', 'routing_mode') === 'proxy_banned_ru') {
+			const _rm = uci.get(data[0], 'config', 'routing_mode');
+			if (_rm === 'proxy_banned_ru') {
 				this.value('russia-dns', _('Russia DNS server') + ' 🔓');
+				this.value('secure-dns', _('Secure DNS server') + ' 🔒');
+			} else if (/^bypass_(cn|ir)$/.test(_rm)) {
+				this.value('region-dns', _('Region DNS') + ' 🔓');
 				this.value('secure-dns', _('Secure DNS server') + ' 🔒');
 			}
 			uci.sections(data[0], 'dns_server', (res) => {
@@ -925,7 +982,7 @@ return view.extend({
 			delete this.vallist;
 
 			this.value('', _('Direct'));
-			if (uci.get(data[0], 'config', 'routing_mode') === 'proxy_banned_ru')
+			if (/^(proxy_banned_ru|bypass_cn|bypass_ir)$/.test(uci.get(data[0], 'config', 'routing_mode')))
 				this.value('main-out', _('Same as main node') + ' 🔗');
 			uci.sections(data[0], 'routing_node', (res) => {
 				if (res['.name'] !== section_id && res.enabled === '1')
@@ -1030,7 +1087,7 @@ return view.extend({
 		s.tab('routing_rule', _('Routing Rules'));
 		o = s.taboption('routing_rule', form.SectionValue, '_routing_rule', form.GridSection, 'routing_rule');
 		o.depends('routing_mode', 'custom');
-		o.depends({'routing_mode': 'proxy_banned_ru', 'show_advanced_rules': '1'});
+		o.depends({'routing_mode': /^(proxy_banned_ru|bypass_cn|bypass_ir)$/, 'show_advanced_rules': '1'});
 
 		ss = o.subsection;
 		ss.addremove = true;
@@ -1384,8 +1441,12 @@ return view.extend({
 
 			this.value('default-dns', _('Default DNS (issued by WAN)'));
 			this.value('system-dns', _('System DNS'));
-			if (uci.get(data[0], 'config', 'routing_mode') === 'proxy_banned_ru') {
+			const _rm = uci.get(data[0], 'config', 'routing_mode');
+			if (_rm === 'proxy_banned_ru') {
 				this.value('russia-dns', _('Russia DNS server') + ' 🔓');
+				this.value('secure-dns', _('Secure DNS server') + ' 🔒');
+			} else if (/^bypass_(cn|ir)$/.test(_rm)) {
+				this.value('region-dns', _('Region DNS') + ' 🔓');
 				this.value('secure-dns', _('Secure DNS server') + ' 🔒');
 			}
 			uci.sections(data[0], 'dns_server', (res) => {
@@ -1662,8 +1723,12 @@ return view.extend({
 
 			this.value('default-dns', _('Default DNS (issued by WAN)'));
 			this.value('system-dns', _('System DNS'));
-			if (uci.get(data[0], 'config', 'routing_mode') === 'proxy_banned_ru') {
+			const _rm = uci.get(data[0], 'config', 'routing_mode');
+			if (_rm === 'proxy_banned_ru') {
 				this.value('russia-dns', _('Russia DNS server') + ' 🔓');
+				this.value('secure-dns', _('Secure DNS server') + ' 🔒');
+			} else if (/^bypass_(cn|ir)$/.test(_rm)) {
+				this.value('region-dns', _('Region DNS') + ' 🔓');
 				this.value('secure-dns', _('Secure DNS server') + ' 🔒');
 			}
 			uci.sections(data[0], 'dns_server', (res) => {

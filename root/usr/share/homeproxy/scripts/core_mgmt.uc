@@ -13,6 +13,34 @@ function shellquote(s) {
 	return `'${replace(s, "'", "'\\''")}'`;
 }
 
+/* Optional GitHub mirror (set by a provisioning tool or the user as
+ * uci homeproxy.config.github_mirror). Used ONLY as a FALLBACK: every fetch tries
+ * GitHub first and only swaps to the mirror if GitHub fails — so a healthy GitHub is
+ * never bypassed, but a blocked/failed one still gets the file via the mirror. */
+function gh_mirror_base() {
+	let base = null;
+	const fd = popen('uci -q get homeproxy.config.github_mirror 2>/dev/null');
+	if (fd) { base = trim(fd.read('all')); fd.close(); }
+	return (base && length(base)) ? replace(base, /\/+$/, '') : null;
+}
+
+function gh_mirror_of(url, base) {
+	const m = match(url, /^https:\/\/github\.com(\/[^\/]+\/[^\/]+\/releases\/.+)$/);
+	return m ? `${base}${m[1]}` : null;
+}
+
+/* GitHub-first, mirror-FALLBACK download. Returns wget exit code (0 = success). */
+function gh_fetch(url, dest, timeout_ms) {
+	let rc = system(`wget -qO ${shellquote(dest)} --timeout=15 ${shellquote(url)} 2>/dev/null`, timeout_ms);
+	if (rc !== 0) {
+		const base = gh_mirror_base();
+		const mu = base ? gh_mirror_of(url, base) : null;
+		if (mu)
+			rc = system(`wget -qO ${shellquote(dest)} --timeout=15 ${shellquote(mu)} 2>/dev/null`, timeout_ms);
+	}
+	return rc;
+}
+
 function detect_pkg_manager() {
 	for (let p in ['/usr/bin/apk', '/sbin/apk', '/usr/sbin/apk'])
 		if (access(p)) return 'apk';
@@ -245,7 +273,7 @@ if (action === 'info') {
 	if (!url || !tmp_path) {
 		result = { result: false, error: 'missing arguments' };
 	} else {
-		const exit_code = system(`wget -qO ${shellquote(tmp_path)} ${shellquote(url)} 2>/dev/null`, 300000);
+		const exit_code = gh_fetch(url, tmp_path, 300000);   /* GitHub first, mirror fallback */
 		result = exit_code === 0 ? { result: true } : { result: false, error: 'download failed' };
 	}
 
@@ -258,13 +286,18 @@ if (action === 'info') {
 	} else {
 		let exit_code;
 		if (core === 'hiddify' && pkg_manager === 'apk') {
-			exit_code = system(
-				'{ wget -qO /tmp/homeproxy-hiddify.pub https://github.com/1andrevich/homeproxy-hiddify/releases/latest/download/homeproxy-hiddify.pub' +
-				' && cp /tmp/homeproxy-hiddify.pub /etc/apk/keys/' +
-				` && apk add ${shellquote(tmp_path)}; } >/dev/null 2>&1` +
-				`; RC=$?; rm -f ${shellquote(tmp_path)} /tmp/homeproxy-hiddify.pub; exit $RC`,
-				120000
-			);
+			/* Signing key: skip the fetch if already present (a provisioning tool may pre-place
+			 * it); else GitHub-first, mirror-FALLBACK via gh_fetch, best-effort (a
+			 * throttled/blocked GitHub must NOT fail the install — the package already
+			 * arrived over HTTPS). Install trusted if the key is there, else untrusted. */
+			if (!access('/etc/apk/keys/homeproxy-hiddify.pub')) {
+				if (gh_fetch('https://github.com/1andrevich/homeproxy-hiddify/releases/latest/download/homeproxy-hiddify.pub', '/tmp/homeproxy-hiddify.pub', 20000) === 0)
+					system('[ -s /tmp/homeproxy-hiddify.pub ] && cp /tmp/homeproxy-hiddify.pub /etc/apk/keys/ 2>/dev/null; rm -f /tmp/homeproxy-hiddify.pub');
+			}
+			if (access('/etc/apk/keys/homeproxy-hiddify.pub'))
+				exit_code = system(`apk add ${shellquote(tmp_path)} >/dev/null 2>&1; RC=$?; rm -f ${shellquote(tmp_path)}; exit $RC`, 120000);
+			else
+				exit_code = system(`apk add --allow-untrusted ${shellquote(tmp_path)} >/dev/null 2>&1; RC=$?; rm -f ${shellquote(tmp_path)}; exit $RC`, 120000);
 		} else if (pkg_manager === 'apk') {
 			/* sing-box-extended has no signing key — allow-untrusted is unavoidable */
 			exit_code = system(
