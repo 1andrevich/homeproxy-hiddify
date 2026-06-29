@@ -33,7 +33,7 @@ Optionally legacy build for 23.05 is available in Releases
 
 ## Installation
 
-*~40 MB of free space recommended. Tight on storage? Install the LuCI app first, then use its **Core & Tools** tab (Services → Re:HomeProxy → Core & Tools) to install a core — it auto-picks a build that fits, including a compact build for small devices.*
+*~40 MB of free space recommended. Tight on storage? Install the LuCI app first, then use its **Core & Tools** tab (Services → Re:HomeProxy → Core & Tools) to install a core — it auto-picks a build that fits, including a compact build for small memory devices.*
 
 ### Quick install (one-liner)
 
