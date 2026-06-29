@@ -33,7 +33,23 @@ Optionally legacy build for 23.05 is available in Releases
 
 ## Installation
 
-*~40 MB of free space recommended. Tight on storage? Install the LuCI app first, then use its **Core & Tools** tab (Services → Re:HomeProxy → Core & Tools) to install a core — it auto-picks a build that fits, including a compact build for small devices.*
+*~40 MB of free space recommended. Tight on storage? Install the LuCI app first, then use its **Core & Tools** tab (Services → Re:HomeProxy → Core & Tools) to install a core — it auto-picks a build that fits, including a compact build for small memory devices.*
+
+### Quick install (one-liner)
+
+Installs the LuCI app, then interactively walks you through the proxy core and optional ByeDPI / Zapret. Works on APK (25.12+), opkg (24.10) and 23.05 legacy. Run over SSH on the router:
+
+```sh
+wget -qO- https://raw.githubusercontent.com/1andrevich/homeproxy-hiddify/master/install.sh | sh
+```
+
+Behind a blocked/throttled GitHub, pass a mirror (note: the env var goes on `sh`, not `wget`):
+
+```sh
+wget -qO- https://raw.githubusercontent.com/1andrevich/homeproxy-hiddify/master/install.sh | GH_MIRROR=https://your.mirror sh
+```
+
+Prefer to do it by hand? Follow the per-version steps below.
 
 ### OpenWRT 25.12+ (APK)
 
@@ -72,6 +88,51 @@ Open **Services → Re:HomeProxy → Core & Tools** and install what you need �
 - **Proxy core** *(required, pick one)* — [hiddify-core](https://github.com/hiddify/hiddify-core) (default) or [sing-box-extended](https://github.com/shtorm-7/sing-box-extended) (adds AmneziaWG / WARP and the widest protocol set). See **[Core Management](../../wiki/Core-Management-en)**.
 - **ByeDPI** *(optional)* — SOCKS-level DPI bypass that un-throttles sites without a VPN, with 40 presets and a built-in strategy tester. See **[ByeDPI](../../wiki/ByeDPI-en)**.
 - **Zapret 2** *(optional)* — packet-level (nfqws2) DPI bypass selected per routing rule, with curated presets and optional Discord-voice desync. See **[Zapret](../../wiki/Zapret-en)**.
+
+### Manual install over SSH (alternative to the Core & Tools tab)
+
+The **Core & Tools** tab is recommended — it auto-detects your hardware and picks a build that fits. To install the same components by hand over SSH, first detect your architecture and package format:
+
+```sh
+. /etc/openwrt_release; ARCH="$DISTRIB_ARCH"
+command -v apk >/dev/null && EXT=apk || EXT=ipk
+echo "$ARCH / $EXT"
+```
+
+The hiddify-core and ByeDPI packages are signed with the `homeproxy-hiddify.pub` key trusted during the app install above; if you skipped that, add `--allow-untrusted` to `apk add`.
+
+**Proxy core — pick one** (plus its required kernel modules):
+
+```sh
+if [ "$EXT" = apk ]; then apk add kmod-nft-tproxy kmod-tun; else opkg install kmod-nft-tproxy kmod-tun; fi
+
+# hiddify-core (default; for a compact build replace 'latest/download' with 'download/upx')
+wget -O /tmp/hiddify-core.$EXT "https://github.com/1andrevich/hiddify-core/releases/latest/download/hiddify-core_${ARCH}.${EXT}"
+if [ "$EXT" = apk ]; then apk add /tmp/hiddify-core.apk; else opkg install --force-reinstall /tmp/hiddify-core.ipk; fi
+
+# ...OR sing-box-extended (AmneziaWG / WARP, widest protocol set; unsigned)
+URL=$(wget -qO- 'https://api.github.com/repos/shtorm-7/sing-box-extended/releases/latest' | grep -o "https://github\.com/[^\"]*${ARCH}[^\"]*\.${EXT}" | head -1)
+wget -O /tmp/sing-box-extended.$EXT "$URL"
+if [ "$EXT" = apk ]; then apk add --allow-untrusted /tmp/sing-box-extended.apk; else opkg install /tmp/sing-box-extended.ipk; fi
+```
+
+**ByeDPI** *(optional)* — needs `curl` (its built-in strategy tester uses it):
+
+```sh
+if [ "$EXT" = apk ]; then apk add curl; else opkg install curl; fi
+URL=$(wget -qO- 'https://api.github.com/repos/1andrevich/ByeDPI-OpenWrt/releases/latest' | grep -o "https://github\.com/[^\"]*byedpi_[^\"]*${ARCH}\.${EXT}" | head -1)
+wget -O /tmp/byedpi.$EXT "$URL"
+if [ "$EXT" = apk ]; then apk add /tmp/byedpi.apk; else opkg install /tmp/byedpi.ipk; fi
+```
+
+**Zapret 2** *(optional)* — needs the NFQUEUE kernel module:
+
+```sh
+if [ "$EXT" = apk ]; then apk add kmod-nft-queue; else opkg install kmod-nft-queue; fi
+[ "$EXT" = apk ] && wget -O /etc/apk/keys/zapret2-1andrevich.pub "https://github.com/1andrevich/zapret2-openwrt/releases/latest/download/zapret2-1andrevich.pub"
+wget -O /tmp/zapret2.$EXT "https://github.com/1andrevich/zapret2-openwrt/releases/latest/download/zapret2_${ARCH}.${EXT}"
+if [ "$EXT" = apk ]; then apk add /tmp/zapret2.apk; else opkg install /tmp/zapret2.ipk; fi
+```
 
 ### Optional 
 
