@@ -7,7 +7,7 @@
 
 'use strict';
 
-import { readfile, writefile } from 'fs';
+import { access, readfile, writefile } from 'fs';
 import { isnan } from 'math';
 import { connect } from 'ubus';
 import { cursor } from 'uci';
@@ -42,27 +42,91 @@ const uciroutingsetting = 'routing',
 const ucinode = 'node';
 const uciruleset = 'ruleset';
 const uciserver = 'server';
+const ucirurule = 'proxy_ru_rule';
 
-const routing_mode = uci.get(uciconfig, ucimain, 'routing_mode') || 'bypass_mainland_china';
+const routing_mode = uci.get(uciconfig, ucimain, 'routing_mode') || 'proxy_banned_ru';
+
+/* Selective routing is ONE engine; the region is data.
+ *   forward (blocklist): default direct, lists -> proxy.            proxy_banned_ru (RU)
+ *   reverse (bypass):    default proxy, region -> direct, overrides. bypass_cn / bypass_ir
+ * Adding a country = one REGION row + a routing_mode value + a client.js entry. */
+const REGION = {
+	cn: {
+		geosite:     'https://fastly.jsdelivr.net/gh/1715173329/sing-geosite@rule-set-unstable/geosite-geolocation-cn.srs',
+		geoip:       'https://fastly.jsdelivr.net/gh/1715173329/IPCIDR-CHINA@rule-set/cn.srs',
+		geosite_non: 'https://fastly.jsdelivr.net/gh/1715173329/sing-geosite@rule-set-unstable/geosite-geolocation-!cn.srs',
+		local_dns:   { type: 'udp', server: '223.5.5.5' },	/* AliDNS */
+		guard:       true					/* geoip fallback + !cn guard (China list is non-exhaustive) */
+	},
+	ir: {
+		geosite:     'https://fastly.jsdelivr.net/gh/Chocolate4U/Iran-sing-box-rules@rule-set/geosite-ir.srs',
+		geoip:       'https://fastly.jsdelivr.net/gh/Chocolate4U/Iran-sing-box-rules@rule-set/geoip-ir.srs',
+		geosite_non: null,
+		local_dns:   { type: 'udp', server: '178.22.122.100' },	/* Shecan (default; overridable via iran_dns_server) — stable public IPs, not ISP-delegated */
+		guard:       false					/* Iran configs use the simple scheme, no geoip fallback */
+	}
+};
+const MODE_REGION = { bypass_cn: 'cn', bypass_ir: 'ir' };
+function is_bypass_mode(m) { return m in ['bypass_cn', 'bypass_ir']; }
+function is_selective_mode(m) { return m === 'proxy_banned_ru' || is_bypass_mode(m); }
+function region_of(m) { return MODE_REGION[m]; }
 
 let wan_dns = ubus.call('network.interface', 'status', {'interface': 'wan'})?.['dns-server']?.[0];
 if (!wan_dns)
-	wan_dns = (routing_mode in ['proxy_mainland_china', 'global']) ? '8.8.8.8' : '223.5.5.5';
+	wan_dns = '8.8.8.8';	/* ultimate fallback for the remote/bootstrap resolver; region-local DNS comes from REGION */
 
 const dns_port = uci.get(uciconfig, uciinfra, 'dns_port') || '5333';
 
 const ntp_server = uci.get(uciconfig, uciinfra, 'ntp_server') || 'time.apple.com';
 
+/* Detect active core. Must match the core init.d actually runs, or the generated dialect
+ * won't fit it. Mirror init.d's precedence: honor preferred_core when that core is
+ * installed, otherwise auto-pick (hiddify-core first, then sing-box). Falls back to a
+ * UCI custom path when neither standard binary is present. */
+const preferred_core = uci.get(uciconfig, ucimain, 'preferred_core') || 'auto';
+const have_hiddify = !!access('/usr/bin/hiddify-core');
+const have_singbox = !!access('/usr/bin/sing-box');
+
+let is_hiddify = false, is_singbox = false;
+if (preferred_core === 'hiddify' && have_hiddify)
+	is_hiddify = true;
+else if (preferred_core === 'singbox' && have_singbox)
+	is_singbox = true;
+else if (have_hiddify)
+	is_hiddify = true;
+else if (have_singbox)
+	is_singbox = true;
+else {
+	const custom_path = uci.get(uciconfig, ucimain, 'custom_core_path');
+	const custom_type = uci.get(uciconfig, ucimain, 'custom_core_type');
+	if (custom_path && access(custom_path)) {
+		is_hiddify = custom_type === 'hiddify';
+		is_singbox = !is_hiddify;
+	}
+}
+
 const ipv6_support = uci.get(uciconfig, ucimain, 'ipv6_support') || '0';
+const byedpi_enabled = uci.get(uciconfig, ucimain, 'byedpi_enabled');
+/* zapret: a `direct` outbound stamped with routing_mark; nft catches the mark and
+ * sends the handshake to NFQUEUE where nfqws desyncs it. Separate from byedpi. */
+const zapret_enabled = uci.get(uciconfig, ucimain, 'zapret_enabled');
+const zapret_mark = uci.get(uciconfig, ucimain, 'zapret_mark') || '110';
+/* Opt-in: route call/voice UDP ports (50000-65530) to zapret-out instead of the proxy.
+ * Only honored when zapret_enabled === '1' (zapret-out exists). */
+const zapret_voice = uci.get(uciconfig, ucimain, 'zapret_voice') || '0';
 
 let main_node, main_udp_node, dedicated_udp_node, default_outbound, default_outbound_dns,
-    domain_strategy, sniff_override, dns_server, china_dns_server, dns_default_strategy,
-    dns_default_server, dns_disable_cache, dns_disable_cache_expire, dns_independent_cache,
-    dns_client_subnet, cache_file_store_rdrc, cache_file_rdrc_timeout, direct_domain_list,
-    proxy_domain_list;
+    domain_strategy, sniff_override, dns_server, china_dns_server, iran_dns_server, russia_dns_server,
+    secure_dns_server, proxy_calls, no_proxy_torrents, show_advanced_rules, dns_default_strategy, dns_default_server, dns_disable_cache,
+    dns_disable_cache_expire, dns_independent_cache, dns_client_subnet, cache_file_store_rdrc,
+    cache_file_rdrc_timeout, direct_domain_list, proxy_domain_list;
 
 if (routing_mode !== 'custom') {
 	main_node = uci.get(uciconfig, ucimain, 'main_node') || 'nil';
+	if (main_node === 'nil') {
+		warn('homeproxy: no main_node configured, skipping config generation.\n');
+		exit(0);
+	}
 	main_udp_node = uci.get(uciconfig, ucimain, 'main_udp_node') || 'nil';
 	dedicated_udp_node = !isEmpty(main_udp_node) && !(main_udp_node in ['same', main_node]);
 
@@ -70,11 +134,31 @@ if (routing_mode !== 'custom') {
 	if (isEmpty(dns_server) || dns_server === 'wan')
 		dns_server = wan_dns;
 
-	if (routing_mode === 'bypass_mainland_china') {
+	/* Region local resolver: optional UCI override, else the stable default from REGION
+	 * (AliDNS for CN, Shecan for IR). 'wan'/empty falls back to that default. */
+	if (routing_mode === 'bypass_cn') {
 		china_dns_server = uci.get(uciconfig, ucimain, 'china_dns_server');
 		if (isEmpty(china_dns_server) || type(china_dns_server) !== 'string' || china_dns_server === 'wan')
-			china_dns_server = wan_dns;
+			china_dns_server = REGION.cn.local_dns.server;
 	}
+	if (routing_mode === 'bypass_ir') {
+		iran_dns_server = uci.get(uciconfig, ucimain, 'iran_dns_server');
+		if (isEmpty(iran_dns_server) || type(iran_dns_server) !== 'string' || iran_dns_server === 'wan')
+			iran_dns_server = REGION.ir.local_dns.server;
+	}
+
+	/* Shared selective knobs (forward RU + reverse CN/IR): remote DoH + exceptions.
+	 * Reverse modes ride the same engine, so they get secure-dns/overrides for free. */
+	if (is_selective_mode(routing_mode)) {
+		secure_dns_server = uci.get(uciconfig, ucimain, 'secure_dns_server') || 'https://cloudflare-dns.com/dns-query';
+		domain_strategy = uci.get(uciconfig, ucimain, 'domain_strategy');
+		proxy_calls = uci.get(uciconfig, ucimain, 'proxy_calls');
+		no_proxy_torrents = uci.get(uciconfig, ucimain, 'no_proxy_torrents');
+		show_advanced_rules = uci.get(uciconfig, ucimain, 'show_advanced_rules');
+	}
+	if (routing_mode === 'proxy_banned_ru')
+		russia_dns_server = uci.get(uciconfig, ucimain, 'russia_dns_server') || '77.88.8.8';
+
 	dns_default_strategy = (ipv6_support !== '1') ? 'ipv4_only' : null;
 
 	direct_domain_list = trim(readfile(HP_DIR + '/resources/direct_list.txt'));
@@ -122,9 +206,8 @@ if (match(proxy_mode, /redirect/)) {
 	self_mark = uci.get(uciconfig, 'infra', 'self_mark') || '100';
 	redirect_port = uci.get(uciconfig, 'infra', 'redirect_port') || '5331';
 }
-if (match(proxy_mode), /tproxy/)
-	if (main_udp_node !== 'nil' || routing_mode === 'custom')
-		tproxy_port = uci.get(uciconfig, 'infra', 'tproxy_port') || '5332';
+if (match(proxy_mode, /tproxy/))
+	tproxy_port = uci.get(uciconfig, 'infra', 'tproxy_port') || '5332';
 if (match(proxy_mode), /tun/) {
 	tun_name = uci.get(uciconfig, uciinfra, 'tun_name') || 'singtun0';
 	tun_addr4 = uci.get(uciconfig, uciinfra, 'tun_addr4') || '172.19.0.1/30';
@@ -185,13 +268,21 @@ function generate_endpoint(node) {
 	if (type(node) !== 'object' || isEmpty(node))
 		return null;
 
+	const is_wg = node.type in ['wireguard', 'amneziawg'];
+
+	const addPrefix = (addr) => {
+		if (!addr || match(addr, /\//)) return addr;
+		return match(addr, /:/) ? addr + '/128' : addr + '/32';
+	};
+	const raw_addr = node.wireguard_local_address;
+
 	const endpoint = {
-		type: node.type,
+		type: is_wg ? 'wireguard' : node.type,
 		tag: 'cfg-' + node['.name'] + '-out',
-		address: node.wireguard_local_address,
+		address: type(raw_addr) === 'array' ? map(raw_addr, addPrefix) : addPrefix(raw_addr),
 		mtu: strToInt(node.wireguard_mtu),
 		private_key: node.wireguard_private_key,
-		peers: (node.type === 'wireguard') ? [
+		peers: is_wg ? [
 			{
 				address: node.address,
 				port: strToInt(node.port),
@@ -205,7 +296,29 @@ function generate_endpoint(node) {
 				reserved: parse_port(node.wireguard_reserved),
 			}
 		] : null,
-		system: (node.type === 'wireguard') ? false : null,
+		system: is_wg ? false : null,
+		amnezia: (node.type === 'amneziawg') ? {
+			jc: strToInt(node.amnezia_jc),
+			jmin: strToInt(node.amnezia_jmin),
+			jmax: strToInt(node.amnezia_jmax),
+			s1: strToInt(node.amnezia_s1),
+			s2: strToInt(node.amnezia_s2),
+			s3: strToInt(node.amnezia_s3),
+			s4: strToInt(node.amnezia_s4),
+			h1: node.amnezia_h1 || null,
+			h2: node.amnezia_h2 || null,
+			h3: node.amnezia_h3 || null,
+			h4: node.amnezia_h4 || null,
+			i1: node.amnezia_i1 || null,
+			i2: node.amnezia_i2 || null,
+			i3: node.amnezia_i3 || null,
+			i4: node.amnezia_i4 || null,
+			i5: node.amnezia_i5 || null,
+			j1: node.amnezia_j1 || null,
+			j2: node.amnezia_j2 || null,
+			j3: node.amnezia_j3 || null,
+			itime: strToInt(node.amnezia_itime),
+		} : null,
 		tcp_fast_open: strToBool(node.tcp_fast_open),
 		tcp_multi_path: strToBool(node.tcp_multi_path),
 		udp_fragment: strToBool(node.udp_fragment)
@@ -230,6 +343,59 @@ function transport_host(node) {
 	return h || node.httpupgrade_host;
 }
 
+/* xhttp "split download" (the "dl=h2"/"dl=h3" feature): the download direction can use
+ * a different host, path, server/port and TLS (commonly a different server_name + ALPN
+ * such as h2/h3) than the upload. sing-box-extended names this nested transport
+ * `download`; hiddify-core uses the xray-style `downloadSettings`. The inner shape is
+ * the same sing-box transport + TLS for both, so build it once and let the caller pick
+ * the key per core. Returns null when the node has no split download configured. An
+ * unset server/port is omitted (removeBlankAttrs strips it) = "reuse the main
+ * connection" — this matches the hiddify reference configs (and works on hiddify-core);
+ * sing-box users should set an explicit download server. */
+function xhttp_download(node) {
+	if (node.transport !== 'xhttp')
+		return null;
+	if (isEmpty(node.xhttp_download_host) && isEmpty(node.xhttp_download_sni) && isEmpty(node.xhttp_download_path))
+		return null;
+
+	const sec = node.xhttp_download_security;
+	const want_tls = (sec === 'tls' || sec === 'reality' || !isEmpty(node.xhttp_download_sni) || !isEmpty(node.xhttp_download_alpn));
+	const tls = want_tls ? {
+		enabled: true,
+		server_name: node.xhttp_download_sni,
+		insecure: strToBool(node.xhttp_download_insecure),
+		alpn: node.xhttp_download_alpn ? (type(node.xhttp_download_alpn) === 'array' ? node.xhttp_download_alpn : split(node.xhttp_download_alpn, ',')) : null,
+		/* Reality requires uTLS in sing-box (see the main-TLS block) — default the
+		 * fingerprint to 'edge' when reality is on but the node carries none. */
+		utls: (!isEmpty(node.xhttp_download_fp) || sec === 'reality') ? {
+			enabled: true,
+			fingerprint: !isEmpty(node.xhttp_download_fp) ? node.xhttp_download_fp : 'edge'
+		} : null,
+		reality: (sec === 'reality') ? {
+			enabled: true,
+			public_key: node.xhttp_download_pbk,
+			short_id: node.xhttp_download_sid
+		} : null
+	} : null;
+
+	return {
+		host: node.xhttp_download_host || transport_host(node),
+		path: node.xhttp_download_path || node.http_path,
+		server: node.xhttp_download_server || null,
+		server_port: strToInt(node.xhttp_download_port) || null,
+		tls: tls
+	};
+}
+
+/* sing-box-extended FATALs with "x_padding_bytes cannot be disabled" whenever xhttp
+ * padding resolves to empty: an explicit "0"/"0-0" disables it, AND an absent field
+ * decodes to "" in Go which counts as disabled too. So the field must always be present
+ * and non-empty on every xhttp transport — including the nested `download` block, which
+ * is itself a full transport. Coerce any disabling/empty value to the default range. */
+function xhttp_padding(v) {
+	return (isEmpty(v) || v === '0' || v === '0-0') ? '100-1000' : v;
+}
+
 function generate_outbound(node) {
 	if (type(node) !== 'object' || isEmpty(node))
 		return null;
@@ -238,10 +404,10 @@ function generate_outbound(node) {
 		type: node.type,
 		tag: 'cfg-' + node['.name'] + '-out',
 
-		server: node.address,
-		server_port: (node.type === 'mieru') ? 0 : strToInt(node.port),
-		/* Hysteria(2) */
-		server_ports: node.hysteria_hopping_port,
+		server: (node.type === 'shadowsocks' && node.shadowtls_enabled === '1') ? null : node.address,
+		server_port: (node.type === 'mieru') ? 0 : ((node.type === 'shadowsocks' && node.shadowtls_enabled === '1') ? null : strToInt(node.port)),
+		/* Hysteria(2) / Mieru (sing-box-extended) */
+		server_ports: (!is_hiddify && node.type === 'mieru' && node.mieru_port_range) ? [node.mieru_port_range] : node.hysteria_hopping_port,
 
 		username: (node.type !== 'ssh') ? node.username : null,
 		user: (node.type === 'ssh') ? node.username : null,
@@ -275,11 +441,11 @@ function generate_outbound(node) {
 		/* ShadowTLS / Socks */
 		version: (node.type === 'shadowtls') ? strToInt(node.shadowtls_version) : ((node.type === 'socks') ? node.socks_version : null),
 		/* Mieru */
-		portBindings: (node.type === 'mieru' && node.mieru_protocol && node.mieru_port_range) ? [
+		portBindings: (is_hiddify && node.type === 'mieru' && node.mieru_protocol && node.mieru_port_range) ? [
 			{ protocol: node.mieru_protocol, portRange: node.mieru_port_range }
 		] : null,
 		multiplexing: (node.type === 'mieru') ? node.mieru_multiplexing : null,
-		handshake_mode: (node.type === 'mieru') ? node.mieru_handshake_mode : null,
+		handshake_mode: (is_hiddify && node.type === 'mieru') ? node.mieru_handshake_mode : null,
 		/* SSH */
 		client_version: node.ssh_client_version,
 		host_key: node.ssh_host_key,
@@ -319,7 +485,13 @@ function generate_outbound(node) {
 			size: node.tls_fragment_size,
 			sleep: node.tls_fragment_sleep
 		} : null,
-		tls: (node.tls === '1') ? {
+		/* Shadowsocks has no top-level tls field in ANY sing-box-based core — for a
+		 * ShadowTLS-wrapped Shadowsocks the TLS lives on the separate shadowtls transport
+		 * outbound (detour). Both sing-box-extended AND hiddify-core 4.1.0 (HiddifyCli)
+		 * strict-reject a stray tls here ("unknown field tls" → FATAL), so suppress it for
+		 * shadowsocks unconditionally (the earlier is_singbox-only gate was wrong — hiddify
+		 * is not lenient). */
+		tls: (node.tls === '1' && node.type !== 'shadowsocks') ? {
 			enabled: true,
 			server_name: node.tls_sni,
 			insecure: strToBool(node.tls_insecure),
@@ -333,9 +505,14 @@ function generate_outbound(node) {
 				config: node.tls_ech_config,
 				config_path: node.tls_ech_config_path
 			} : null,
-			utls: !isEmpty(node.tls_utls) ? {
+			/* Reality REQUIRES uTLS in sing-box ("uTLS is required by reality client"
+			 * is a FATAL that crash-loops the whole service; hiddify-core defaults it
+			 * silently). So when reality is on we always emit utls, defaulting the
+			 * fingerprint to 'edge' if the node (e.g. a sub-imported reality node)
+			 * didn't carry one. */
+			utls: (!isEmpty(node.tls_utls) || node.tls_reality === '1') ? {
 				enabled: true,
-				fingerprint: node.tls_utls
+				fingerprint: !isEmpty(node.tls_utls) ? node.tls_utls : 'edge'
 			} : null,
 			reality: (node.tls_reality === '1') ? {
 				enabled: true,
@@ -343,11 +520,23 @@ function generate_outbound(node) {
 				short_id: node.tls_reality_short_id
 			} : null
 		} : null,
-		transport: !isEmpty(node.transport) ? {
+		transport: (!is_hiddify && node.type === 'mieru') ? node.mieru_protocol : !isEmpty(node.transport) ? {
 			type: node.transport,
 			host: transport_host(node),
 			path: node.http_path || node.ws_path,
 			mode: (node.transport === 'xhttp') ? (node.xhttp_mode || 'auto') : null,
+			/* xhttp transport options differ by core DIALECT: hiddify-core (HiddifyCli, the
+			 * format the Hiddify app exports) uses camelCase — xPaddingBytes /
+			 * scMaxEachPostBytes / scMinPostsIntervalMs — while sing-box-extended uses
+			 * snake_case. Emit both spellings; the wrong-core one is null and removeBlankAttrs
+			 * strips it before write. sing-box keeps a forced 100-1000 padding default to
+			 * preserve prior behaviour; hiddify only emits what the node actually carries. */
+			x_padding_bytes: (is_singbox && node.transport === 'xhttp') ? xhttp_padding(node.xhttp_padding_bytes) : null,
+			xPaddingBytes: (is_hiddify && node.transport === 'xhttp' && !isEmpty(node.xhttp_padding_bytes)) ? xhttp_padding(node.xhttp_padding_bytes) : null,
+			sc_max_each_post_bytes: (is_singbox && node.transport === 'xhttp') ? (node.xhttp_sc_max_each_post_bytes || null) : null,
+			scMaxEachPostBytes: (is_hiddify && node.transport === 'xhttp') ? (node.xhttp_sc_max_each_post_bytes || null) : null,
+			sc_min_posts_interval_ms: (is_singbox && node.transport === 'xhttp') ? (node.xhttp_sc_min_posts_interval_ms || null) : null,
+			scMinPostsIntervalMs: (is_hiddify && node.transport === 'xhttp') ? (node.xhttp_sc_min_posts_interval_ms || null) : null,
 			headers: node.xhttp_headers ? json(node.xhttp_headers) : (node.ws_host ? { Host: node.ws_host } : null),
 			method: node.http_method,
 			max_early_data: strToInt(node.websocket_early_data),
@@ -360,19 +549,63 @@ function generate_outbound(node) {
 		/* NaiveProxy */
 		quic: (node.type === 'naive') ? strToBool(node.naive_quic) : null,
 		extra_headers: (node.type === 'naive') ? (node.naive_extra_headers ? json(node.naive_extra_headers) : null) : null,
+		/* sing-box-extended's ssh outbound has NO udp_over_tcp field → emitting it FATALs
+		 * with "unknown field udp_over_tcp" (verified on sing-box check). hiddify-core's
+		 * ssh works with it as-is (tested), so keep the ssh branch for hiddify only.
+		 * naive/shadowsocks keep udp_over_tcp on both cores. */
 		udp_over_tcp: (node.type === 'naive') ? strToBool(node.naive_udp_over_tcp) :
-		              (node.type === 'ssh') ? (node.ssh_udp_over_tcp !== '0' ? true : null) :
-		              ((node.udp_over_tcp === '1') ? {
+		              (is_hiddify && node.type === 'ssh') ? (node.ssh_udp_over_tcp !== '0' ? true : null) :
+		              ((is_hiddify && node.udp_over_tcp === '1') ? {
 			enabled: true,
 			version: strToInt(node.udp_over_tcp_version)
 		} : null),
 		tcp_fast_open: strToBool(node.tcp_fast_open),
 		tcp_multi_path: strToBool(node.tcp_multi_path),
 		udp_fragment: strToBool(node.udp_fragment),
-		bind_interface: node.bind_interface || null
+		bind_interface: node.bind_interface || null,
+		detour: (node.type === 'shadowsocks' && node.shadowtls_enabled === '1') ? ('cfg-' + node['.name'] + '-shadowtls-out') : null
 	};
 
+	/* xhttp split download: attach under the per-core key (`download` for
+	 * sing-box-extended, `downloadSettings` for hiddify-core). The download block is a
+	 * full xhttp transport, so sing-box requires it to carry x_padding_bytes too — an
+	 * absent field decodes to "" and FATALs ("cannot be disabled"). Mirror the main
+	 * transport's per-core padding spelling (sing-box always forces a default; hiddify
+	 * only emits what the node carries). */
+	if (type(outbound.transport) === 'object') {
+		const dl = xhttp_download(node);
+		if (dl) {
+			if (is_singbox && node.transport === 'xhttp')
+				dl.x_padding_bytes = xhttp_padding(node.xhttp_padding_bytes);
+			else if (is_hiddify && node.transport === 'xhttp' && !isEmpty(node.xhttp_padding_bytes))
+				dl.xPaddingBytes = xhttp_padding(node.xhttp_padding_bytes);
+			outbound.transport[is_hiddify ? 'downloadSettings' : 'download'] = dl;
+		}
+	}
+
 	return outbound;
+}
+
+/* Push outbound(s) for a node. For ShadowTLS-wrapped Shadowsocks, first pushes the
+ * hidden ShadowTLS transport outbound, then the Shadowsocks outbound with detour set. */
+function push_outbound(list, node) {
+	if (node.type === 'shadowsocks' && node.shadowtls_enabled === '1') {
+		push(list, {
+			type: 'shadowtls',
+			tag: 'cfg-' + node['.name'] + '-shadowtls-out',
+			server: node.address,
+			server_port: strToInt(node.port),
+			version: strToInt(node.shadowtls_version) || 3,
+			password: node.shadowtls_password || null,
+			tls: {
+				enabled: true,
+				server_name: node.tls_sni || null,
+				insecure: strToBool(node.tls_insecure),
+				utls: !isEmpty(node.tls_utls) ? { enabled: true, fingerprint: node.tls_utls } : null
+			}
+		});
+	}
+	push(list, generate_outbound(node));
 }
 
 function get_outbound(cfg) {
@@ -391,7 +624,14 @@ function get_outbound(cfg) {
 		switch (cfg) {
 		case 'block-out':
 		case 'direct-out':
+		case 'main-out':
 			return cfg;
+		case 'byedpi-out':
+			/* Fall back to direct if ByeDPI is disabled so the config stays valid */
+			return (byedpi_enabled === '1') ? 'byedpi-out' : 'direct-out';
+		case 'zapret-out':
+			/* Fall back to plain direct if zapret is disabled so the config stays valid */
+			return (zapret_enabled === '1') ? 'zapret-out' : 'direct-out';
 		default:
 			const node = uci.get(uciconfig, cfg, 'node');
 			if (isEmpty(node))
@@ -411,6 +651,13 @@ function get_resolver(cfg) {
 	switch (cfg) {
 	case 'default-dns':
 	case 'system-dns':
+	/* Built-in selective-mode resolvers — emitted with these literal tags (forward RU:
+	 * russia-dns/secure-dns; reverse CN/IR: region-dns/secure-dns; global: main-dns),
+	 * so a custom DNS rule may target them directly (don't prefix as a cfg-*-dns). */
+	case 'russia-dns':
+	case 'secure-dns':
+	case 'region-dns':
+	case 'main-dns':
 		return cfg;
 	default:
 		return 'cfg-' + cfg + '-dns';
@@ -429,6 +676,14 @@ function get_ruleset(cfg) {
 /* Config helper end */
 
 const config = {};
+
+const has_outbound = (tag) => {
+	for (let ob in config.outbounds)
+		if (ob?.tag === tag) return true;
+	for (let ep in (config.endpoints || []))
+		if (ep?.tag === tag) return true;
+	return false;
+};
 
 /* Log */
 config.log = {
@@ -472,73 +727,158 @@ config.dns = {
 };
 
 if (!isEmpty(main_node)) {
-	/* Main DNS */
-	push(config.dns.servers, {
-		tag: 'main-dns',
-		domain_resolver: {
-			server: 'default-dns',
-			strategy: (ipv6_support !== '1') ? 'ipv4_only' : null
-		},
-		detour: 'main-out',
-		...parse_dnsserver(dns_server, 'tcp')
-	});
-	config.dns.final = 'main-dns';
-
-	if (length(direct_domain_list))
-		push(config.dns.rules, {
-			rule_set: 'direct-domain',
-			action: 'route',
-			server: (routing_mode === 'bypass_mainland_china') ? 'china-dns' : 'default-dns'
-		});
-
-	/* Filter out SVCB/HTTPS queries for "exquisite" Apple devices */
-	if (routing_mode === 'gfwlist' || length(proxy_domain_list))
-		push(config.dns.rules, {
-			rule_set: (routing_mode !== 'gfwlist') ? 'proxy-domain' : null,
-			query_type: [64, 65],
-			action: 'reject'
-		});
-
-	if (routing_mode === 'bypass_mainland_china') {
+	if (routing_mode === 'proxy_banned_ru') {
+		/* Russia mode: direct-default routing, russia-dns for all, secure-dns for proxy lists.
+		 *
+		 * secure-dns goes through main-out for real proxy nodes — tunneling the query hides
+		 * it from the ISP and reaches resolvers the ISP might block. But ByeDPI is a DPI-desync,
+		 * not a tunnel: routing DNS through it fails every way (DoH/DoT TLS handshake gets
+		 * corrupted by the desync; udp:// can't do socks UDP-over-TCP), and it adds no privacy
+		 * since ByeDPI egresses direct anyway. So for ByeDPI, secure-dns goes direct — DoH/DoT
+		 * is already encrypted/un-poisonable, it just must not pass through the desync. */
+		/* ByeDPI and Zapret both egress direct (not a tunnel), so secure-dns must go
+		 * direct too — a DoH/DoT query can't ride a desync. */
+		const secure_dns_detour = (main_node === 'byedpi-out' || main_node === 'zapret-out') ? 'direct-out' : 'main-out';
 		push(config.dns.servers, {
-			tag: 'china-dns',
-			domain_resolver: {
-				server: 'default-dns',
-				strategy: 'prefer_ipv6'
-			},
+			tag: 'russia-dns',
 			detour: self_mark ? 'direct-out' : null,
-			...parse_dnsserver(china_dns_server)
+			...parse_dnsserver(russia_dns_server)
+		});
+		push(config.dns.servers, {
+			tag: 'secure-dns',
+			domain_resolver: {
+				server: 'russia-dns',
+				strategy: (ipv6_support !== '1') ? 'ipv4_only' : null
+			},
+			detour: secure_dns_detour,
+			...parse_dnsserver(secure_dns_server, 'tcp')
+		});
+		config.dns.final = 'russia-dns';
+
+		/* andrevi.ch always via secure-dns (hardcoded diagnostic anchor) */
+		push(config.dns.rules, {
+			domain: ['andrevi.ch'],
+			action: 'route',
+			server: 'secure-dns'
 		});
 
+		/* Custom proxy list → secure-dns (before ru_domain_rulesets for explicit priority) */
 		if (length(proxy_domain_list))
 			push(config.dns.rules, {
 				rule_set: 'proxy-domain',
 				action: 'route',
-				server: 'main-dns'
+				server: 'secure-dns'
 			});
 
+		/* Proxy-list domains → secure-dns (Cloudflare DoH via proxy) to prevent DNS leaks */
+		let ru_domain_rulesets = [];
+		uci.foreach(uciconfig, ucirurule, (cfg) => {
+			if (cfg.enabled !== '1') return;
+			const tag = (cfg.source === 'refilter') ? 'hp-ru-refilter-domain' : ('hp-ru-' + cfg.source);
+			if (index(ru_domain_rulesets, tag) < 0)
+				push(ru_domain_rulesets, tag);
+		});
+		if (length(ru_domain_rulesets))
+			push(config.dns.rules, {
+				rule_set: ru_domain_rulesets,
+				action: 'route',
+				server: 'secure-dns'
+			});
+	} else if (is_bypass_mode(routing_mode)) {
+		/* Reverse (bypass) mode: default route is PROXY; region traffic carved out to direct.
+		 * DNS mirrors it -- proxied (default) resolves via DoH-through-tunnel (anti-pollution +
+		 * hides queries from the ISP/operator); region domains resolve via the local resolver
+		 * (correct domestic CDN, fast, shutdown-resilient). One engine, region is data. */
+		const r = region_of(routing_mode);
+		const region = REGION[r];
+
+		/* Region-local resolver (direct egress): user-chosen server (china_dns_server /
+		 * iran_dns_server), defaulting to the REGION baseline (AliDNS CN / Shecan IR). */
+		const region_dns_server = (r === 'cn') ? china_dns_server : iran_dns_server;
+		push(config.dns.servers, {
+			tag: 'region-dns',
+			detour: self_mark ? 'direct-out' : null,
+			...parse_dnsserver(region_dns_server)
+		});
+		/* Remote/default resolver: DoH through the tunnel, bootstrapped via region-dns.
+		 * NOTE (Iran validation): bootstrapping a DoH *hostname* via the local resolver can be
+		 * poisoned by the ISP -- if confirmed in-country, set secure_dns_server to an IP-literal
+		 * DoH (e.g. https://1.1.1.1/dns-query) so no bootstrap is needed. */
+		push(config.dns.servers, {
+			tag: 'secure-dns',
+			domain_resolver: {
+				server: 'region-dns',
+				strategy: (ipv6_support !== '1') ? 'ipv4_only' : null
+			},
+			detour: 'main-out',
+			...parse_dnsserver(secure_dns_server, 'tcp')
+		});
+		config.dns.final = 'secure-dns';
+
+		/* Custom direct list -> region-dns */
+		if (length(direct_domain_list))
+			push(config.dns.rules, {
+				rule_set: 'direct-domain',
+				action: 'route',
+				server: 'region-dns'
+			});
+
+		/* Filter out SVCB/HTTPS queries for proxied custom domains */
+		if (length(proxy_domain_list))
+			push(config.dns.rules, {
+				rule_set: 'proxy-domain',
+				query_type: [64, 65],
+				action: 'reject'
+			});
+
+		/* Region domains -> region-dns (local) */
 		push(config.dns.rules, {
-			rule_set: 'geosite-cn',
+			rule_set: 'geosite-' + r,
 			action: 'route',
-			server: 'china-dns',
+			server: 'region-dns',
 			strategy: 'prefer_ipv6'
 		});
-		push(config.dns.rules, {
-			type: 'logical',
-			mode: 'and',
-			rules: [
-				{
-					rule_set: 'geosite-noncn',
-					invert: true
-				},
-				{
-					rule_set: 'geoip-cn'
-				}
-			],
-			action: 'route',
-			server: 'china-dns',
-			strategy: 'prefer_ipv6'
+
+		/* Optional geoip fallback + non-region guard. CN: list non-exhaustive, catch unlisted
+		 * domestic by IP. IR: off -- Iran configs use the simple scheme. */
+		if (region.guard)
+			push(config.dns.rules, {
+				type: 'logical',
+				mode: 'and',
+				rules: [
+					{ rule_set: 'geosite-non' + r, invert: true },
+					{ rule_set: 'geoip-' + r }
+				],
+				action: 'route',
+				server: 'region-dns',
+				strategy: 'prefer_ipv6'
+			});
+	} else {
+		/* Global (proxy everything): plain remote DNS through the tunnel. No region carve-out. */
+		push(config.dns.servers, {
+			tag: 'main-dns',
+			domain_resolver: {
+				server: 'default-dns',
+				strategy: (ipv6_support !== '1') ? 'ipv4_only' : null
+			},
+			detour: 'main-out',
+			...parse_dnsserver(dns_server, 'tcp')
 		});
+		config.dns.final = 'main-dns';
+
+		if (length(direct_domain_list))
+			push(config.dns.rules, {
+				rule_set: 'direct-domain',
+				action: 'route',
+				server: 'default-dns'
+			});
+
+		if (length(proxy_domain_list))
+			push(config.dns.rules, {
+				rule_set: 'proxy-domain',
+				query_type: [64, 65],
+				action: 'reject'
+			});
 	}
 } else if (!isEmpty(default_outbound)) {
 	/* DNS servers */
@@ -637,9 +977,9 @@ push(config.inbounds, {
 	listen: '::',
 	listen_port: int(mixed_port),
 	udp_timeout: strToTime(udp_timeout),
-	sniff: true,
-	sniff_override_destination: strToBool(sniff_override),
-	set_system_proxy: false
+	sniff: is_hiddify ? true : null,
+	sniff_override_destination: is_hiddify ? strToBool(sniff_override) : null,
+	set_system_proxy: is_hiddify ? false : null,
 });
 
 if (match(proxy_mode, /redirect/))
@@ -649,8 +989,8 @@ if (match(proxy_mode, /redirect/))
 
 		listen: '::',
 		listen_port: int(redirect_port),
-		sniff: true,
-		sniff_override_destination: strToBool(sniff_override)
+		sniff: is_hiddify ? true : null,
+		sniff_override_destination: is_hiddify ? strToBool(sniff_override) : null,
 	});
 if (match(proxy_mode, /tproxy/))
 	push(config.inbounds, {
@@ -661,8 +1001,8 @@ if (match(proxy_mode, /tproxy/))
 		listen_port: int(tproxy_port),
 		network: 'udp',
 		udp_timeout: strToTime(udp_timeout),
-		sniff: true,
-		sniff_override_destination: strToBool(sniff_override)
+		sniff: is_hiddify ? true : null,
+		sniff_override_destination: is_hiddify ? strToBool(sniff_override) : null,
 	});
 if (match(proxy_mode, /tun/))
 	push(config.inbounds, {
@@ -676,8 +1016,8 @@ if (match(proxy_mode, /tun/))
 		endpoint_independent_nat: strToBool(endpoint_independent_nat),
 		udp_timeout: strToTime(udp_timeout),
 		stack: tcpip_stack,
-		sniff: true,
-		sniff_override_destination: strToBool(sniff_override)
+		sniff: is_hiddify ? true : null,
+		sniff_override_destination: is_hiddify ? strToBool(sniff_override) : null,
 	});
 /* Server inbounds */
 uci.foreach(uciconfig, uciserver, (cfg) => {
@@ -725,8 +1065,17 @@ uci.foreach(uciconfig, uciserver, (cfg) => {
 		zero_rtt_handshake: strToBool(cfg.tuic_enable_zero_rtt),
 		heartbeat: strToTime(cfg.tuic_heartbeat),
 
-		/* AnyTLS / HTTP / Hysteria (2) / Mixed / Socks / Trojan / Tuic / VLESS / VMess */
-		users: (cfg.type !== 'shadowsocks') ? [
+		/* MTProxy */
+		concurrency: (cfg.type === 'mtproxy') ? strToInt(cfg.mtproxy_concurrency) : null,
+		idle_timeout: (cfg.type === 'mtproxy') ? (cfg.mtproxy_idle_timeout || null) : null,
+		handshake_timeout: (cfg.type === 'mtproxy') ? (cfg.mtproxy_handshake_timeout || null) : null,
+		domain_fronting_port: (cfg.type === 'mtproxy') ? strToInt(cfg.domain_fronting_port) : null,
+		domain_fronting_host: (cfg.type === 'mtproxy') ? (cfg.domain_fronting_host || null) : null,
+
+		/* AnyTLS / HTTP / Hysteria (2) / Mixed / MTProxy / Socks / Trojan / Tuic / VLESS / VMess */
+		users: (cfg.type === 'mtproxy') ?
+			map(cfg.mtproxy_secrets || [], (s, i) => ({ name: 'user' + (i + 1), secret: s })) :
+			(cfg.type !== 'shadowsocks') ? [
 			{
 				name: !(cfg.type in ['http', 'mixed', 'naive', 'socks']) ? 'cfg-' + cfg['.name'] + '-server' : null,
 				username: cfg.username,
@@ -806,6 +1155,8 @@ uci.foreach(uciconfig, uciserver, (cfg) => {
 			type: cfg.transport,
 			host: transport_host(cfg),
 			path: cfg.http_path || cfg.ws_path,
+			mode: (cfg.transport === 'xhttp') ? (cfg.xhttp_mode || 'auto') : null,
+			x_padding_bytes: (is_singbox && cfg.transport === 'xhttp') ? xhttp_padding(cfg.xhttp_padding_bytes) : null,
 			headers: cfg.ws_host ? {
 				Host: cfg.ws_host
 			} : null,
@@ -853,13 +1204,40 @@ if (!isEmpty(main_node)) {
 			idle_timeout: (strToInt(main_urltest_interval) > 1800) ? `${main_urltest_interval * 2}s` : null,
 		});
 		urltest_nodes = main_urltest_nodes;
+	} else if (main_node === 'byedpi-out') {
+		/* ByeDPI as main node: route through the local ByeDPI socks proxy.
+		 * byedpi-out is a synthetic tag, not a real node section, so build the
+		 * socks outbound here. Fall back to direct if ByeDPI is disabled. */
+		if (byedpi_enabled === '1')
+			push(config.outbounds, {
+				type: 'socks',
+				tag: 'main-out',
+				server: '127.0.0.1',
+				server_port: 5335,
+				udp_over_tcp: (uci.get(uciconfig, ucimain, 'byedpi_udp_over_tcp') !== '0') || null
+			});
+		else
+			push(config.outbounds, { type: 'direct', tag: 'main-out' });
+	} else if (main_node === 'zapret-out') {
+		/* Zapret as main node: egress direct but stamped with the Zapret routing_mark, so
+		 * nft feeds the handshake to nfqws2 (desync everything, no proxy — the Zapret
+		 * equivalent of standalone ByeDPI). Synthetic tag; fall back to plain direct if
+		 * Zapret is disabled so the config stays valid. */
+		if (zapret_enabled === '1')
+			push(config.outbounds, {
+				type: 'direct',
+				tag: 'main-out',
+				routing_mark: strToInt(zapret_mark)
+			});
+		else
+			push(config.outbounds, { type: 'direct', tag: 'main-out' });
 	} else {
 		const main_node_cfg = uci.get_all(uciconfig, main_node) || {};
-		if (main_node_cfg.type === 'wireguard') {
+		if (main_node_cfg.type in ['wireguard', 'amneziawg']) {
 			push(config.endpoints, generate_endpoint(main_node_cfg));
 			config.endpoints[length(config.endpoints)-1].tag = 'main-out';
 		} else {
-			push(config.outbounds, generate_outbound(main_node_cfg));
+			push_outbound(config.outbounds, main_node_cfg);
 			config.outbounds[length(config.outbounds)-1].tag = 'main-out';
 		}
 	}
@@ -878,13 +1256,36 @@ if (!isEmpty(main_node)) {
 			idle_timeout: (strToInt(main_udp_urltest_interval) > 1800) ? `${main_udp_urltest_interval * 2}s` : null,
 		});
 		urltest_nodes = [...urltest_nodes, ...filter(main_udp_urltest_nodes, (l) => !~index(urltest_nodes, l))];
+	} else if (dedicated_udp_node && main_udp_node === 'byedpi-out') {
+		/* ByeDPI as dedicated UDP node — same synthetic-tag handling as above */
+		if (byedpi_enabled === '1')
+			push(config.outbounds, {
+				type: 'socks',
+				tag: 'main-udp-out',
+				server: '127.0.0.1',
+				server_port: 5335,
+				udp_over_tcp: (uci.get(uciconfig, ucimain, 'byedpi_udp_over_tcp') !== '0') || null
+			});
+		else
+			push(config.outbounds, { type: 'direct', tag: 'main-udp-out' });
+	} else if (dedicated_udp_node && main_udp_node === 'zapret-out') {
+		/* Zapret as dedicated UDP node — direct egress + Zapret mark; nfqws2 desyncs
+		 * UDP/QUIC too (unlike ByeDPI). Synthetic tag, fall back to plain direct. */
+		if (zapret_enabled === '1')
+			push(config.outbounds, {
+				type: 'direct',
+				tag: 'main-udp-out',
+				routing_mark: strToInt(zapret_mark)
+			});
+		else
+			push(config.outbounds, { type: 'direct', tag: 'main-udp-out' });
 	} else if (dedicated_udp_node) {
 		const main_udp_node_cfg = uci.get_all(uciconfig, main_udp_node) || {};
-		if (main_udp_node_cfg.type === 'wireguard') {
+		if (main_udp_node_cfg.type in ['wireguard', 'amneziawg']) {
 			push(config.endpoints, generate_endpoint(main_udp_node_cfg));
 			config.endpoints[length(config.endpoints)-1].tag = 'main-udp-out';
 		} else {
-			push(config.outbounds, generate_outbound(main_udp_node_cfg));
+			push_outbound(config.outbounds, main_udp_node_cfg);
 			config.outbounds[length(config.outbounds)-1].tag = 'main-udp-out';
 		}
 	}
@@ -892,12 +1293,65 @@ if (!isEmpty(main_node)) {
 	for (let i in urltest_nodes) {
 		const urltest_node = uci.get_all(uciconfig, i);
 		if (!urltest_node) continue;
-		if (urltest_node.type === 'wireguard') {
+		if (urltest_node.type in ['wireguard', 'amneziawg']) {
 			push(config.endpoints, generate_endpoint(urltest_node));
 			config.endpoints[length(config.endpoints)-1].tag = 'cfg-' + i + '-out';
 		} else {
-			push(config.outbounds, generate_outbound(urltest_node));
+			push_outbound(config.outbounds, urltest_node);
 			config.outbounds[length(config.outbounds)-1].tag = 'cfg-' + i + '-out';
+		}
+	}
+
+	/* Advanced routing_node outbounds for proxy_banned_ru */
+	if (routing_mode === 'proxy_banned_ru' && show_advanced_rules === '1') {
+		let adv_urltest_nodes = [],
+		    adv_routing_nodes = [];
+
+		uci.foreach(uciconfig, uciroutingnode, (cfg) => {
+			if (cfg.enabled !== '1') return;
+
+			if (cfg.node === 'urltest') {
+				const existing_urltest_nodes = filter(cfg.urltest_nodes, (k) => uci.get_all(uciconfig, k) != null);
+				push(config.outbounds, {
+					type: 'urltest',
+					tag: 'cfg-' + cfg['.name'] + '-out',
+					outbounds: map(existing_urltest_nodes, (k) => `cfg-${k}-out`),
+					url: cfg.urltest_url,
+					interval: strToTime(cfg.urltest_interval),
+					tolerance: strToInt(cfg.urltest_tolerance),
+					idle_timeout: strToTime(cfg.urltest_idle_timeout),
+					interrupt_exist_connections: strToBool(cfg.urltest_interrupt_exist_connections)
+				});
+				adv_urltest_nodes = [...adv_urltest_nodes, ...filter(existing_urltest_nodes, (l) => !~index(adv_urltest_nodes, l))];
+			} else {
+				const outbound = uci.get_all(uciconfig, cfg.node) || {};
+				/* Skip a routing node whose target proxy node is empty or dangling —
+				 * otherwise push_outbound() appends a null outbound and the next line
+				 * dereferences it, crashing config generation (no file is written). */
+				if (isEmpty(outbound)) return;
+				if (outbound.type in ['wireguard', 'amneziawg']) {
+					push(config.endpoints, generate_endpoint(outbound));
+					config.endpoints[length(config.endpoints)-1].bind_interface = cfg.bind_interface;
+					config.endpoints[length(config.endpoints)-1].detour = get_outbound(cfg.outbound);
+				} else {
+					push_outbound(config.outbounds, outbound);
+					config.outbounds[length(config.outbounds)-1].bind_interface = cfg.bind_interface;
+					const adv_chain_detour = get_outbound(cfg.outbound);
+					if (adv_chain_detour)
+						config.outbounds[length(config.outbounds)-1].detour = adv_chain_detour;
+				}
+				push(adv_routing_nodes, cfg.node);
+			}
+		});
+
+		for (let i in filter(adv_urltest_nodes, (l) => !~index(adv_routing_nodes, l))) {
+			if (has_outbound('cfg-' + i + '-out')) continue;
+			const urltest_node = uci.get_all(uciconfig, i);
+			if (!urltest_node) continue;
+			if (urltest_node.type in ['wireguard', 'amneziawg'])
+				push(config.endpoints, generate_endpoint(urltest_node));
+			else
+				push_outbound(config.outbounds, urltest_node);
 		}
 	}
 } else if (!isEmpty(default_outbound)) {
@@ -923,7 +1377,11 @@ if (!isEmpty(main_node)) {
 			urltest_nodes = [...urltest_nodes, ...filter(existing_urltest_nodes, (l) => !~index(urltest_nodes, l))];
 		} else {
 			const outbound = uci.get_all(uciconfig, cfg.node) || {};
-			if (outbound.type === 'wireguard') {
+			/* Skip a routing node whose target proxy node is empty or dangling —
+			 * otherwise push_outbound() appends a null outbound and the next line
+			 * dereferences it, crashing config generation (no file is written). */
+			if (isEmpty(outbound)) return;
+			if (outbound.type in ['wireguard', 'amneziawg']) {
 				push(config.endpoints, generate_endpoint(outbound));
 				config.endpoints[length(config.endpoints)-1].bind_interface = cfg.bind_interface;
 				config.endpoints[length(config.endpoints)-1].detour = get_outbound(cfg.outbound);
@@ -933,9 +1391,11 @@ if (!isEmpty(main_node)) {
 						strategy: cfg.domain_strategy
 					};
 			} else {
-				push(config.outbounds, generate_outbound(outbound));
+				push_outbound(config.outbounds, outbound);
 				config.outbounds[length(config.outbounds)-1].bind_interface = cfg.bind_interface;
-				config.outbounds[length(config.outbounds)-1].detour = get_outbound(cfg.outbound);
+				const chain_detour = get_outbound(cfg.outbound);
+				if (chain_detour)
+					config.outbounds[length(config.outbounds)-1].detour = chain_detour;
 				if (cfg.domain_resolver)
 					config.outbounds[length(config.outbounds)-1].domain_resolver = {
 						server: get_resolver(cfg.domain_resolver),
@@ -949,10 +1409,10 @@ if (!isEmpty(main_node)) {
 	for (let i in filter(urltest_nodes, (l) => !~index(routing_nodes, l))) {
 		const urltest_node = uci.get_all(uciconfig, i);
 		if (!urltest_node) continue;
-		if (urltest_node.type === 'wireguard')
+		if (urltest_node.type in ['wireguard', 'amneziawg'])
 			push(config.endpoints, generate_endpoint(urltest_node));
 		else
-			push(config.outbounds, generate_outbound(urltest_node));
+			push_outbound(config.outbounds, urltest_node);
 	}
 }
 
@@ -967,13 +1427,15 @@ config.route = {
 		{
 			inbound: 'dns-in',
 			action: 'hijack-dns'
+		},
+		{
+			/* Explicit sniff action — emit for BOTH cores. hiddify-core's legacy inbound
+			 * `sniff: true` does NOT sniff QUIC (TLS works, QUIC doesn't), so without this
+			 * route action QUIC carries no SNI and can't be domain-routed (e.g. YouTube
+			 * video → zapret-out fell through to direct). Device-confirmed on hiddify-core
+			 * 1.13.1; both cores support the action. */
+			action: 'sniff'
 		}
-		/*
-		 * leave for sing-box 1.13.0
-		 * {
-		 * 	action: 'sniff'
-		 * }
-		 */
 	],
 	rule_set: [],
 	auto_detect_interface: isEmpty(default_interface) ? true : null,
@@ -984,33 +1446,38 @@ config.route = {
 /* Routing rules */
 if (!isEmpty(main_node)) {
 	/* Avoid DNS loop */
-	config.route.default_domain_resolver = {
+	/* sing-box-extended supports action object; hiddify-core (standard sing-box 1.12) expects a string tag */
+	const default_resolver_server = is_bypass_mode(routing_mode) ? 'region-dns' :
+	                                (routing_mode === 'proxy_banned_ru') ? 'russia-dns' : 'default-dns';
+	config.route.default_domain_resolver = is_singbox ? {
 		action: 'route',
-		server: (routing_mode === 'bypass_mainland_china') ? 'china-dns' : 'default-dns',
+		server: default_resolver_server,
 		strategy: (ipv6_support !== '1') ? 'prefer_ipv4' : null
-	};
+	} : default_resolver_server;
 
-	/* Direct list */
-	if (length(direct_domain_list))
+	/* Direct list (not needed in proxy_banned_ru — direct is the default) */
+	if (length(direct_domain_list) && routing_mode !== 'proxy_banned_ru')
 		push(config.route.rules, {
 			rule_set: 'direct-domain',
 			action: 'route',
 			outbound: 'direct-out'
 		});
 
-	/* Main UDP out */
-	if (dedicated_udp_node)
+	/* Main UDP out — only in `global` here (everything proxied, no carve-outs, order moot).
+	 * In selective modes (RU/reverse) the UDP-node rule is emitted LAST, after the region
+	 * baseline + per-service overrides, so domestic/override UDP isn't swept into it. */
+	if (dedicated_udp_node && routing_mode === 'global')
 		push(config.route.rules, {
 			network: 'udp',
 			action: 'route',
 			outbound: 'main-udp-out'
 		});
 
-	config.route.final = 'main-out';
+	config.route.final = (routing_mode === 'proxy_banned_ru') ? 'direct-out' : 'main-out';
 
 	/* Rule set */
 	/* Direct list */
-	if (length(direct_domain_list))
+	if (length(direct_domain_list) && routing_mode !== 'proxy_banned_ru')
 		push(config.route.rule_set, {
 			type: 'inline',
 			tag: 'direct-domain',
@@ -1021,7 +1488,7 @@ if (!isEmpty(main_node)) {
 			]
 		});
 
-	/* Proxy list */
+	/* Proxy list — also used in proxy_banned_ru for proxy-domain → main-out */
 	if (length(proxy_domain_list))
 		push(config.route.rule_set, {
 			type: 'inline',
@@ -1033,37 +1500,288 @@ if (!isEmpty(main_node)) {
 			]
 		});
 
-	if (routing_mode === 'bypass_mainland_china') {
+	if (is_selective_mode(routing_mode)) {
+		/* Resolve domains before routing — prevents the proxy server from doing its own DNS
+		 * resolution, and (reverse) lets the geoip baseline match by IP. */
+		push(config.route.rules, {
+			action: 'resolve',
+			strategy: (ipv6_support !== '1') ? 'ipv4_only' : null
+		});
+
+		/* Advanced custom routing rules (highest priority) */
+		if (show_advanced_rules === '1') {
+			uci.foreach(uciconfig, uciroutingrule, (cfg) => {
+				if (cfg.enabled !== '1') return;
+
+				push(config.route.rules, {
+					inbound: cfg.inbound,
+					ip_version: strToInt(cfg.ip_version),
+					protocol: cfg.protocol,
+					network: cfg.network,
+					domain: cfg.domain,
+					domain_suffix: cfg.domain_suffix,
+					domain_keyword: cfg.domain_keyword,
+					domain_regex: cfg.domain_regex,
+					source_ip_cidr: cfg.source_ip_cidr,
+					source_ip_is_private: strToBool(cfg.source_ip_is_private),
+					ip_cidr: cfg.ip_cidr,
+					ip_is_private: strToBool(cfg.ip_is_private),
+					source_port: parse_port(cfg.source_port),
+					source_port_range: cfg.source_port_range,
+					port: parse_port(cfg.port),
+					port_range: cfg.port_range,
+					process_name: cfg.process_name,
+					process_path: cfg.process_path,
+					process_path_regex: cfg.process_path_regex,
+					user: cfg.user,
+					rule_set: get_ruleset(cfg.rule_set),
+					rule_set_ip_cidr_match_source: strToBool(cfg.rule_set_ip_cidr_match_source),
+					rule_set_ip_cidr_accept_empty: strToBool(cfg.rule_set_ip_cidr_accept_empty),
+					invert: strToBool(cfg.invert),
+					action: cfg.action,
+					outbound: get_outbound(cfg.outbound),
+					override_address: cfg.override_address,
+					override_port: strToInt(cfg.override_port)
+				});
+			});
+		}
+
+		/* Call proxying rules: UDP media ports + XMPP/SIP ports for VoIP apps */
+		/* Torrent bypass first — takes priority over proxy_calls port ranges (51413 overlaps 50000:65530) */
+		if (no_proxy_torrents === '1') {
+			push(config.route.rules, {
+				protocol: ['bittorrent'],
+				action: 'route',
+				outbound: 'direct-out'
+			});
+			push(config.route.rules, {
+				port_range: ['6881:6889', '51413:51413'],
+				action: 'route',
+				outbound: 'direct-out'
+			});
+		}
+
+		/* Zapret Discord voice (opt-in): send Discord's voice-server UDP ranges
+		 * (19294-19344, 50000-50100 — from flowseal/zapret-discord-youtube) to zapret-out
+		 * BEFORE proxy_calls, so Discord voice is desynced via Zapret instead of proxied.
+		 * Emitted ONLY when Zapret is on (so zapret-out exists) — when Zapret is off this
+		 * rule disappears and proxy_calls handles these ports as before. Works on either core. */
+		if (zapret_enabled === '1' && zapret_voice === '1')
+			push(config.route.rules, {
+				network: 'udp',
+				port_range: ['19294:19344', '50000:50100'],
+				action: 'route',
+				outbound: 'zapret-out'
+			});
+
+		if (proxy_calls === '1') {
+			push(config.route.rules, {
+				network: 'udp',
+				port: [1400, 8443],
+				port_range: ['50000:65530', '596:599', '3478:3497', '16384:16387', '16393:16402'],
+				action: 'route',
+				outbound: 'main-out'
+			});
+			push(config.route.rules, {
+				port: [4244, 7985, 5222, 5223, 5242, 5243],
+				action: 'route',
+				outbound: 'main-out'
+			});
+		}
+
+		/* andrevi.ch always via proxy (hardcoded diagnostic anchor) */
+		push(config.route.rules, {
+			domain: ['andrevi.ch'],
+			action: 'route',
+			outbound: 'main-out'
+		});
+
+		/* Custom proxy list → main-out */
+		if (length(proxy_domain_list))
+			push(config.route.rules, {
+				rule_set: 'proxy-domain',
+				action: 'route',
+				outbound: 'main-out'
+			});
+
+		/* Per-rule outbounds and rule sets
+		 * Priority order: specific services first → russia-inside → refilter (largest list last) */
+		const ru_source_priority = (s) => s === 'refilter' ? 2 : s === 'russia-inside' ? 1 : 0;
+		let ru_rules = [];
+		uci.foreach(uciconfig, ucirurule, (cfg) => { if (cfg.enabled === '1') push(ru_rules, cfg); });
+		ru_rules = sort(ru_rules, (a, b) => ru_source_priority(a.source) - ru_source_priority(b.source));
+
+		/* Use direct-out for rule set downloads when the main path isn't startup-safe:
+		 * WireGuard/AmneziaWG endpoints aren't ready yet, and ByeDPI resolves hostnames
+		 * through sing-box's own DNS inbound — which isn't serving during rule-set init, so
+		 * downloading github through it deadlocks (socks5 code 4 "host unreachable") and
+		 * FATALs the whole service. Direct download lets sing-box resolve via russia-dns. */
+		const main_node_type = uci.get(uciconfig, main_node, 'type') || '';
+		let main_has_wg = (main_node_type in ['wireguard', 'amneziawg']);
+		if (!main_has_wg && main_node === 'urltest') {
+			const ut_nodes = filter(uci.get(uciconfig, ucimain, 'main_urltest_nodes') || [], (k) => uci.get_all(uciconfig, k) != null);
+			for (let n in ut_nodes) {
+				if ((uci.get(uciconfig, n, 'type') || '') in ['wireguard', 'amneziawg']) {
+					main_has_wg = true;
+					break;
+				}
+			}
+		}
+		const ruleset_detour = (main_has_wg || main_node === 'byedpi-out') ? 'direct-out' : 'main-out';
+
+		for (let cfg in ru_rules) {
+
+			/* 'main-out' routes through the main proxy; 'byedpi-out' through the shared ByeDPI
+			 * socks outbound (already created when ByeDPI is enabled). Both reuse an existing
+			 * outbound, so no per-source outbound is generated. */
+			let effective_outbound;
+			if (cfg.node === 'main-out' || isEmpty(cfg.node))
+				effective_outbound = 'main-out';
+			else if (cfg.node === 'byedpi-out')
+				effective_outbound = (byedpi_enabled === '1') ? 'byedpi-out' : 'direct-out';
+			else if (cfg.node === 'zapret-out')
+				effective_outbound = (zapret_enabled === '1') ? 'zapret-out' : 'direct-out';
+			else
+				effective_outbound = 'hp-ru-' + cfg.source + '-out';
+
+			if (cfg.node === 'main-out' || isEmpty(cfg.node) || cfg.node === 'byedpi-out' || cfg.node === 'zapret-out') {
+				/* no new outbound needed — main-out / byedpi-out / zapret-out already exist */
+			} else if (!has_outbound(effective_outbound)) {
+				if (cfg.node === 'urltest') {
+					const ut_nodes = filter(cfg.urltest_nodes || [], (k) => uci.get_all(uciconfig, k) != null);
+					push(config.outbounds, {
+						type: 'urltest',
+						tag: effective_outbound,
+						outbounds: map(ut_nodes, (k) => `cfg-${k}-out`),
+						interval: strToTime(cfg.urltest_interval || '180'),
+						tolerance: strToInt(cfg.urltest_tolerance || '150'),
+						idle_timeout: '1800s'
+					});
+					/* Generate underlying node outbounds, skipping already-generated tags */
+					for (let n in ut_nodes) {
+						if (has_outbound('cfg-' + n + '-out')) continue;
+						const nc = uci.get_all(uciconfig, n);
+						if (!nc) continue;
+						if (nc.type in ['wireguard', 'amneziawg']) {
+							push(config.endpoints, generate_endpoint(nc));
+							config.endpoints[length(config.endpoints)-1].tag = 'cfg-' + n + '-out';
+						} else {
+							push_outbound(config.outbounds, nc);
+							config.outbounds[length(config.outbounds)-1].tag = 'cfg-' + n + '-out';
+						}
+					}
+				} else if (!isEmpty(cfg.node)) {
+					const nc = uci.get_all(uciconfig, cfg.node) || {};
+					if (nc.type in ['wireguard', 'amneziawg']) {
+						push(config.endpoints, generate_endpoint(nc));
+						config.endpoints[length(config.endpoints)-1].tag = effective_outbound;
+					} else {
+						push_outbound(config.outbounds, nc);
+						config.outbounds[length(config.outbounds)-1].tag = effective_outbound;
+					}
+				}
+			}
+
+			/* Routing rules */
+			const rule_sets = (cfg.source === 'refilter')
+				? ['hp-ru-refilter-domain', 'hp-ru-refilter-ip']
+				: ['hp-ru-' + cfg.source];
+			push(config.route.rules, {
+				rule_set: rule_sets,
+				action: 'route',
+				outbound: effective_outbound
+			});
+
+			/* Rule sets (remote — core handles download and 1d refresh) */
+			const has_ruleset = (tag) => filter(config.route.rule_set, (rs) => rs.tag === tag).length > 0;
+			if (cfg.source === 'refilter') {
+				if (!has_ruleset('hp-ru-refilter-domain'))
+					push(config.route.rule_set, {
+						type: 'remote',
+						tag: 'hp-ru-refilter-domain',
+						format: 'binary',
+						url: 'https://github.com/1andrevich/Re-filter-lists/releases/latest/download/ruleset-domain-refilter_domains.srs',
+						download_detour: ruleset_detour,
+						update_interval: '1d'
+					});
+				if (!has_ruleset('hp-ru-refilter-ip'))
+					push(config.route.rule_set, {
+						type: 'remote',
+						tag: 'hp-ru-refilter-ip',
+						format: 'binary',
+						url: 'https://github.com/1andrevich/Re-filter-lists/releases/latest/download/ruleset-ip-refilter_ipsum.srs',
+						download_detour: ruleset_detour,
+						update_interval: '1d'
+					});
+			} else {
+				if (!has_ruleset('hp-ru-' + cfg.source))
+					push(config.route.rule_set, {
+						type: 'remote',
+						tag: 'hp-ru-' + cfg.source,
+						format: 'binary',
+						url: 'https://github.com/itdoginfo/allow-domains/releases/latest/download/' + replace(cfg.source, '-', '_') + '.srs',
+						download_detour: ruleset_detour,
+						update_interval: '1d'
+					});
+			}
+		}
+		/* Reverse: region baseline -> direct (lowest priority, AFTER per-service overrides).
+		 * MUST include geoip (IP) so non-sniffable UDP / no-SNI gets the direct decision. */
+		if (is_bypass_mode(routing_mode)) {
+			push(config.route.rules, {
+				rule_set: [ 'geosite-' + region_of(routing_mode), 'geoip-' + region_of(routing_mode) ],
+				action: 'route',
+				outbound: 'direct-out'
+			});
+			/* Proxied-UDP default node, after baseline+overrides so domestic/override UDP isn't swept in. */
+			if (dedicated_udp_node)
+				push(config.route.rules, {
+					network: 'udp',
+					action: 'route',
+					outbound: 'main-udp-out'
+				});
+		}
+	}
+
+	if (is_bypass_mode(routing_mode)) {
+		/* Region rule-sets (.srs). Direct-bootstrap: download direct so a not-yet-up proxy
+		 * can't deadlock rule-set init at startup. geosite_non only when guard is on (CN). */
+		const r = region_of(routing_mode);
+		const region = REGION[r];
 		push(config.route.rule_set, {
 			type: 'remote',
-			tag: 'geoip-cn',
+			tag: 'geoip-' + r,
 			format: 'binary',
-			url: 'https://fastly.jsdelivr.net/gh/1715173329/IPCIDR-CHINA@rule-set/cn.srs',
-			download_detour: 'main-out'
+			url: region.geoip,
+			download_detour: 'direct-out',
+			update_interval: '1d'
 		});
 		push(config.route.rule_set, {
 			type: 'remote',
-			tag: 'geosite-cn',
+			tag: 'geosite-' + r,
 			format: 'binary',
-			url: 'https://fastly.jsdelivr.net/gh/1715173329/sing-geosite@rule-set-unstable/geosite-geolocation-cn.srs',
-			download_detour: 'main-out'
+			url: region.geosite,
+			download_detour: 'direct-out',
+			update_interval: '1d'
 		});
-		push(config.route.rule_set, {
-			type: 'remote',
-			tag: 'geosite-noncn',
-			format: 'binary',
-			url: 'https://fastly.jsdelivr.net/gh/1715173329/sing-geosite@rule-set-unstable/geosite-geolocation-!cn.srs',
-			download_detour: 'main-out'
-		});
+		if (region.guard)
+			push(config.route.rule_set, {
+				type: 'remote',
+				tag: 'geosite-non' + r,
+				format: 'binary',
+				url: region.geosite_non,
+				download_detour: 'direct-out',
+				update_interval: '1d'
+			});
 	}
 
 	if (isEmpty(config.route.rule_set))
 		config.route.rule_set = null;
 } else if (!isEmpty(default_outbound)) {
-	config.route.default_domain_resolver = {
+	config.route.default_domain_resolver = is_singbox ? {
 		action: 'resolve',
 		server: get_resolver(default_outbound_dns)
-	};
+	} : get_resolver(default_outbound_dns);
 
 	if (domain_strategy)
 		push(config.route.rules, {
@@ -1133,13 +1851,40 @@ if (!isEmpty(main_node)) {
 }
 /* Routing rules end */
 
+/* ByeDPI outbound */
+if (byedpi_enabled === '1') {
+	const byedpi_uot = uci.get(uciconfig, ucimain, 'byedpi_udp_over_tcp') !== '0';
+	push(config.outbounds, {
+		type: 'socks',
+		tag: 'byedpi-out',
+		server: '127.0.0.1',
+		server_port: 5335,
+		udp_over_tcp: byedpi_uot || null
+	});
+}
+/* ByeDPI outbound end */
+
+/* zapret outbound: a plain direct dialer stamped with routing_mark. sing-box egresses
+ * the selected (e.g. YouTube) flows directly but tagged with zapret_mark; nft catches
+ * that mark and feeds the handshake to NFQUEUE where nfqws (running separately) desyncs
+ * the DPI. routing_mark OVERRIDES the global default_mark, so firewall_post.ut adds a
+ * matching loop-avoidance return for zapret_mark. */
+if (zapret_enabled === '1') {
+	push(config.outbounds, {
+		type: 'direct',
+		tag: 'zapret-out',
+		routing_mark: strToInt(zapret_mark)
+	});
+}
+/* zapret outbound end */
+
 /* Experimental start */
 config.experimental = {
 	clash_api: {
 		external_controller: '127.0.0.1:9090'
 	}
 };
-if (routing_mode in ['bypass_mainland_china', 'custom']) {
+if (is_selective_mode(routing_mode) || routing_mode === 'custom') {
 	config.experimental.cache_file = {
 		enabled: true,
 		path: RUN_DIR + '/cache.db',

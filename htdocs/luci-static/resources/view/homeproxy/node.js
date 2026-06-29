@@ -7,6 +7,7 @@
 'use strict';
 'require form';
 'require fs';
+'require rpc';
 'require uci';
 'require ui';
 'require view';
@@ -17,6 +18,253 @@
 function allowInsecureConfirm(ev, _section_id, value) {
 	if (value === '1' && !confirm(_('Are you sure to allow insecure?')))
 		ev.target.firstElementChild.checked = null;
+}
+
+async function parseVpnLink(uri) {
+	/* AmneziaVPN vpn:// share format: base64url(qCompress(JSON))
+	 * qCompress = 4-byte big-endian uncompressed length + zlib stream */
+	const b64 = uri.slice(6).replace(/-/g, '+').replace(/_/g, '/');
+	const binary = atob(b64);
+	const bytes = new Uint8Array(binary.length);
+	for (let i = 0; i < binary.length; i++)
+		bytes[i] = binary.charCodeAt(i);
+
+	const ds = new DecompressionStream('deflate');
+	const writer = ds.writable.getWriter();
+	const reader = ds.readable.getReader();
+	writer.write(bytes.slice(4)); // skip 4-byte qCompress length header
+	writer.close();
+
+	const chunks = [];
+	let res;
+	while (!(res = await reader.read()).done)
+		chunks.push(res.value);
+
+	const decoded = JSON.parse(new TextDecoder().decode(
+		new Uint8Array(chunks.reduce((a, c) => [...a, ...c], []))
+	));
+
+	const container = decoded.containers?.find(c => c.container === decoded.defaultContainer)
+	               || decoded.containers?.[0];
+	if (!container) return null;
+
+	const label = decoded.description || decoded.hostName || null;
+
+	switch (container.container) {
+	case 'amnezia-awg':
+	case 'amnezia-awg2': {
+		const awg = container.awg;
+		if (!awg) return null;
+		/* detailed fields live inside last_config as a JSON string */
+		let cfg = awg;
+		if (awg.last_config) {
+			try { cfg = Object.assign({}, awg, JSON.parse(awg.last_config)); } catch(e) {}
+		}
+		const clientIp = cfg.client_ip || '';
+		const localAddr = clientIp.includes('/') ? clientIp : (clientIp ? clientIp + '/32' : null);
+		return {
+			label: (label || (cfg.hostName + ':' + cfg.port) || 'AmneziaWG') + '-awg',
+			type: 'amneziawg',
+			address: cfg.hostName || decoded.hostName,
+			port: String(cfg.port || awg.port),
+			wireguard_local_address: localAddr ? [localAddr] : null,
+			wireguard_private_key: cfg.client_priv_key,
+			wireguard_peer_public_key: cfg.server_pub_key,
+			wireguard_pre_shared_key: cfg.psk_key || null,
+			wireguard_mtu: cfg.mtu || null,
+			wireguard_persistent_keepalive_interval: cfg.persistent_keep_alive || null,
+			amnezia_jc: awg.Jc,
+			amnezia_jmin: awg.Jmin,
+			amnezia_jmax: awg.Jmax,
+			amnezia_s1: awg.S1,
+			amnezia_s2: awg.S2,
+			amnezia_s3: awg.S3 || null,
+			amnezia_s4: awg.S4 || null,
+			amnezia_h1: awg.H1,
+			amnezia_h2: awg.H2,
+			amnezia_h3: awg.H3,
+			amnezia_h4: awg.H4,
+			amnezia_i1: awg.I1 || null,
+			amnezia_i2: awg.I2 || null,
+			amnezia_i3: awg.I3 || null,
+			amnezia_i4: awg.I4 || null,
+			amnezia_i5: awg.I5 || null,
+		};
+	}
+	case 'amnezia-xray': {
+		const xray = container.xray;
+		if (!xray?.last_config) return null;
+		let xrayCfg;
+		try { xrayCfg = JSON.parse(xray.last_config); } catch(e) { return null; }
+
+		const outbound = xrayCfg.outbounds?.find(
+			o => !['freedom', 'blackhole', 'dns'].includes(o.protocol)
+		);
+		if (!outbound) return null;
+
+		const stream = outbound.streamSettings || {};
+		/* Xray network → homeproxy transport */
+		const netMap = { ws: 'ws', grpc: 'grpc', h2: 'http', http: 'http',
+		                 httpupgrade: 'httpupgrade', xhttp: 'xhttp', splithttp: 'xhttp' };
+		const transport = netMap[stream.network] || null;
+		const security = stream.security || 'none';
+
+		let config = {
+			label: (label || (decoded.hostName + ':' + xray.port) || outbound.protocol) + '-XRay',
+			transport: transport,
+		};
+
+		/* TLS / Reality */
+		if (security === 'reality') {
+			const r = stream.realitySettings || {};
+			Object.assign(config, {
+				tls: '1',
+				tls_reality: '1',
+				tls_sni: r.serverName || null,
+				tls_utls: r.fingerprint || null,
+				tls_reality_public_key: r.publicKey || null,
+				tls_reality_short_id: r.shortId || null,
+			});
+		} else if (security === 'tls') {
+			const t = stream.tlsSettings || {};
+			Object.assign(config, {
+				tls: '1',
+				tls_sni: t.serverName || null,
+				tls_insecure: t.allowInsecure ? '1' : '0',
+				tls_utls: t.fingerprint || null,
+			});
+		}
+
+		/* Transport details */
+		if (transport === 'ws') {
+			const ws = stream.wsSettings || {};
+			config.ws_path = ws.path || null;
+			config.transport_host = ws.headers?.Host || null;
+		} else if (transport === 'grpc') {
+			config.grpc_servicename = (stream.grpcSettings || {}).serviceName || null;
+		} else if (transport === 'xhttp') {
+			const xhttpCfg = stream.xhttpSettings || stream.splithttpSettings || {};
+			config.http_path = xhttpCfg.path || null;
+			config.http_host = xhttpCfg.host || null;
+			config.xhttp_mode = xhttpCfg.mode || null;
+			config.xhttp_padding_bytes = xhttpCfg.xPaddingBytes || xhttpCfg.x_padding_bytes || null;
+			config.xhttp_sc_max_each_post_bytes = xhttpCfg.scMaxEachPostBytes || xhttpCfg.sc_max_each_post_bytes || null;
+			config.xhttp_sc_min_posts_interval_ms = xhttpCfg.scMinPostsIntervalMs || xhttpCfg.sc_min_posts_interval_ms || null;
+		}
+
+		/* Protocol-specific fields */
+		switch (outbound.protocol) {
+		case 'vless': {
+			const vnext = outbound.settings?.vnext?.[0];
+			if (!vnext) return null;
+			const user = vnext.users?.[0] || {};
+			return Object.assign(config, {
+				type: 'vless',
+				address: vnext.address,
+				port: String(vnext.port),
+				uuid: user.id,
+				vless_flow: (security === 'reality' || security === 'tls') ? (user.flow || null) : null,
+			});
+		}
+		case 'vmess': {
+			const vnext = outbound.settings?.vnext?.[0];
+			if (!vnext) return null;
+			const user = vnext.users?.[0] || {};
+			return Object.assign(config, {
+				type: 'vmess',
+				address: vnext.address,
+				port: String(vnext.port),
+				uuid: user.id,
+				vmess_alter_id: String(user.alterId || 0),
+			});
+		}
+		case 'trojan': {
+			const server = outbound.settings?.servers?.[0];
+			if (!server) return null;
+			return Object.assign(config, {
+				type: 'trojan',
+				address: server.address,
+				port: String(server.port),
+				password: server.password,
+			});
+		}
+		case 'shadowsocks': {
+			const server = outbound.settings?.servers?.[0];
+			if (!server) return null;
+			return Object.assign(config, {
+				type: 'shadowsocks',
+				address: server.address,
+				port: String(server.port),
+				password: server.password,
+				shadowsocks_encrypt_method: server.method,
+			});
+		}
+		default:
+			return null;
+		}
+	}
+	default:
+		/* amnezia-openvpn, amnezia-ipsec, unknown — skip silently */
+		return null;
+	}
+}
+
+function parseWireGuardConf(text) {
+	const lines = text.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#'));
+	let section = null;
+	const iface = {}, peer = {};
+
+	for (const line of lines) {
+		if (line === '[Interface]') { section = 'interface'; continue; }
+		if (line === '[Peer]')      { section = 'peer';      continue; }
+		const eq = line.indexOf('=');
+		if (eq < 0) continue;
+		const key = line.slice(0, eq).trim();
+		const val = line.slice(eq + 1).trim();
+		if (section === 'interface') iface[key] = val;
+		else if (section === 'peer') peer[key] = val;
+	}
+
+	if (!iface.PrivateKey || !peer.PublicKey || !peer.Endpoint) return null;
+
+	const lastColon = peer.Endpoint.lastIndexOf(':');
+	const host = peer.Endpoint.slice(0, lastColon);
+	const port = peer.Endpoint.slice(lastColon + 1);
+
+	const isAWG = !!(iface.Jc || iface.Jmin || iface.Jmax || iface.H1);
+
+	const node = {
+		label:                   isAWG ? 'AmneziaWG' : 'WireGuard',
+		type:                    isAWG ? 'amneziawg' : 'wireguard',
+		address:                 host.replace(/^\[|\]$/g, ''),
+		port:                    port,
+		wireguard_private_key:   iface.PrivateKey,
+		wireguard_peer_public_key: peer.PublicKey,
+		wireguard_pre_shared_key:  peer.PresharedKey || null,
+		wireguard_local_address: iface.Address ? iface.Address.split(',').map(a => a.trim()) : null,
+		wireguard_mtu:           iface.MTU || null,
+	};
+
+	if (isAWG) {
+		node.amnezia_jc   = iface.Jc   || null;
+		node.amnezia_jmin = iface.Jmin  || null;
+		node.amnezia_jmax = iface.Jmax  || null;
+		node.amnezia_s1   = iface.S1   || null;
+		node.amnezia_s2   = iface.S2   || null;
+		node.amnezia_s3   = iface.S3   || null;
+		node.amnezia_s4   = iface.S4   || null;
+		node.amnezia_h1   = iface.H1   || null;
+		node.amnezia_h2   = iface.H2   || null;
+		node.amnezia_h3   = iface.H3   || null;
+		node.amnezia_h4   = iface.H4   || null;
+		node.amnezia_i1   = iface.I1   || null;
+		node.amnezia_i2   = iface.I2   || null;
+		node.amnezia_i3   = iface.I3   || null;
+		node.amnezia_i4   = iface.I4   || null;
+		node.amnezia_i5   = iface.I5   || null;
+	}
+
+	return node;
 }
 
 function parseShareLink(uri, features) {
@@ -342,6 +590,9 @@ function parseShareLink(uri, features) {
 				config.http_path = params.get('path') ? decodeURIComponent(params.get('path')) : null;
 				config.http_host = params.get('host') ? decodeURIComponent(params.get('host')) : null;
 				config.xhttp_mode = params.get('mode') || null;
+				config.xhttp_padding_bytes = params.get('xPaddingBytes') || params.get('x_padding_bytes') || null;
+				config.xhttp_sc_max_each_post_bytes = params.get('scMaxEachPostBytes') || params.get('sc_max_each_post_bytes') || null;
+				config.xhttp_sc_min_posts_interval_ms = params.get('scMinPostsIntervalMs') || params.get('sc_min_posts_interval_ms') || null;
 				break;
 			}
 
@@ -448,6 +699,9 @@ function parseShareLink(uri, features) {
 				config.http_path = params.get('path') ? decodeURIComponent(params.get('path')) : null;
 				config.http_host = params.get('host') ? decodeURIComponent(params.get('host')) : null;
 				config.xhttp_mode = params.get('mode') || null;
+				config.xhttp_padding_bytes = params.get('xPaddingBytes') || params.get('x_padding_bytes') || null;
+				config.xhttp_sc_max_each_post_bytes = params.get('scMaxEachPostBytes') || params.get('sc_max_each_post_bytes') || null;
+				config.xhttp_sc_min_posts_interval_ms = params.get('scMinPostsIntervalMs') || params.get('sc_min_posts_interval_ms') || null;
 				break;
 			}
 
@@ -631,28 +885,6 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	s.modaltitle = L.bind(hp.loadModalTitle, this, _('Node'), _('Add a node'), data[0]);
 	s.sectiontitle = L.bind(hp.loadDefaultLabel, this, data[0]);
 
-	if (routing_mode !== 'custom') {
-		o = s.option(form.Button, '_apply', _('Apply'));
-		o.editable = true;
-		o.modalonly = false;
-		o.inputstyle = 'apply';
-		o.inputtitle = function(section_id) {
-			if (main_node == section_id) {
-				this.readonly = true;
-				return _('Applied');
-			} else {
-				this.readonly = false;
-				return _('Apply');
-			}
-		}
-		o.onclick = function(ev, section_id) {
-			uci.set(data[0], 'config', 'main_node', section_id);
-
-			return this.map.save(null, true).then(() => {
-				ui.changes.apply(true);
-			});
-		}
-	}
 
 	o = s.option(form.Value, 'label', _('Label'));
 	o.load = L.bind(hp.loadDefaultLabel, this, data[0]);
@@ -679,6 +911,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 		o.value('tuic', _('Tuic'));
 	if (features.with_wireguard && features.with_gvisor)
 		o.value('wireguard', _('WireGuard'));
+	o.value('amneziawg', _('AmneziaWG'));
 	o.value('vless', _('VLESS'));
 	o.value('vmess', _('VMess'));
 	o.rmempty = false;
@@ -704,6 +937,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	o.depends('type', 'vless');
 	o.depends('type', 'vmess');
 	o.depends('type', 'wireguard');
+	o.depends('type', 'amneziawg');
 	o.rmempty = false;
 
 	o = s.option(form.Value, 'username', _('Username'));
@@ -895,6 +1129,18 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	o.modalonly = true;
 	/* Shadowsocks config end */
 
+	/* ShadowTLS transport (overlay for Shadowsocks) */
+	o = s.option(form.Flag, 'shadowtls_enabled', _('ShadowTLS transport'),
+		_('Wrap this Shadowsocks connection in ShadowTLS for TLS camouflage.'));
+	o.depends('type', 'shadowsocks');
+	o.rmempty = false;
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'shadowtls_password', _('ShadowTLS password'));
+	o.password = true;
+	o.depends({'type': 'shadowsocks', 'shadowtls_enabled': '1'});
+	o.modalonly = true;
+
 	/* ShadowTLS config */
 	o = s.option(form.ListValue, 'shadowtls_version', _('ShadowTLS version'));
 	o.value('1', _('v1'));
@@ -902,6 +1148,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	o.value('3', _('v3'));
 	o.default = '1';
 	o.depends('type', 'shadowtls');
+	o.depends({'type': 'shadowsocks', 'shadowtls_enabled': '1'});
 	o.rmempty = false;
 	o.modalonly = true;
 
@@ -1185,6 +1432,64 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 		_('JSON object, e.g. {"X-Header": "value"}. Leave empty for none.'));
 	o.depends('transport', 'xhttp');
 	o.modalonly = true;
+
+	o = s.option(form.Value, 'xhttp_padding_bytes', _('Padding bytes'),
+		_('Random padding length range, e.g. 100-1000. Leave empty for the core default.'));
+	o.depends('transport', 'xhttp');
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'xhttp_sc_max_each_post_bytes', _('Max bytes per POST'),
+		_('packet-up mode: max body size of each upload POST, e.g. 1000000-1000000.'));
+	o.depends('transport', 'xhttp');
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'xhttp_sc_min_posts_interval_ms', _('Min POST interval (ms)'),
+		_('packet-up mode: minimum interval between upload POSTs in ms, e.g. 30-30.'));
+	o.depends('transport', 'xhttp');
+	o.modalonly = true;
+
+	/* XHTTP split download ("dl=h2"/"dl=h3"): the download direction may use a
+	 * separate host/path/server and TLS (different SNI/ALPN) from the upload.
+	 * Leave these empty to use a single bidirectional stream. */
+	o = s.option(form.Value, 'xhttp_download_host', _('Download host'),
+		_('Split download: host (Host header / :authority) for the download direction. Leave empty to reuse the upload host.'));
+	o.depends('transport', 'xhttp');
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'xhttp_download_path', _('Download path'),
+		_('Split download: path for the download direction. Leave empty to reuse the upload path.'));
+	o.depends('transport', 'xhttp');
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'xhttp_download_server', _('Download server'),
+		_('Optional separate server address for the download direction. Empty reuses the main server (works on hiddify-core; set explicitly for sing-box).'));
+	o.datatype = 'host';
+	o.depends('transport', 'xhttp');
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'xhttp_download_port', _('Download port'));
+	o.datatype = 'port';
+	o.depends('transport', 'xhttp');
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'xhttp_download_sni', _('Download TLS server name'),
+		_('TLS SNI for the download direction (often a different CDN/edge host than the upload).'));
+	o.depends('transport', 'xhttp');
+	o.modalonly = true;
+
+	o = s.option(form.ListValue, 'xhttp_download_alpn', _('Download ALPN'));
+	o.value('', _('Default'));
+	o.value('h2');
+	o.value('h3');
+	o.value('http/1.1');
+	o.depends('transport', 'xhttp');
+	o.modalonly = true;
+
+	o = s.option(form.Flag, 'xhttp_download_insecure', _('Download allow insecure'),
+		_('Allow insecure TLS for the download direction. Use only for testing.'));
+	o.default = o.disabled;
+	o.depends('transport', 'xhttp');
+	o.modalonly = true;
 	/* XHTTP config end */
 
 	o = s.option(form.ListValue, 'packet_encoding', _('Packet encoding'));
@@ -1201,6 +1506,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 		_('List of IP (v4 or v6) addresses prefixes to be assigned to the interface.'));
 	o.datatype = 'cidr';
 	o.depends('type', 'wireguard');
+	o.depends('type', 'amneziawg');
 	o.rmempty = false;
 	o.modalonly = true;
 
@@ -1208,6 +1514,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 		_('WireGuard requires base64-encoded private keys.'));
 	o.password = true;
 	o.depends('type', 'wireguard');
+	o.depends('type', 'amneziawg');
 	o.validate = L.bind(hp.validateBase64Key, this, 44);
 	o.rmempty = false;
 	o.modalonly = true;
@@ -1215,6 +1522,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	o = s.option(form.Value, 'wireguard_peer_public_key', _('Peer pubkic key'),
 		_('WireGuard peer public key.'));
 	o.depends('type', 'wireguard');
+	o.depends('type', 'amneziawg');
 	o.validate = L.bind(hp.validateBase64Key, this, 44);
 	o.rmempty = false;
 	o.modalonly = true;
@@ -1223,6 +1531,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 		_('WireGuard pre-shared key.'));
 	o.password = true;
 	o.depends('type', 'wireguard');
+	o.depends('type', 'amneziawg');
 	o.validate = L.bind(hp.validateBase64Key, this, 44);
 	o.modalonly = true;
 
@@ -1235,14 +1544,123 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	o.datatype = 'range(0,9000)';
 	o.placeholder = '1408';
 	o.depends('type', 'wireguard');
+	o.depends('type', 'amneziawg');
 	o.modalonly = true;
 
 	o = s.option(form.Value, 'wireguard_persistent_keepalive_interval', _('Persistent keepalive interval'),
 		_('In seconds. Disabled by default.'));
 	o.datatype = 'uinteger';
 	o.depends('type', 'wireguard');
+	o.depends('type', 'amneziawg');
 	o.modalonly = true;
 	/* Wireguard config end */
+
+	/* AmneziaWG config start */
+	o = s.option(form.Value, 'amnezia_jc', _('Jc'),
+		_('Junk packet count.'));
+	o.datatype = 'uinteger';
+	o.depends('type', 'amneziawg');
+	o.rmempty = false;
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'amnezia_jmin', _('Jmin'),
+		_('Junk packet minimum size.'));
+	o.datatype = 'uinteger';
+	o.depends('type', 'amneziawg');
+	o.rmempty = false;
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'amnezia_jmax', _('Jmax'),
+		_('Junk packet maximum size.'));
+	o.datatype = 'uinteger';
+	o.depends('type', 'amneziawg');
+	o.rmempty = false;
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'amnezia_s1', _('S1'));
+	o.datatype = 'uinteger';
+	o.depends('type', 'amneziawg');
+	o.rmempty = false;
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'amnezia_s2', _('S2'));
+	o.datatype = 'uinteger';
+	o.depends('type', 'amneziawg');
+	o.rmempty = false;
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'amnezia_s3', _('S3'));
+	o.datatype = 'uinteger';
+	o.depends('type', 'amneziawg');
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'amnezia_s4', _('S4'));
+	o.datatype = 'uinteger';
+	o.depends('type', 'amneziawg');
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'amnezia_h1', _('H1'),
+		_('Magic header range, e.g. 426560850-1096521767'));
+	o.depends('type', 'amneziawg');
+	o.rmempty = false;
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'amnezia_h2', _('H2'),
+		_('Magic header range, e.g. 1603445073-1836768565'));
+	o.depends('type', 'amneziawg');
+	o.rmempty = false;
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'amnezia_h3', _('H3'),
+		_('Magic header range, e.g. 2047861992-2141668339'));
+	o.depends('type', 'amneziawg');
+	o.rmempty = false;
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'amnezia_h4', _('H4'),
+		_('Magic header range, e.g. 2141792848-2142674170'));
+	o.depends('type', 'amneziawg');
+	o.rmempty = false;
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'amnezia_i1', _('I1'),
+		_('Optional cookie byte sequence in &lt;b 0x...&gt; format.'));
+	o.depends('type', 'amneziawg');
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'amnezia_i2', _('I2'));
+	o.depends('type', 'amneziawg');
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'amnezia_i3', _('I3'));
+	o.depends('type', 'amneziawg');
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'amnezia_i4', _('I4'));
+	o.depends('type', 'amneziawg');
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'amnezia_i5', _('I5'));
+	o.depends('type', 'amneziawg');
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'amnezia_j1', _('J1'));
+	o.depends('type', 'amneziawg');
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'amnezia_j2', _('J2'));
+	o.depends('type', 'amneziawg');
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'amnezia_j3', _('J3'));
+	o.depends('type', 'amneziawg');
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'amnezia_itime', _('ITime'));
+	o.datatype = 'uinteger';
+	o.depends('type', 'amneziawg');
+	o.modalonly = true;
+	/* AmneziaWG config end */
 
 	/* Mux config start */
 	o = s.option(form.Flag, 'multiplex', _('Multiplex'));
@@ -1335,6 +1753,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	o = s.option(form.Value, 'tls_sni', _('TLS SNI'),
 		_('Used to verify the hostname on the returned certificates unless insecure is given.'));
 	o.depends('tls', '1');
+	o.depends({'type': 'shadowsocks', 'shadowtls_enabled': '1'});
 	o.modalonly = true;
 
 	o = s.option(form.DynamicList, 'tls_alpn', _('TLS ALPN'),
@@ -1347,6 +1766,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 		'<br/>' +
 		_('This is <strong>DANGEROUS</strong>, your traffic is almost like <strong>PLAIN TEXT</strong>! Use at your own risk!'));
 	o.depends('tls', '1');
+	o.depends({'type': 'shadowsocks', 'shadowtls_enabled': '1'});
 	o.onchange = allowInsecureConfirm;
 	o.modalonly = true;
 
@@ -1429,6 +1849,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 		o.value('randomized');
 		o.value('safari');
 		o.depends({'tls': '1', 'type': /^((?!hysteria2?|tuic$).)+$/});
+		o.depends({'type': 'shadowsocks', 'shadowtls_enabled': '1'});
 		o.validate = function(section_id, value) {
 			if (section_id) {
 				let tls_reality = this.map.findElement('id', 'cbid.homeproxy.%s.tls_reality'.format(section_id)).firstElementChild;
@@ -1500,7 +1921,9 @@ return view.extend({
 	load() {
 		return Promise.all([
 			uci.load('homeproxy'),
-			hp.getBuiltinFeatures()
+			hp.getBuiltinFeatures(),
+			/* Zapret strategy candidates (shipped read-only); null if absent → builtin fallback used */
+			L.resolveDefault(fs.read('/etc/homeproxy/zapret_candidates.json'), null)
 		]);
 	},
 
@@ -1509,6 +1932,15 @@ return view.extend({
 		let main_node = uci.get(data[0], 'config', 'main_node');
 		let routing_mode = uci.get(data[0], 'config', 'routing_mode');
 		let features = data[1];
+
+		/* Parse the Zapret candidate list once; each entry = {name, args, group}.
+		 * 'args' is the stable key (used for match/apply); 'name' is display-only. */
+		let zapret_candidates = null;
+		try {
+			const parsed = JSON.parse(data[2] || 'null');
+			if (parsed && Array.isArray(parsed.candidates) && parsed.candidates.length)
+				zapret_candidates = parsed.candidates;
+		} catch (e) { /* fall back to builtin below */ }
 
 		/* Cache subscription information, it will be called multiple times */
 		let subinfo = [];
@@ -1541,7 +1973,7 @@ return view.extend({
 		ss.handleLinkImport = function() {
 			let textarea = new ui.Textarea();
 			ui.showModal(_('Import share links'), [
-				E('p', _('Support Hysteria, Mieru, NaïveProxy, Shadowsocks, SSH, Trojan, v2rayN (VMess), WireGuard, and XTLS (VLESS) online configuration delivery standard.')),
+				E('p', _('Support Amnezia (vpn://), Hysteria, Mieru, NaïveProxy (naive://), Shadowsocks (ss://), SSH, Trojan, v2rayN (VMess), WireGuard, and VLESS (vless://) online configuration delivery standard.')),
 				textarea.render(),
 				E('div', { class: 'right' }, [
 					E('button', {
@@ -1551,23 +1983,35 @@ return view.extend({
 					'',
 					E('button', {
 						class: 'btn cbi-button-action',
-						click: ui.createHandlerFn(this, () => {
-							let input_links = textarea.getValue().trim().split('\n');
-							if (input_links && input_links[0]) {
-								/* Remove duplicate lines */
-								input_links = input_links.reduce((pre, cur) =>
-									(!pre.includes(cur) && pre.push(cur), pre), []);
+						click: ui.createHandlerFn(this, function() {
+							let input_links = textarea.getValue().trim().split('\n')
+								.map(l => l.trim()).filter(Boolean);
+							if (!input_links.length)
+								return ui.hideModal();
 
-								let allow_insecure = uci.get(data[0], 'subscription', 'allow_insecure');
-								let packet_encoding = uci.get(data[0], 'subscription', 'packet_encoding');
-								let imported_node = 0;
-								input_links.forEach((l) => {
-									let config = parseShareLink(l, features);
-									if (config) {
+							/* Remove duplicates */
+							input_links = [...new Set(input_links)];
+
+							let allow_insecure = uci.get(data[0], 'subscription', 'allow_insecure');
+							let packet_encoding = uci.get(data[0], 'subscription', 'packet_encoding');
+							const total = input_links.length;
+
+							const vpnLinks = input_links.filter(l => l.startsWith('vpn://'));
+							const uriLinks = input_links.filter(l => !l.startsWith('vpn://'));
+
+							return Promise.all(vpnLinks.map(l => parseVpnLink(l).catch(() => null)))
+								.then(vpnConfigs => {
+									const configs = [
+										...vpnConfigs.filter(Boolean),
+										...uriLinks.map(l => parseShareLink(l, features)).filter(Boolean)
+									];
+
+									let imported_node = 0;
+									configs.forEach((config) => {
 										if (config.tls === '1' && allow_insecure === '1')
-											config.tls_insecure = '1'
+											config.tls_insecure = '1';
 										if (['vless', 'vmess'].includes(config.type))
-											config.packet_encoding = packet_encoding
+											config.packet_encoding = packet_encoding;
 
 										let nameHash = hp.calcStringMD5(config.label);
 										let sid = uci.add(data[0], 'node', nameHash);
@@ -1575,28 +2019,77 @@ return view.extend({
 											uci.set(data[0], sid, k, config[k]);
 										});
 										imported_node++;
-									}
+									});
+
+									if (imported_node === 0)
+										ui.addNotification(null, E('p', _('No valid share link found.')));
+									else
+										ui.addNotification(null, E('p', _('Successfully imported %s nodes of total %s.').format(
+											imported_node, total)));
+
+									return uci.save()
+										.then(L.bind(this.map.load, this.map))
+										.then(L.bind(this.map.reset, this.map))
+										.then(L.ui.hideModal)
+										.catch(() => {});
 								});
-
-								if (imported_node === 0)
-									ui.addNotification(null, E('p', _('No valid share link found.')));
-								else
-									ui.addNotification(null, E('p', _('Successfully imported %s nodes of total %s.').format(
-										imported_node, input_links.length)));
-
-								return uci.save()
-									.then(L.bind(this.map.load, this.map))
-									.then(L.bind(this.map.reset, this.map))
-									.then(L.ui.hideModal)
-									.catch(() => {});
-							} else {
-								return ui.hideModal();
-							}
 						})
 					}, [ _('Import') ])
 				])
 			])
 		}
+		ss.handleConfImport = function() {
+			const fileInput = E('input', { type: 'file', accept: '.conf', style: 'display:block;margin:8px 0' });
+			ui.showModal(_('Import .conf file'), [
+				E('p', _('Select a WireGuard or AmneziaWG .conf file.')),
+				fileInput,
+				E('div', { class: 'right' }, [
+					E('button', { class: 'btn', click: ui.hideModal }, [ _('Cancel') ]),
+					' ',
+					E('button', {
+						class: 'btn cbi-button-action',
+						click: ui.createHandlerFn(this, function() {
+							const file = fileInput.files[0];
+							if (!file) return ui.hideModal();
+
+							return new Promise((resolve) => {
+								const reader = new FileReader();
+								reader.onload = (ev) => resolve(ev.target.result);
+								reader.readAsText(file);
+							}).then((text) => {
+								const config = parseWireGuardConf(text);
+								if (!config) {
+									ui.hideModal();
+									return ui.addNotification(null, E('p', _('No valid WireGuard/AmneziaWG config found.')));
+								}
+
+								const existingLabels = new Set(
+									uci.sections(data[0], 'node').map(s => s.label).filter(Boolean)
+								);
+								if (existingLabels.has(config.label)) {
+									const base = config.label;
+									let n = 2;
+									while (existingLabels.has(base + '-' + n)) n++;
+									config.label = base + '-' + n;
+								}
+
+								const sid = uci.add(data[0], 'node');
+								for (const [k, v] of Object.entries(config))
+									if (v != null) uci.set(data[0], sid, k, Array.isArray(v) ? v : String(v));
+
+								return uci.save()
+									.then(L.bind(this.map.load, this.map))
+									.then(L.bind(this.map.reset, this.map))
+									.then(L.ui.hideModal)
+									.then(() => ui.addNotification(null, E('p', _('Successfully imported node: %s').format(config.label))))
+									.catch(() => {});
+							});
+						})
+					}, [ _('Import') ])
+				])
+			]);
+		}
+
 		ss.renderSectionAdd = function(/* ... */) {
 			let el = form.GridSection.prototype.renderSectionAdd.apply(this, arguments),
 				nameEl = el.querySelector('.cbi-section-create-name');
@@ -1622,6 +2115,12 @@ return view.extend({
 				'title': _('Import share links'),
 				'click': ui.createHandlerFn(this, 'handleLinkImport')
 			}, [ _('Import share links') ]));
+
+			el.appendChild(E('button', {
+				'class': 'cbi-button cbi-button-add',
+				'title': _('Import .conf file'),
+				'click': ui.createHandlerFn(this, 'handleConfImport')
+			}, [ _('Import .conf') ]));
 
 			return el;
 		}
@@ -1775,6 +2274,687 @@ return view.extend({
 			return this.map.save(null, true);
 		}
 		/* Subscriptions settings end */
+
+		/* ByeDPI settings start */
+		s.tab('byedpi', _('ByeDPI'));
+		let byedpiSV = s.taboption('byedpi', form.SectionValue, '_byedpi', form.NamedSection, 'config', 'homeproxy');
+		ss = byedpiSV.subsection;
+		ss.anonymous = true;
+		ss.addremove = false;
+
+		o = ss.option(form.Flag, 'byedpi_udp_over_tcp', _('UDP over TCP'),
+			_('Wrap UDP traffic in TCP when routing to ByeDPI.'));
+		o.default = o.enabled;
+		o.rmempty = false;
+
+		(function() {
+			const BYEDPI_PRESETS = [
+				/* A — Community-contributed strategies (from issues / community testing) */
+				{ name: 'A1 — YouTube 1',                  args: '-o1 -r-5+se -a1 -At,r,s -d1 -n google.com -Qr -f-1' },
+				{ name: 'A2 — YouTube 2',                  args: '-d1 -d3+s -s6+s -d9+s -s12+s -d15+s -s20+s -d25+s -s30+s -d35+s -r1+s -S -a1 -As -d1 -d3+s -s6+s -d9+s -s12+s -d15+s -s20+s -d25+s -s30+s -d35+s -S -a1' },
+				{ name: 'A3 — General 1',                  args: '-d1+s -O1 -s29+s -t 5 -An -Ku -a5 -s443+s -d80+s -d443+s -s80+s -s443+s -d53+s -s53+s -d443+s -An' },
+				{ name: 'A4 — YouTube 3',                  args: '-H:"youtube.com googlevideo.com ggpht.com ytimg.com googleapis.com googleusercontent.com youtube-ui.l.google.com yt4.ggpht.com" -o1 -a1 -r-5+se -t6 -n rutube.com -An -f-1 -t8 -n www.google.com -d1 -s1+s -d1+s -s3+s -d6+s -s12+s -d14+s -s20+s -d24+s -s30+s -a1' },
+				{ name: 'A5 — General 2',                  args: '-H:"youtube.com googlevideo.com ytimg.com ggpht.com youtu.be youtubei.googleapis.com" -Kt,h -d1 -s1+s -s3+s -s6+s -s9+s -s12+s -s15+s -s20+s -s30+s -a1 -An -H:"soundcloud.com api.soundcloud.com api-v2.soundcloud.com m.soundcloud.com eventgateway.soundcloud.com api-partners.soundcloud.com api-mobile.soundcloud.com wis.sndcdn.com va.sndcdn.com invite.soundcloud.com events.soundcloud.com" -Kth -Qorig -n "www.google.com" -f-1 -t5 -d1 -s1+s -s3+s -s6+s -s9+s -s12+s -s15+s -s20+s -s30+s -Mh,d,r -An -H:"sndcdn.com a-v2.sndcdn.com cf-hls-media.sndcdn.com cf-media.sndcdn.com cf-preview-media.sndcdn.com cf-hls-opus-media.sndcdn.com i1.sndcdn.com i2.sndcdn.com i3.sndcdn.com i4.sndcdn.com assets.soundcloud.com playback.media-streaming.soundcloud.cloud" -Kth -Qorig -n "www.google.com" -f-1 -t5 -s1 -d2 -Mh,d,r -An -H:"discord.com discord.gg discord.media discordapp.com cdn.discordapp.com media.discordapp.net images-ext-1.discordapp.net images-ext-2.discordapp.net images.discordapp.net gateway.discord.gg status.discord.com api.discord.com discord-attachments-uploads-prd.storage.googleapis.com hcaptcha.com recaptcha.net accounts.google.com appleid.apple.com" -Kth -Qorig -n "www.google.com" -f-1 -t5 -o1 -s1+s -s2+s -s5+s -d3+s -s7+s -s10+s -s15+s -An -Ku' },
+				{ name: 'A6 — General 3',                  args: '-H:"youtube.com googlevideo.com ggpht.com ytimg.com googleapis.com googleusercontent.com youtube-ui.l.google.com yt4.ggpht.com" -o1 -a1 -r-5+se -t6 -n rutube.com -An -H:"cdn.discordapp.com canary.discord.com vdis.gd ptb.discord.com discord-attachments-uploads-prd.storage.googleapis.com discord-activities.com discord.co discord.com discord.design discord.dev discord.gg discord.gift discord.gifts discord.media discord.new discord.store discord.tools discordactivities.com discordapp.com discordapp.net media.discordapp.net images-ext-1.discordapp.net images-ext-2.discordapp.net stable.dl2.discordapp.net discordcdn.com discordmerch.com discordpartygames.com discordsays.com discordsez.com discordstatus.com" -f-1 -t8 -n www.google.com -s1+s -a5 -An -H:"soundcloud.com sndcdn.com soundcloud.app.goo.gl" -f-1 -T0.5 -Ars -d0+sm -At -r1+s -An -f-200 -s2 -s5+hm -t6 -Qr -n wb.ru' },
+				/* B — Disorder — most effective on Linux */
+				{ name: 'B1 — Disorder Basic',             args: '--disorder 1' },
+				{ name: 'B2 — Disorder at SNI',            args: '--disorder 1+s' },
+				{ name: 'B3 — Disorder TLS+HTTP',          args: '--proto tls,http --disorder 1' },
+				{ name: 'B4 — Split + Disorder',           args: '--split 1 --disorder 3' },
+				{ name: 'B5 — Disorder + Auto TLS Record', args: '--disorder 1 --auto=torst --tlsrec 1+s' },
+				/* C — Fake TTL */
+				{ name: 'C1 — Fake TTL=6',                 args: '--fake -1 --ttl 6' },
+				{ name: 'C2 — Fake TTL=8',                 args: '--fake -1 --ttl 8' },
+				{ name: 'C3 — Fake TTL=10',                args: '--fake -1 --ttl 10' },
+				{ name: 'C4 — Fake TTL=12',                args: '--fake -1 --ttl 12' },
+				{ name: 'C5 — Fake TTL=15',                args: '--fake -1 --ttl 15' },
+				/* D — Fake MD5 — Linux-only TCP option */
+				{ name: 'D1 — Fake MD5',                   args: '--fake -1 --md5sig' },
+				{ name: 'D2 — Disorder + Fake MD5',        args: '--disorder 1 --fake -1 --md5sig' },
+				{ name: 'D3 — Fake MD5 TLS+HTTP',          args: '--proto tls,http --fake -1 --md5sig' },
+				/* E — TLS Record split */
+				{ name: 'E1 — TLS Record Split',           args: '--tlsrec 1+s' },
+				{ name: 'E2 — TLS Record + Auto',          args: '--auto=torst --tlsrec 1+s' },
+				{ name: 'E3 — TLS Record + Timeout',       args: '--auto=torst --timeout 3 --tlsrec 1+s' },
+				{ name: 'E4 — Disorder + TLS Record',      args: '--disorder 1 --tlsrec 1+s' },
+				/* F — OOB */
+				{ name: 'F1 — OOB at SNI',                 args: '--oob 1+s' },
+				{ name: 'F2 — OOB at SNI+3',               args: '--oob 3+s' },
+				{ name: 'F3 — DisoOB at SNI',              args: '--disoob 1+s' },
+				{ name: 'F4 — DisoOB + Fake MD5',          args: '--disoob 1+s --fake -1 --md5sig' },
+				/* G — Split */
+				{ name: 'G1 — Split at SNI',               args: '--split 1+s' },
+				{ name: 'G2 — Split at SNI Middle',        args: '--split 0+sm' },
+				{ name: 'G3 — Split at 2',                 args: '--split 2' },
+				{ name: 'G4 — Split + OOB',                args: '--split 1+s --oob 2+s' },
+				/* H — HTTP modification */
+				{ name: 'H1 — HTTP Host Case Mix',         args: '--proto http --mod-http hcsmix' },
+				{ name: 'H2 — HTTP Host Double Mix',       args: '--proto http --mod-http hcsmix,dcsmix' },
+				{ name: 'H3 — HTTP Full Mix',              args: '--proto http --mod-http hcsmix,dcsmix,rmspace' },
+				{ name: 'H4 — HTTP Mix + Disorder',        args: '--proto tls,http --mod-http hcsmix --disorder 1' },
+				/* I — Auto-mode */
+				{ name: 'I1 — Auto SSL Error Fallback',    args: '--fake -1 --ttl 8 --auto=ssl_err --fake -1 --ttl 5' },
+				{ name: 'I2 — Auto Reset Fallback',        args: '--fake -1 --md5sig --auto=torst --disorder 1' },
+				/* J — Fake TLS modification */
+				{ name: 'J1 — Random TLS Fake',            args: '--fake -1 --fake-tls-mod rand' },
+				{ name: 'J2 — Original TLS Fake',          args: '--fake -1 --fake-tls-mod orig' },
+				/* K — Aggressive combos */
+				{ name: 'K1 — Aggressive Split',           args: '--split 1+s --disorder 3+s' },
+				{ name: 'K2 — Aggressive OOB + MD5',       args: '--oob 1+s --disorder 1 --fake -1 --md5sig' },
+				{ name: 'K3 — Aggressive DisoOB',          args: '--disoob 1+s --disorder 3+s' },
+				{ name: 'K4 — Aggressive Combo',           args: '--split 1+s --oob 2+s --disorder 3+s' },
+				{ name: 'K5 — TLS+HTTP Disorder + Record', args: '--proto tls,http --disorder 1 --tlsrec 1+s' },
+				/* L — UDP */
+				{ name: 'L1 — UDP Fake',                   args: '--proto udp --udp-fake 5' },
+				{ name: 'L2 — TLS+UDP Fake MD5',           args: '--proto tls,udp --fake -1 --md5sig --udp-fake 5' },
+				/* M — Full combo */
+				{ name: 'M1 — Full TLS Bypass',            args: '--proto tls --fake -1 --md5sig --tlsrec 1+s' }
+			];
+
+			/* Groups are matched to presets by the letter prefix of the preset name
+			 * (A1 → group A, B3 → group B, …). A preset can sit anywhere in the array and
+			 * still render under its group, in both the dropdown and the test-all table —
+			 * so adding a strategy is a one-line append, no index bookkeeping. */
+			const BYEDPI_GROUPS = [
+				{ key: 'A', label: _('Community') },
+				{ key: 'B', label: _('Disorder — reorders TCP segments') },
+				{ key: 'C', label: _('Fake TTL') },
+				{ key: 'D', label: _('Fake MD5') },
+				{ key: 'E', label: _('TLS Record Split') },
+				{ key: 'F', label: _('OOB') },
+				{ key: 'G', label: _('Split') },
+				{ key: 'H', label: _('HTTP Modification') },
+				{ key: 'I', label: _('Auto-mode') },
+				{ key: 'J', label: _('TLS Modification') },
+				{ key: 'K', label: _('Aggressive') },
+				{ key: 'L', label: _('UDP') },
+				{ key: 'M', label: _('Full Combo') },
+			];
+
+			const callByeDPITest = rpc.declare({
+				object: 'luci.homeproxy',
+				method: 'byedpi_strategy_test',
+				params: ['cmd_opts', 'port'],
+				expect: { '': {} }
+			});
+
+			const callCurlStatus = rpc.declare({
+				object: 'luci.homeproxy',
+				method: 'curl_status',
+				expect: { '': {} }
+			});
+
+			/* Reference to the Command-options option, set when it's created below.
+			 * The preset dropdown drives this field through LuCI's own widget API. */
+			let cmdOptsOpt = null;
+
+			function applyPreset(idx) {
+				if (!BYEDPI_PRESETS[idx])
+					return;
+				const val = BYEDPI_PRESETS[idx].args;
+				const widget = cmdOptsOpt ? cmdOptsOpt.getUIElement('config') : null;
+				if (widget) {
+					widget.setValue(val);
+					widget.node.dispatchEvent(new Event('change', { bubbles: true }));
+				} else {
+					/* fallback if the widget isn't registered yet */
+					const el = document.querySelector('[name*=".byedpi_cmd_opts"]');
+					if (el) {
+						el.value = val;
+						el.dispatchEvent(new Event('change', { bubbles: true }));
+					}
+				}
+			}
+
+			/* Preset selector — DummyValue so LuCI never tracks or resets it.
+			 * It's a picker that fills byedpi_cmd_opts, not a stored value. On every
+			 * render it pre-selects whichever preset matches the current options, so it
+			 * reflects truth and survives section re-renders. */
+			o = ss.option(form.DummyValue, '_byedpi_preset', _('Strategy preset'));
+			o.render = function(option_index, section_id) {
+				const cur = (uci.get('homeproxy', 'config', 'byedpi_cmd_opts') || '').trim();
+				let curIdx = -1;
+				for (let i = 0; i < BYEDPI_PRESETS.length; i++)
+					if (BYEDPI_PRESETS[i].args === cur) { curIdx = i; break; }
+
+				const sel = E('select', {
+					'class': 'cbi-input-select',
+					'style': 'max-width:100%'
+				});
+				sel.appendChild(E('option', {
+					value: '',
+					selected: curIdx < 0 ? '' : null
+				}, curIdx < 0 ? _('— custom / select a preset —') : _('— select a preset —')));
+				for (let g of BYEDPI_GROUPS) {
+					const grp = E('optgroup', { label: g.label });
+					BYEDPI_PRESETS.forEach((p, i) => {
+						if (p.name.charAt(0) !== g.key) return;
+						grp.appendChild(E('option', {
+							value: String(i),
+							selected: i === curIdx ? '' : null
+						}, p.name));
+					});
+					sel.appendChild(grp);
+				}
+				sel.addEventListener('change', function() {
+					if (sel.value !== '')
+						applyPreset(parseInt(sel.value));
+				});
+				return E('div', { 'class': 'cbi-value' }, [
+					E('label', { 'class': 'cbi-value-title' }, _('Strategy preset')),
+					E('div', { 'class': 'cbi-value-field' }, [
+						sel,
+						E('div', { 'class': 'cbi-value-description' },
+							_('Grouped by technique. Based on <a href="https://github.com/hufrea/byedpi" target="_blank">hufrea/byedpi</a> and community testing. See also <a href="https://github.com/fatyzzz/Byedpi-Setup" target="_blank">fatyzzz/Byedpi-Setup</a>.'))
+					])
+				]);
+			};
+			o.write = function() {};
+
+			o = ss.option(form.Value, 'byedpi_cmd_opts',
+				_('Command options'),
+				_('Arguments passed to ByeDPI. Select a preset above or enter custom options. See <code>ciadpi --help</code> for full flag reference.'));
+			o.placeholder = '--disorder 1';
+			cmdOptsOpt = o;
+
+			/* Strategy tester */
+			o = ss.option(form.DummyValue, '_byedpi_tester',
+				_('Test current strategy'),
+				_('Starts ByeDPI with the current options on a temporary port and probes 4 sites — ' +
+				  '<b>YouTube</b> and <b>Telegram</b> (far servers), <b>Discord</b> and <b>Speedtest.net</b> ' +
+				  '(near Cloudflare/Ookla edges). A strategy that passes the far ones but fails the near ones ' +
+				  'is destination-sensitive (typical of fixed <code>--fake --ttl</code>). ' +
+				  'Requires curl; without it, only confirms ByeDPI starts.'));
+			o.render = function(option_index, section_id) {
+				const msgEl = E('span', { style: 'margin-left:8px; font-size:0.9em; color:gray' }, '');
+				const btn = E('button', {
+					'class': 'btn cbi-button cbi-button-action',
+					'click': ui.createHandlerFn(this, () => {
+						const el = document.querySelector('[name*=".byedpi_cmd_opts"]');
+						const opts = el ? el.value.trim() : '';
+						btn.disabled = true;
+						msgEl.style.color = 'gray';
+						msgEl.textContent = _('Testing...');
+						return L.resolveDefault(callByeDPITest(opts, '15335'), {}).then((ret) => {
+							btn.disabled = false;
+							if (ret.results && ret.results.length) {
+								const frag = [];
+								ret.results.forEach((r, i) => {
+									if (i) frag.push(document.createTextNode(' · '));
+									frag.push(E('span', {
+										style: 'font-weight:bold; color:' + (r.ok ? 'green' : '#cc3300'),
+										title: r.host + ' → ' + (r.ok ? r.code : (r.reason || 'fail'))
+									}, (r.label || r.tag) + (r.ok ? ' ✓' : ' ✗')));
+								});
+								frag.push(E('span', { style: 'color:gray; margin-left:6px' },
+									'(' + ret.passed + '/' + ret.total + ')'));
+								while (msgEl.firstChild) msgEl.removeChild(msgEl.firstChild);
+								frag.forEach((n) => msgEl.appendChild(n));
+							} else if (ret.result) {
+								msgEl.style.color = 'green';
+								msgEl.textContent = _('✓ ByeDPI started (install curl for full test)');
+							} else {
+								msgEl.style.color = 'red';
+								msgEl.textContent = ret.error || _('Test failed');
+							}
+						});
+					})
+				}, [ _('Test') ]);
+
+				return E('div', { 'class': 'cbi-value' }, [
+					E('label', { 'class': 'cbi-value-title' }, _('Test current strategy')),
+					E('div',   { 'class': 'cbi-value-field' }, [ btn, msgEl ])
+				]);
+			};
+			o.write = function() {};
+
+			/* Test all strategies */
+			o = ss.option(form.DummyValue, '_byedpi_test_all', _('Test all strategies'));
+			o.render = function(option_index, section_id) {
+				const progressEl = E('div', {
+					style: 'font-size:0.9em; margin:6px 0; display:none'
+				}, '');
+				const tableEl = E('table', {
+					style: 'width:100%; border-collapse:collapse; font-size:0.85em; display:none; margin-top:4px'
+				});
+
+				let stopRequested = false;
+				const stopBtn = E('button', {
+					'class': 'btn cbi-button cbi-button-reset',
+					'style': 'display:none; margin-left:6px',
+					'click': function() {
+						stopRequested = true;
+						stopBtn.disabled = true;
+						stopBtn.textContent = _('Stopping…');
+					}
+				}, [ _('Stop') ]);
+
+				const btn = E('button', {
+					'class': 'btn cbi-button cbi-button-action',
+					'disabled': true,
+					'click': ui.createHandlerFn(this, function() {
+						if (!confirm(_('Test all strategies?') + '\n\n' +
+						             _('Each is probed against 4 sites (~12 min total). You can Stop it at any point.') + '\n' +
+						             _('LAN clients are not affected during testing.')))
+							return;
+
+						btn.disabled = true;
+						stopRequested = false;
+						stopBtn.disabled = false;
+						stopBtn.textContent = _('Stop');
+						stopBtn.style.display = '';
+						progressEl.style.display = '';
+						progressEl.style.color = 'gray';
+						progressEl.textContent = _('Preparing...');
+						tableEl.style.display = '';
+						tableEl.innerHTML = '';
+
+						/* Display order = group order, then array order within a group, so an
+						 * appended preset shows under its letter-group here too (not at the bottom). */
+						const orderedIdx = [];
+						for (let g of BYEDPI_GROUPS)
+							BYEDPI_PRESETS.forEach((p, gi) => { if (p.name.charAt(0) === g.key) orderedIdx.push(gi); });
+
+						const rows = [];
+						for (let k = 0; k < orderedIdx.length; k++) {
+							const i = orderedIdx[k];
+							const dotsCell = E('td', {
+								style: 'white-space:nowrap; padding:2px 8px; font-size:0.95em; color:gray'
+							}, '–');
+							const applyBtn = E('button', {
+								'class': 'btn cbi-button cbi-button-save',
+								style: 'padding:1px 8px; font-size:0.8em; visibility:hidden',
+								click: (function(idx) {
+									return function() { applyPreset(idx); };
+								})(i)
+							}, [ _('Apply') ]);
+
+							tableEl.appendChild(E('tr', { style: 'border-bottom:1px solid #f0f0f0' }, [
+								dotsCell,
+								E('td', { style: 'padding:2px 8px; color:#555; white-space:nowrap' },
+									BYEDPI_PRESETS[i].name),
+								E('td', { style: 'padding:2px 8px; color:#888; font-family:monospace; font-size:0.85em; word-break:break-all' },
+									BYEDPI_PRESETS[i].args),
+								E('td', { style: 'padding:2px 4px; white-space:nowrap' }, [ applyBtn ])
+							]));
+							rows.push({ dotsCell, applyBtn });
+						}
+
+						let fullPass = 0, partial = 0;
+						let chain = Promise.resolve();
+						for (let k = 0; k < orderedIdx.length; k++) {
+							chain = chain.then((function(pos) {
+								return function() {
+									if (stopRequested) return;
+									const i = orderedIdx[pos];
+									const { dotsCell, applyBtn } = rows[pos];
+									progressEl.textContent =
+										(pos + 1) + ' / ' + orderedIdx.length +
+										': ' + BYEDPI_PRESETS[i].name;
+									dotsCell.textContent = '⏳';
+									return L.resolveDefault(
+										callByeDPITest(BYEDPI_PRESETS[i].args, '15335'), {}
+									).then(function(ret) {
+										if (ret.results && ret.results.length) {
+											const frag = [];
+											ret.results.forEach(function(r) {
+												frag.push(E('span', {
+													style: 'font-weight:bold; margin-right:4px; color:' + (r.ok ? 'green' : '#cc3300'),
+													title: (r.label || r.tag) + ' (' + r.host + ') → ' + (r.ok ? r.code : (r.reason || 'fail'))
+												}, r.ok ? '●' : '○'));
+											});
+											frag.push(E('span', { style: 'color:#888; margin-left:2px' },
+												ret.passed + '/' + ret.total));
+											while (dotsCell.firstChild) dotsCell.removeChild(dotsCell.firstChild);
+											frag.forEach(function(n) { dotsCell.appendChild(n); });
+											if (ret.passed === ret.total) { fullPass++; applyBtn.style.visibility = ''; }
+											else if (ret.passed > 0) { partial++; applyBtn.style.visibility = ''; }
+										} else {
+											dotsCell.textContent = ret.result ? '✓' : '✗';
+											dotsCell.style.color = ret.result ? 'green' : '#cc3300';
+										}
+									});
+								};
+							})(k));
+						}
+
+						return chain.then(function() {
+							stopBtn.style.display = 'none';
+							const tail =
+								(partial > 0 ? ', ' + partial + ' ' + _('partial') : '') +
+								((fullPass + partial) > 0 ? ' — ' + _('click Apply next to a strategy (prefer all-green)') : '');
+							if (stopRequested) {
+								progressEl.style.color = '#c80';
+								progressEl.textContent = _('Stopped') + ' — ' + fullPass + ' ' + _('work on all sites') + tail;
+							} else {
+								progressEl.style.color = fullPass > 0 ? 'green' : (partial > 0 ? '#c80' : '#cc3300');
+								progressEl.textContent = _('Done') + ': ' + fullPass + ' / ' + BYEDPI_PRESETS.length +
+									' ' + _('work on all sites') + tail;
+							}
+							btn.disabled = false;
+						});
+					})
+				}, [ _('Test all strategies') ]);
+
+				const hintEl = E('div', { style: 'font-size:0.85em; color:#666; margin-bottom:6px' },
+					_('Probes each preset against 4 sites (YouTube video CDN, Telegram, Discord, Speedtest). ' +
+					  '● = TLS handshake got through, ○ = blocked; hover a dot for the site and result. ' +
+					  'Tests a fixed preset list. You can Stop it anytime. ~12 min total.'));
+
+				L.resolveDefault(callCurlStatus(), {}).then(function(status) {
+					if (status.installed) {
+						btn.disabled = false;
+					} else {
+						hintEl.textContent = _('Requires curl. Install it on the Status page first.');
+						hintEl.style.color = '#c00';
+					}
+				});
+
+				return E('div', { 'class': 'cbi-value' }, [
+					E('label', { 'class': 'cbi-value-title' }, _('Test all strategies')),
+					E('div', { 'class': 'cbi-value-field' }, [
+						hintEl,
+						btn,
+						stopBtn,
+						progressEl,
+						tableEl
+					])
+				]);
+			};
+			o.write = function() {};
+		})();
+
+		o = ss.option(form.Flag, 'byedpi_block_quic',
+			_('Block QUIC (UDP port 443)') + ' ⚠️',
+			_('This nftables rule drops all outgoing UDP port 443 packets to external addresses, ' +
+			  'forcing browsers and apps to fall back to TCP/TLS where ByeDPI can apply DPI bypass. ' +
+			  'Side effects: may break services that require QUIC, and affects all LAN clients. ' +
+			  'Enable if your strategy works but some sites still do not load.'));
+		o.default = o.disabled;
+		o.rmempty = false;
+		/* ByeDPI settings end */
+
+		/* Zapret settings start */
+		s.tab('zapret', _('Zapret'));
+		let zapretSV = s.taboption('zapret', form.SectionValue, '_zapret', form.NamedSection, 'config', 'homeproxy');
+		ss = zapretSV.subsection;
+		ss.anonymous = true;
+		ss.addremove = false;
+
+		(function() {
+			const HTTP = '--filter-tcp=80 --filter-l7=http --payload=http_req --lua-desync=fake:blob=fake_default_http:tcp_md5 --lua-desync=multisplit:pos=method+2 --new ';
+			const TLS = '--filter-tcp=443 --filter-l7=tls --payload=tls_client_hello ';
+			/* Domain-specific fakes shipped by the zapret2 package (registered via --blob=@file). */
+			const FK = '/opt/zapret2/files/fake';
+			/* Strategy candidates come from the shipped read-only file
+			 * /etc/homeproxy/zapret_candidates.json (loaded in load()). Each entry =
+			 * {name, args, group} where group is 'recommended' (curated, purpose-named)
+			 * or 'auto' (the full-test pool, technique-named). If the file is missing,
+			 * fall back to this minimal builtin set so the UI never breaks. */
+			const ZAPRET_PRESETS = zapret_candidates || [
+				{ name: _('Default (fake + multidisorder)'), group: 'recommended', args: HTTP + TLS + '--lua-desync=fake:blob=fake_default_tls:tcp_md5:tcp_seq=-10000 --lua-desync=multidisorder:pos=1,midsld' },
+				{ name: _('Multisplit'),                     group: 'recommended', args: HTTP + TLS + '--lua-desync=fake:blob=fake_default_tls:tcp_md5:tcp_seq=-10000 --lua-desync=multisplit:pos=1,midsld' },
+				{ name: _('Fake only'),                      group: 'recommended', args: HTTP + TLS + '--lua-desync=fake:blob=fake_default_tls:tcp_md5' }
+			];
+
+			const callZapretTest = rpc.declare({
+				object: 'luci.homeproxy',
+				method: 'zapret_strategy_test',
+				params: ['cmd_opts', 'ips'],
+				expect: { '': {} }
+			});
+
+			const callZapretResolve = rpc.declare({
+				object: 'luci.homeproxy',
+				method: 'zapret_resolve_hosts',
+				expect: { '': {} }
+			});
+
+			/* Resolve the 4 test hosts ONCE (bounded + retried server-side), via the
+			 * same secure-DNS/direct path production uses for these blocked domains, so
+			 * the IP is representative for the TLS-handshake probe. Returns
+			 * { ok, ips, error }; ips is the "tag=ip …" string fed to each candidate so
+			 * the full-test sweep doesn't re-hit DNS for all 36 candidates. A failure
+			 * here is the "DNS not ready right after Apply" case — surfaced as one
+			 * clear message instead of 36 ubus errors. */
+			function resolveHosts() {
+				return L.resolveDefault(callZapretResolve(), {}).then((ret) => {
+					let d = {};
+					try { d = JSON.parse(ret.output || '{}'); } catch (e) {}
+					if (!d.ok || !d.ips)
+						return { ok: false, error: d.error || _('DNS not ready — wait a few seconds after Apply and retry') };
+					const ips = Object.keys(d.ips).map((k) => k + '=' + d.ips[k]).join(' ');
+					return { ok: true, ips: ips };
+				}, () => ({ ok: false, error: _('rpc error') }));
+			}
+
+			let cmdOptsOpt = null;
+			let presetSelEl = null;
+			function applyPreset(idx) {
+				if (!ZAPRET_PRESETS[idx]) return;
+				const val = ZAPRET_PRESETS[idx].args;
+				const widget = cmdOptsOpt ? cmdOptsOpt.getUIElement('config') : null;
+				if (widget) {
+					widget.setValue(val);
+					widget.node.dispatchEvent(new Event('change', { bubbles: true }));
+				} else {
+					const el = document.querySelector('[name*=".zapret_cmd_opts"]');
+					if (el) { el.value = val; el.dispatchEvent(new Event('change', { bubbles: true })); }
+				}
+				if (presetSelEl) presetSelEl.value = String(idx);
+			}
+
+			/* Preset picker — DummyValue, never stored; it just fills zapret_cmd_opts and
+			 * pre-selects whichever preset matches the current value. */
+			o = ss.option(form.DummyValue, '_zapret_preset', _('Strategy preset'));
+			o.render = function(option_index, section_id) {
+				const cur = (uci.get('homeproxy', 'config', 'zapret_cmd_opts') || '').trim();
+				let curIdx = -1;
+				for (let i = 0; i < ZAPRET_PRESETS.length; i++)
+					if (ZAPRET_PRESETS[i].args === cur) { curIdx = i; break; }
+				const sel = E('select', { 'class': 'cbi-input-select', 'style': 'max-width:100%' });
+				presetSelEl = sel;
+				sel.appendChild(E('option', { value: '', selected: curIdx < 0 ? '' : null },
+					curIdx < 0 ? _('— custom / select a preset —') : _('— select a preset —')));
+				/* Group into two optgroups but keep the flat index as the option value
+				 * (applyPreset / curIdx both index the flat ZAPRET_PRESETS array). */
+				const _groups = [
+					{ key: 'recommended', label: _('Recommended') },
+					{ key: 'auto',        label: _('Full-test pool') }
+				];
+				_groups.forEach((g) => {
+					const og = E('optgroup', { label: g.label });
+					ZAPRET_PRESETS.forEach((p, i) => {
+						if ((p.group || 'recommended') !== g.key) return;
+						og.appendChild(E('option', { value: String(i), selected: i === curIdx ? '' : null }, p.name));
+					});
+					if (og.children.length) sel.appendChild(og);
+				});
+				sel.addEventListener('change', function() { if (sel.value !== '') applyPreset(parseInt(sel.value)); });
+				return E('div', { 'class': 'cbi-value' }, [
+					E('label', { 'class': 'cbi-value-title' }, _('Strategy preset')),
+					E('div', { 'class': 'cbi-value-field' }, [ sel,
+						E('div', { 'class': 'cbi-value-description' }, _('Fills the strategy below. Use the tester to find one that works on your ISP. ' +
+							'Based on <a href="https://github.com/bol-van/zapret2" target="_blank">bol-van/zapret2</a> (nfqws2/blockcheck2) and ' +
+							'<a href="https://github.com/flowseal/zapret-discord-youtube" target="_blank">flowseal/zapret-discord-youtube</a> (MIT). ' +
+							'Packages by <a href="https://github.com/1andrevich/zapret2-openwrt" target="_blank">1andrevich/zapret2-openwrt</a>.')) ])
+				]);
+			};
+			o.write = function() {};
+
+			o = ss.option(form.Value, 'zapret_cmd_opts', _('Desync strategy'),
+				_('nfqws2 options applied to every flow routed to Zapret. No hostlists — the routing rules already select what is sent here. ' +
+				  'Pick a preset above or edit freely. The <code>--qnum</code>/<code>--user</code>/<code>--fwmark</code>/<code>--lua-init</code> arguments are added automatically.'));
+			o.default = ZAPRET_PRESETS[0].args;
+			o.rmempty = false;
+			cmdOptsOpt = o;
+
+			/* Strategy tester — runs the candidate on a temp queue scoped to 4 test sites,
+			 * leaving the live queue/traffic untouched (zapret_test.sh). */
+			o = ss.option(form.DummyValue, '_zapret_tester', _('Test current strategy'),
+				_('Runs the current strategy on a temporary NFQUEUE scoped to 4 test sites — ' +
+				  '<b>YouTube</b>, <b>Telegram</b>, <b>Discord</b>, <b>Speedtest.net</b> — and checks whether each TLS handshake completes. ' +
+				  'Does not touch your live connection. A site that fails here means the strategy breaks it.'));
+			o.render = function(option_index, section_id) {
+				const msgEl = E('span', { style: 'margin-left:8px; font-size:0.9em; color:gray' }, '');
+				const btn = E('button', {
+					'class': 'btn cbi-button cbi-button-action',
+					'click': ui.createHandlerFn(this, async () => {
+						/* Read the strategy the SAME way the preset picker writes it (the
+						 * widget), with a uci fallback — a raw querySelector can grab the
+						 * wrong/no input and return '' → nfqws2 runs with no desync → every
+						 * handshake is blocked → a false 0/4. The full test never had this
+						 * because it uses the preset definitions directly. */
+						const w = cmdOptsOpt ? cmdOptsOpt.getUIElement(section_id) : null;
+						let opts = (w && w.getValue() != null) ? String(w.getValue())
+							: (uci.get('homeproxy', 'config', 'zapret_cmd_opts') || '');
+						opts = opts.trim();
+						btn.disabled = true;
+						msgEl.style.color = 'gray';
+						msgEl.textContent = _('Testing...');
+						if (!opts) {
+							btn.disabled = false;
+							msgEl.style.color = 'red';
+							msgEl.textContent = _('No strategy set — pick a preset or enter options first');
+							return;
+						}
+						const r0 = await resolveHosts();
+						if (!r0.ok) {
+							btn.disabled = false;
+							msgEl.style.color = 'red';
+							msgEl.textContent = r0.error;
+							return;
+						}
+						return L.resolveDefault(callZapretTest(opts, r0.ips), {}).then((ret) => {
+							btn.disabled = false;
+							let data = {};
+							try { data = JSON.parse(ret.output || '{}'); } catch (e) {}
+							if (data.error) {
+								msgEl.style.color = 'red';
+								msgEl.textContent = data.error;
+							} else if (data.results && data.results.length) {
+								const frag = [];
+								data.results.forEach((r, i) => {
+									if (i) frag.push(document.createTextNode(' · '));
+									frag.push(E('span', {
+										style: 'font-weight:bold; color:' + (r.ok ? 'green' : '#cc3300'),
+										title: r.host + (r.ok ? (' → ' + r.tls + 's') : (' → ' + (r.reason || 'fail')))
+									}, (r.label || r.tag) + (r.ok ? ' ✓' : ' ✗')));
+								});
+								frag.push(E('span', { style: 'color:gray; margin-left:6px' }, '(' + data.ok + '/' + data.total + ')'));
+								while (msgEl.firstChild) msgEl.removeChild(msgEl.firstChild);
+								frag.forEach((n) => msgEl.appendChild(n));
+							} else {
+								msgEl.style.color = 'red';
+								msgEl.textContent = _('Test failed');
+							}
+						});
+					})
+				}, [ _('Test') ]);
+				return E('div', { 'class': 'cbi-value' }, [
+					E('label', { 'class': 'cbi-value-title' }, _('Test current strategy')),
+					E('div', { 'class': 'cbi-value-field' }, [ btn, msgEl ])
+				]);
+			};
+			o.write = function() {};
+
+			/* Full strategy test — client-driven sweep over every candidate. Page-bound:
+			 * runs only while the user is on the page, one candidate at a time through the
+			 * same isolated probe RPC, with live X/N progress, a Stop button, and a per-winner
+			 * Apply (writes that candidate into zapret_cmd_opts, like picking it in the
+			 * dropdown). Leaving the page stops the sweep; applied results persist on Save. */
+			o = ss.option(form.DummyValue, '_zapret_fulltest', _('Full strategy test'),
+				_('Tries every strategy in the list one by one on a temporary NFQUEUE — your live connection is untouched — ' +
+				  'and shows which pass. Stay on this page while it runs; leaving stops it. ' +
+				  'Press <b>Apply</b> on any passing strategy to select it, then Save &amp; Apply.'));
+			o.render = function(option_index, section_id) {
+				let running = false, stop = false;
+				const runBtn  = E('button', { 'class': 'btn cbi-button cbi-button-action' }, [ _('Run full test') ]);
+				const stopBtn = E('button', { 'class': 'btn cbi-button cbi-button-negative', style: 'margin-left:6px; display:none' }, [ _('Stop') ]);
+				const prog = E('span', { style: 'margin-left:8px; font-size:0.9em; color:gray' }, '');
+				const list = E('div', { style: 'margin-top:8px' });
+
+				function addRow(p, idx, data) {
+					const ok = (data && data.ok) ? data.ok : 0;
+					const total = (data && data.total) ? data.total : 0;
+					const err = data && data.error;
+					const pass = ok > 0 && !err;
+					const r = E('div', { style: 'padding:2px 0; font-size:0.9em' });
+					r.appendChild(E('span', { style: 'font-weight:bold; color:' + (pass ? 'green' : '#999') }, pass ? '✓ ' : '✗ '));
+					r.appendChild(E('span', {}, p.name));
+					r.appendChild(E('span', { style: 'color:gray; margin-left:6px' }, err ? err : ('(' + ok + '/' + total + ')')));
+					if (pass) {
+						const ap = E('a', { href: '#', style: 'margin-left:10px' }, _('Apply'));
+						ap.addEventListener('click', function(ev) {
+							ev.preventDefault();
+							applyPreset(idx);
+							prog.style.color = 'green';
+							prog.textContent = _('Applied: %s — now Save & Apply').format(p.name);
+						});
+						r.appendChild(ap);
+					}
+					list.appendChild(r);
+				}
+
+				async function runAll() {
+					running = true; stop = false;
+					runBtn.disabled = true; stopBtn.disabled = false; stopBtn.style.display = '';
+					while (list.firstChild) list.removeChild(list.firstChild);
+					/* Resolve the test hosts ONCE up front and reuse the IPs for every
+					 * candidate. If DNS isn't ready (Apply just restarted it), stop with
+					 * one clear message instead of grinding out 36 failures. */
+					prog.style.color = 'gray';
+					prog.textContent = _('Resolving test hosts…');
+					const r0 = await resolveHosts();
+					if (!r0.ok) {
+						prog.style.color = '#cc3300';
+						prog.textContent = r0.error;
+						runBtn.disabled = false; stopBtn.style.display = 'none'; running = false;
+						return;
+					}
+					const N = ZAPRET_PRESETS.length;
+					let passed = 0;
+					for (let i = 0; i < N; i++) {
+						if (stop) break;
+						const p = ZAPRET_PRESETS[i];
+						prog.style.color = 'gray';
+						prog.textContent = _('Testing %d/%d: %s').format(i + 1, N, p.name);
+						let data = {};
+						try {
+							const ret = await callZapretTest(p.args, r0.ips);
+							data = JSON.parse(ret.output || '{}');
+						} catch (e) { data = { error: _('rpc error') }; }
+						if (data && data.ok > 0 && !data.error) passed++;
+						addRow(p, i, data);
+					}
+					prog.style.color = stop ? '#cc3300' : 'green';
+					prog.textContent = (stop ? _('Stopped') : _('Done')) + ' — ' + _('%d/%d passed').format(passed, ZAPRET_PRESETS.length);
+					runBtn.disabled = false; stopBtn.style.display = 'none'; running = false;
+				}
+
+				runBtn.addEventListener('click', function() { if (!running) runAll(); });
+				stopBtn.addEventListener('click', function() { stop = true; stopBtn.disabled = true; });
+
+				return E('div', { 'class': 'cbi-value' }, [
+					E('label', { 'class': 'cbi-value-title' }, _('Full strategy test')),
+					E('div', { 'class': 'cbi-value-field' }, [ runBtn, stopBtn, prog, list ])
+				]);
+			};
+			o.write = function() {};
+
+			/* Discord voice opt-in: Discord voice is raw RTP/STUN UDP to bare IPs with no
+			 * sniffable domain, so the hostlist/routing can't catch it. This adds a port-based
+			 * rule (UDP 19294-19344, 50000-50100) sending it to Zapret. Only emitted when both
+			 * Zapret and this switch are on; off = those ports follow the normal call rules. */
+			o = ss.option(form.Flag, 'zapret_voice', _('Discord calls via Zapret'),
+				_('Route Discord\'s voice UDP ports (19294–19344, 50000–50100) through Zapret. ' +
+				  'Discord voice has no domain to match, so it can only be selected by port. ' +
+				  'Leave off if your VPN already handles calls.'));
+			o.default = '0';
+			o.rmempty = false;
+		})();
+
+		/* Zapret settings end */
 
 		return m.render();
 	}

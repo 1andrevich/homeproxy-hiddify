@@ -56,16 +56,14 @@ const cfgname = 'homeproxy';
 const uci = cursor();
 uci.load(cfgname);
 
-const routing_mode = uci.get(cfgname, 'config', 'routing_mode') || 'bypass_mainland_china';
-let outbound_node, outbound_udp_node, china_dns_server, bypass_cn_traffic;
+const routing_mode = uci.get(cfgname, 'config', 'routing_mode') || 'proxy_banned_ru';
+let outbound_node, outbound_udp_node;
 
 if (routing_mode !== 'custom') {
 	outbound_node = uci.get(cfgname, 'config', 'main_node') || 'nil';
 	outbound_udp_node = uci.get(cfgname, 'config', 'main_udp_node') || 'nil';
-	china_dns_server = uci.get(cfgname, 'config', 'china_dns_server');
 } else {
 	outbound_node = uci.get(cfgname, 'routing', 'default_outbound') || 'nil';
-	bypass_cn_traffic = uci.get(cfgname, 'routing', 'bypass_cn_traffic') || '0';
 }
 
 let routing_port = uci.get(cfgname, 'config', 'routing_port');
@@ -79,12 +77,28 @@ let self_mark, redirect_port,
     tproxy_port, tproxy_mark,
     tun_name, tun_mark;
 
+/* ByeDPI runs as root (needed for TCP_MD5SIG etc.) but under a dedicated group, so its
+ * egress can be excluded from the redirect by socket group (skgid) to break the proxy
+ * loop — ciadpi has no fwmark option, and root traffic can't be told apart by skuid. */
+const byedpi_enabled = uci.get(cfgname, 'config', 'byedpi_enabled') || '0';
+const byedpi_gid = uci.get(cfgname, 'infra', 'byedpi_gid') || '8181';
+
+/* zapret: sing-box's `zapret-out` direct outbound stamps egress with zapret_mark (a
+ * routing_mark that OVERRIDES default_mark). That mark must (a) escape the redirect loop
+ * like self_mark does, and (b) be steered into NFQUEUE so nfqws can desync the handshake.
+ * nfqws reinjects its fake packets carrying its own desync mark (0x40000000) — those must
+ * also escape the redirect, and must NOT be re-queued. */
+const zapret_enabled = uci.get(cfgname, 'config', 'zapret_enabled') || '0';
+const zapret_mark = uci.get(cfgname, 'config', 'zapret_mark') || '110';
+const zapret_qnum = uci.get(cfgname, 'config', 'zapret_qnum') || '200';
+const zapret_desync_mark = '0x40000000';   /* nfqws DESYNC_MARK (its reinjected fakes) */
+
 if (match(proxy_mode, /redirect/)) {
 	self_mark = uci.get(cfgname, 'infra', 'self_mark') || '100';
 	redirect_port = uci.get(cfgname, 'infra', 'redirect_port') || '5331';
 }
 if (match(proxy_mode, /tproxy/))
-	if (outbound_udp_node !== 'nil' || routing_mode === 'custom') {
+	if (outbound_udp_node !== 'nil' || routing_mode === 'custom' || routing_mode === 'proxy_banned_ru') {
 		tproxy_port = uci.get(cfgname, 'infra', 'tproxy_port') || '5332';
 		tproxy_mark = resolve_mark(uci.get(cfgname, 'infra', 'tproxy_mark') || '101');
 	}
@@ -162,43 +176,6 @@ set homeproxy_local_addr_v6 {
 }
 {% endif %}
 
-{% if (routing_mode === 'gfwlist'): %}
-set homeproxy_gfw_list_v4 {
-	type ipv4_addr
-	flags interval
-	auto-merge
-}
-{% if (ipv6_support === '1'): %}
-set homeproxy_gfw_list_v6 {
-	type ipv6_addr
-	flags interval
-	auto-merge
-}
-{% endif /* ipv6_support */ %}
-{% elif (match(routing_mode, /mainland_china/) || bypass_cn_traffic === '1'): %}
-set homeproxy_mainland_addr_v4 {
-	type ipv4_addr
-	flags interval
-	auto-merge
-	elements = {
-		{% for (let cnip4 in split(trim(readfile(resources_dir + '/china_ip4.txt')), /[\r\n]/)): %}
-		{{ cnip4 }},
-		{% endfor %}
-	}
-}
-{% if ((ipv6_support === '1') || china_dns_server): %}
-set homeproxy_mainland_addr_v6 {
-	type ipv6_addr
-	flags interval
-	auto-merge
-	elements = {
-		{% for (let cnip6 in split(trim(readfile(resources_dir + '/china_ip6.txt')), /[\r\n]/)): %}
-		{{ cnip6 }},
-		{% endfor %}
-	}
-}
-{% endif /* ipv6_support */ %}
-{% endif /* routing_mode */ %}
 
 {# WAN ACL addresses #}
 set homeproxy_wan_proxy_addr_v4 {
@@ -311,6 +288,10 @@ chain homeproxy_redirect_lanac {
 
 chain homeproxy_redirect {
 	meta mark {{ self_mark }} counter return
+	{% if (zapret_enabled === '1'): %}
+	meta mark {{ zapret_mark }} counter return
+	meta mark and {{ zapret_desync_mark }} != 0 counter return
+	{% endif /* zapret_enabled */ %}
 
 	ip daddr @homeproxy_wan_proxy_addr_v4 counter goto homeproxy_redirect_proxy_port
 	{% if (ipv6_support === '1'): %}
@@ -339,22 +320,6 @@ chain homeproxy_redirect {
 	ip6 daddr @homeproxy_wan_direct_addr_v6 counter return
 	{% endif /* ipv6_support */ %}
 
-	{% if (routing_mode === 'gfwlist'): %}
-	ip daddr != @homeproxy_gfw_list_v4 counter return
-	{% if (ipv6_support === '1'): %}
-	ip6 daddr != @homeproxy_gfw_list_v6 counter return
-	{% endif /* ipv6_support */ %}
-	{% elif (routing_mode === 'bypass_mainland_china' || bypass_cn_traffic === '1'): %}
-	ip daddr @homeproxy_mainland_addr_v4 counter return
-	{% if (ipv6_support === '1'): %}
-	ip6 daddr @homeproxy_mainland_addr_v6 counter return
-	{% endif /* ipv6_support */ %}
-	{% elif (routing_mode === 'proxy_mainland_china'): %}
-	ip daddr != @homeproxy_mainland_addr_v4 counter return
-	{% if (ipv6_support === '1'): %}
-	ip6 daddr != @homeproxy_mainland_addr_v6 counter return
-	{% endif /* ipv6_support */ %}
-	{% endif /* routing_mode */ %}
 
 	{% if (!isEmpty(control_info.lan_gaming_mode_ipv4_ips)): %}
 	ip saddr {{ array_to_nftarr(control_info.lan_gaming_mode_ipv4_ips) }} counter goto homeproxy_redirect_proxy
@@ -371,12 +336,31 @@ chain homeproxy_redirect {
 
 chain homeproxy_output_redir {
 	type nat hook output priority filter -105; policy accept
+	{% if (byedpi_enabled === '1'): %}
+	meta skgid {{ byedpi_gid }} counter return
+	{% endif %}
 	meta nfproto { {{ (ipv6_support === '1') ? 'ipv4, ipv6' : 'ipv4' }} } meta l4proto tcp jump homeproxy_redirect
 }
 {% endif %}
 
+{# NFQUEUE chain: feed ALL Zapret-marked (mark 110) flows to nfqws2 — any port, TCP
+   and UDP — and let the strategy's own --filter-tcp/--filter-udp profiles decide what
+   to desync (the rest passes through via `bypass`). This mirrors how a list→outbound
+   rule routes all matching traffic: once sing-box marks a flow for zapret-out, the
+   queue feeds it, regardless of port (so discord.media on 2053/8443, voice UDP, QUIC,
+   etc. all work with no per-port firewall rules). `ct original packets 1-12` caps it
+   to each flow's handshake; nfqws's reinjected fakes carry DESYNC_MARK (not mark 110)
+   so they are never re-queued. #}
+{% if (zapret_enabled === '1'): %}
+chain homeproxy_zapret_queue {
+	type filter hook postrouting priority mangle; policy accept;
+	meta mark {{ zapret_mark }} meta l4proto tcp ct original packets 1-12 counter queue num {{ zapret_qnum }} bypass
+	meta mark {{ zapret_mark }} meta l4proto udp ct original packets 1-12 counter queue num {{ zapret_qnum }} bypass
+}
+{% endif %}
+
 {# UDP tproxy #}
-{% if (match(proxy_mode, /tproxy/) && (outbound_udp_node !== 'nil' || routing_mode === 'custom')): %}
+{% if (match(proxy_mode, /tproxy/) && (outbound_udp_node !== 'nil' || routing_mode === 'custom' || routing_mode === 'proxy_banned_ru')): %}
 chain homeproxy_mangle_tproxy {
 	meta l4proto udp meta mark set {{ tproxy_mark }} tproxy ip to 127.0.0.1:{{ tproxy_port }} counter accept
 	{% if (ipv6_support === '1'): %}
@@ -460,26 +444,6 @@ chain homeproxy_mangle_prerouting {
 	ip6 daddr @homeproxy_wan_direct_addr_v6 counter return
 	{% endif /* ipv6_support */ %}
 
-	{% if (routing_mode === 'gfwlist'): %}
-	ip daddr != @homeproxy_gfw_list_v4 counter return
-	{% if (ipv6_support === '1'): %}
-	ip6 daddr != @homeproxy_gfw_list_v6 counter return
-	{% endif /* ipv6_support */ %}
-	udp dport { 80, 443 } counter reject comment "!{{ cfgname }}: Fuck you QUIC"
-	{% elif (routing_mode === 'bypass_mainland_china' || bypass_cn_traffic === '1'): %}
-	ip daddr @homeproxy_mainland_addr_v4 counter return
-	{% if (ipv6_support === '1'): %}
-	ip6 daddr @homeproxy_mainland_addr_v6 counter return
-	{% endif /* ipv6_support */ %}
-	{% if (routing_mode !== 'custom'): %}
-	udp dport { 80, 443 } counter reject comment "!{{ cfgname }}: Fuck you QUIC"
-	{% endif /* routing_mode */ %}
-	{% elif (routing_mode === 'proxy_mainland_china'): %}
-	ip daddr != @homeproxy_mainland_addr_v4 counter return
-	{% if (ipv6_support === '1'): %}
-	ip6 daddr != @homeproxy_mainland_addr_v6 counter return
-	{% endif /* ipv6_support */ %}
-	{% endif /* routing_mode */ %}
 
 	{% if (!isEmpty(control_info.lan_gaming_mode_ipv4_ips)): %}
 	ip saddr {{ array_to_nftarr(control_info.lan_gaming_mode_ipv4_ips) }} counter goto homeproxy_mangle_tproxy
@@ -495,7 +459,14 @@ chain homeproxy_mangle_prerouting {
 }
 
 chain homeproxy_mangle_output {
+	{% if (byedpi_enabled === '1'): %}
+	meta skgid {{ byedpi_gid }} counter return
+	{% endif %}
 	meta mark {{ self_mark }} counter return
+	{% if (zapret_enabled === '1'): %}
+	meta mark {{ zapret_mark }} counter return
+	meta mark and {{ zapret_desync_mark }} != 0 counter return
+	{% endif /* zapret_enabled */ %}
 
 	ip daddr @homeproxy_wan_proxy_addr_v4 counter goto homeproxy_mangle_mark
 	{% if (ipv6_support === '1'): %}
@@ -512,22 +483,6 @@ chain homeproxy_mangle_output {
 	ip6 daddr @homeproxy_wan_direct_addr_v6 counter return
 	{% endif /* ipv6_support */ %}
 
-	{% if (routing_mode === 'gfwlist'): %}
-	ip daddr != @homeproxy_gfw_list_v4 counter return
-	{% if (ipv6_support === '1'): %}
-	ip6 daddr != @homeproxy_gfw_list_v6 counter return
-	{% endif /* ipv6_support */ %}
-	{% elif (routing_mode === 'bypass_mainland_china' || bypass_cn_traffic === '1'): %}
-	ip daddr @homeproxy_mainland_addr_v4 counter return
-	{% if (ipv6_support === '1'): %}
-	ip6 daddr @homeproxy_mainland_addr_v6 counter return
-	{% endif /* ipv6_support */ %}
-	{% elif (routing_mode === 'proxy_mainland_china'): %}
-	ip daddr != @homeproxy_mainland_addr_v4 counter return
-	{% if (ipv6_support === '1'): %}
-	ip6 daddr != @homeproxy_mainland_addr_v6 counter return
-	{% endif /* ipv6_support */ %}
-	{% endif /* routing_mode */ %}
 
 	counter goto homeproxy_mangle_mark
 }
@@ -621,26 +576,6 @@ chain homeproxy_mangle_tun {
 	ip6 daddr {{ array_to_nftarr(control_info.wan_direct_ipv6_ips) }} counter return
 	{% endif /* wan_direct_ipv6_ips */ %}
 
-	{% if (routing_mode === 'gfwlist'): %}
-	ip daddr != @homeproxy_gfw_list_v4 counter return
-	{% if (ipv6_support === '1'): %}
-	ip6 daddr != @homeproxy_gfw_list_v6 counter return
-	{% endif /* ipv6_support */ %}
-	udp dport { 80, 443 } counter reject comment "!{{ cfgname }}: Fuck you QUIC"
-	{% elif (routing_mode === 'bypass_mainland_china' || bypass_cn_traffic === '1'): %}
-	ip daddr @homeproxy_mainland_addr_v4 counter return
-	{% if (ipv6_support === '1'): %}
-	ip6 daddr @homeproxy_mainland_addr_v6 counter return
-	{% endif /* ipv6_support */ %}
-	{% if (routing_mode !== 'custom'): %}
-	udp dport { 80, 443 } counter reject comment "!{{ cfgname }}: Fuck you QUIC"
-	{% endif /* routing_mode */ %}
-	{% elif (routing_mode === 'proxy_mainland_china'): %}
-	ip daddr != @homeproxy_mainland_addr_v4 counter return
-	{% if (ipv6_support === '1'): %}
-	ip6 daddr != @homeproxy_mainland_addr_v6 counter return
-	{% endif /* ipv6_support */ %}
-	{% endif /* routing_mode */ %}
 
 	{% if (!isEmpty(control_info.lan_gaming_mode_ipv4_ips)): %}
 	ip saddr {{ array_to_nftarr(control_info.lan_gaming_mode_ipv4_ips) }} counter meta mark set {{ tun_mark }}

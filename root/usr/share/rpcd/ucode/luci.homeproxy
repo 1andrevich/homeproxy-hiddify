@@ -14,12 +14,68 @@ function shellquote(s) {
 	return `'${replace(s, "'", "'\\''")}'`;
 }
 
+/* Optional GitHub mirror (uci homeproxy.config.github_mirror), used ONLY as a
+ * FALLBACK: gh_fetch tries GitHub first and swaps to the mirror only if GitHub
+ * fails — a healthy GitHub is never bypassed. Mirrors core_mgmt.uc's helpers. */
+function gh_mirror_base() {
+	let base = null;
+	const fd = popen('uci -q get homeproxy.config.github_mirror 2>/dev/null');
+	if (fd) { base = trim(fd.read('all')); fd.close(); }
+	return (base && length(base)) ? replace(base, /\/+$/, '') : null;
+}
+
+function gh_fetch(url, dest, timeout_ms) {
+	let rc = system(`wget -qO ${shellquote(dest)} --timeout=15 ${shellquote(url)} 2>/dev/null`, timeout_ms);
+	if (rc !== 0) {
+		const base = gh_mirror_base();
+		const m = base ? match(url, /^https:\/\/github\.com(\/[^\/]+\/[^\/]+\/releases\/.+)$/) : null;
+		if (m)
+			rc = system(`wget -qO ${shellquote(dest)} --timeout=15 ${shellquote(base + m[1])} 2>/dev/null`, timeout_ms);
+	}
+	return rc;
+}
+
 function hasKernelModule(kmod) {
-	return (system(sprintf('[ -e "/lib/modules/$(uname -r)"/%s ]', shellquote(kmod))) === 0);
+	const modname = replace(replace(kmod, /\.ko$/, ''), /-/g, '_');
+	return !!access('/sys/module/' + modname);
 }
 
 const HP_DIR = '/etc/homeproxy';
 const RUN_DIR = '/var/run/homeproxy';
+
+function get_active_core() {
+	/* Mirror init.d / generate_client.uc precedence: honor preferred_core when that core
+	 * is installed, else auto (hiddify-core first, then sing-box). Otherwise file presence
+	 * alone would report the wrong core when both are installed. */
+	let preferred = null;
+	let pfd = popen('uci get homeproxy.config.preferred_core 2>/dev/null');
+	if (pfd) { preferred = trim(pfd.read('all')); pfd.close(); }
+
+	const have_hiddify = access('/usr/bin/hiddify-core');
+	const have_singbox = access('/usr/bin/sing-box');
+	const HID = { path: '/usr/bin/hiddify-core', type: 'hiddify', proc_name: 'hiddify-core' };
+	const SB  = { path: '/usr/bin/sing-box',     type: 'singbox', proc_name: 'sing-box' };
+
+	if (preferred === 'hiddify' && have_hiddify) return HID;
+	if (preferred === 'singbox' && have_singbox) return SB;
+	if (have_hiddify) return HID;
+	if (have_singbox) return SB;
+
+	let custom_path = null;
+	let custom_type = null;
+	let fd = popen('uci get homeproxy.config.custom_core_path 2>/dev/null');
+	if (fd) { custom_path = trim(fd.read('all')); fd.close(); }
+	fd = popen('uci get homeproxy.config.custom_core_type 2>/dev/null');
+	if (fd) { custom_type = trim(fd.read('all')); fd.close(); }
+	if (length(custom_path) > 0 && access(custom_path))
+		return {
+			path:      custom_path,
+			type:      length(custom_type) > 0 ? custom_type : 'singbox',
+			proc_name: custom_type === 'hiddify' ? 'hiddify-core' : 'sing-box',
+			custom:    true
+		};
+	return null;
+}
 
 const methods = {
 	acllist_read: {
@@ -133,7 +189,7 @@ const methods = {
 				url = 'https://www.google.com';
 				break;
 			case 'yandex':
-				url = 'https://www.yandex.ru';
+				url = 'https://ya.ru';
 				break;
 			case 'speedtest':
 				url = 'https://www.speedtest.net';
@@ -216,48 +272,73 @@ const methods = {
 		call: function() {
 			let features = {};
 
-			const fd = popen('/usr/bin/hiddify-core version');
-			if (fd) {
-				const out = fd.read('all');
-				fd.close();
+				const core = get_active_core();
+				const core_binary = core ? core.path : null;
+				if (core) {
+					features.core_type = core.type;
+					if (core.custom)
+						features.core_custom = true;
+				}
 
-				const verMatch = match(out, /hiddify-core version v?(\S+)/);
-				if (verMatch)
-					features.version = verMatch[1];
+				if (core_binary) {
+					const fd = popen(core_binary + ' version');
+					if (fd) {
+						const out = fd.read('all');
+						fd.close();
 
-				const tagsMatch = match(out, /\nTags: ([^\n]+)/);
-				if (tagsMatch)
-					for (let tag in split(tagsMatch[1], ','))
-						features[trim(tag)] = true;
-			}
+						const verMatch = match(out, / version v?(\S+)/);
+						if (verMatch)
+							features.version = verMatch[1];
 
-			features.hp_has_ip_full = access('/usr/libexec/ip-full');
-			features.hp_has_tcp_brutal = hasKernelModule('brutal.ko');
-			features.hp_has_tproxy = hasKernelModule('nft_tproxy.ko') || access('/etc/modules.d/nft-tproxy');
-			features.hp_has_tun = hasKernelModule('tun.ko') || access('/etc/modules.d/30-tun');
+						const tagsMatch = match(out, /\nTags: ([^\n]+)/);
+						if (tagsMatch)
+							for (let tag in split(tagsMatch[1], ','))
+								features[trim(tag)] = true;
+					}
+				}
 
-			return features;
+				features.hp_has_ip_full = !!access('/usr/libexec/ip-full');
+				features.hp_has_tcp_brutal = hasKernelModule('brutal.ko');
+				features.hp_has_tproxy = hasKernelModule('nft_tproxy.ko') || !!access('/etc/modules.d/nft-tproxy');
+				features.hp_has_tun = hasKernelModule('tun.ko') || !!access('/etc/modules.d/30-tun');
+
+				features.available_cores = [];
+				if (access('/usr/bin/hiddify-core')) push(features.available_cores, 'hiddify');
+				if (access('/usr/bin/sing-box'))     push(features.available_cores, 'singbox');
+
+				return features;
 		}
 	},
 
-	resources_get_version: {
-		args: { type: 'type' },
+	detect_custom_core: {
+		args: { path: 'path' },
 		call: function(req) {
-			const version = trim(readfile(`${HP_DIR}/resources/${req.args?.type}.ver`));
-			return { version: version, error: error() };
+			const path = req.args?.path;
+			if (!path || length(path) === 0)
+				return { result: false, error: 'No path provided' };
+			if (!access(path))
+				return { result: false, error: 'File not found: ' + path };
+			let out = '';
+			let fd = popen(shellquote(path) + ' version 2>&1');
+			if (fd) { out = trim(fd.read('all')); fd.close(); }
+			if (length(out) === 0)
+				return { result: false, error: 'Binary produced no output' };
+			let core_type = null;
+			if (match(out, /hiddify/))
+				core_type = 'hiddify';
+			else if (match(out, /sing.box|singbox/))
+				core_type = 'singbox';
+			if (!core_type)
+				return { result: false, error: 'Unknown binary type. Output: ' + substr(out, 0, 120) };
+			const verMatch = match(out, / version v?(\S+)/);
+			const version = verMatch ? verMatch[1] : null;
+			system('uci set homeproxy.config.custom_core_path=' + shellquote(path));
+			system('uci set homeproxy.config.custom_core_type=' + shellquote(core_type));
+			system('uci commit homeproxy');
+			return { result: true, type: core_type, version: version };
 		}
 	},
-	resources_update: {
-		args: { type: 'type' },
-		call: function(req) {
-			if (req.args?.type) {
-				const type = shellquote(req.args?.type);
-				const exit_code = system(`${HP_DIR}/scripts/update_resources.sh ${type}`);
-				return { status: exit_code };
-			} else
-				return { status: 255, error: 'illegal type' };
-		}
-	},
+
 	clash_ip_info: {
 		call: function() {
 			const fd = popen('wget -qO- --timeout=3 http://127.0.0.1:9090/proxies');
@@ -283,23 +364,46 @@ const methods = {
 			/* Direct IP: from direct-out node */
 			const directEntry = lastHistory('direct-out');
 
-			/* Proxy IP: active node of the first URLTest/Fallback group */
+			/* Proxy IP: follow GLOBAL.now to the active leaf node */
 			let proxyEntry = null;
 			let proxyNodeName = null;
-			for (let name in proxies) {
-				const p = proxies[name];
-				if (name === 'GLOBAL')
-					continue;
-				if ((p.type === 'URLTest' || p.type === 'Fallback') && p.now) {
-					proxyNodeName = p.now;
-					proxyEntry = lastHistory(p.now);
-					break;
+			const nonProxy = (name) => name === 'direct-out' || name === 'block-out' || !name;
+			const globalNow = proxies['GLOBAL']?.now;
+			if (globalNow && proxies[globalNow] && !nonProxy(globalNow)) {
+				const g = proxies[globalNow];
+				if (g.type === 'URLTest' || g.type === 'Fallback' || g.type === 'Selector')
+					proxyNodeName = g.now;
+				else
+					proxyNodeName = globalNow;
+			}
+			/* Fallback: first URLTest/Fallback/Selector group */
+			if (!proxyNodeName) {
+				for (let name in proxies) {
+					if (name === 'GLOBAL') continue;
+					const p = proxies[name];
+					if ((p.type === 'URLTest' || p.type === 'Fallback' || p.type === 'Selector') && p.now) {
+						proxyNodeName = p.now;
+						break;
+					}
 				}
 			}
+			/* Last fallback: main-out (route-based modes use it directly) */
+			if (!proxyNodeName && proxies['main-out'])
+				proxyNodeName = 'main-out';
+			if (proxyNodeName)
+				proxyEntry = lastHistory(proxyNodeName);
+
+			const toEntry = (h, name) => h ? {
+				ip:      h.ipinfo?.ip,
+				country: h.ipinfo?.country_code,
+				org:     h.ipinfo?.org,
+				delay:   h.delay,
+				node:    name || null
+			} : null;
 
 			return {
-				direct: directEntry ? { ip: directEntry.ipinfo?.ip, delay: directEntry.delay } : null,
-				proxy:  proxyEntry  ? { ip: proxyEntry.ipinfo?.ip,  delay: proxyEntry.delay, node: proxyNodeName } : null
+				direct: toEntry(directEntry, null),
+				proxy:  toEntry(proxyEntry, proxyNodeName)
 			};
 		}
 	},
@@ -325,6 +429,1057 @@ const methods = {
 					groups[name] = { type: p.type, now: p.now, all: p.all };
 			}
 			return { groups };
+		}
+	},
+	clash_active_node: {
+		args: { tag: 'tag' },
+		call: function(req) {
+			const fd = popen('wget -qO- --timeout=3 http://127.0.0.1:9090/proxies');
+			if (!fd)
+				return { error: 'failed to run wget' };
+			const raw = trim(fd.read('all'));
+			fd.close();
+			if (!length(raw))
+				return { error: 'Clash API not reachable' };
+			let data;
+			try {
+				data = json(raw);
+			} catch(e) {
+				return { error: 'invalid JSON from Clash API' };
+			}
+			const proxies = data?.proxies || {};
+
+			const lastDelay = (name) => {
+				const h = proxies[name]?.history;
+				return (h && length(h)) ? h[length(h) - 1].delay : null;
+			};
+
+			/* Focused query: resolve a specific group/leaf (e.g. 'main-udp-out' for the
+			 * dedicated UDP node) instead of following GLOBAL. */
+			const wantTag = req?.args?.tag;
+			if (wantTag) {
+				const p = proxies[wantTag];
+				if (!p)
+					return { error: 'no active proxy node' };
+				if ((p.type === 'URLTest' || p.type === 'Fallback' || p.type === 'Selector') && p.now)
+					return { node: p.now, type: proxies[p.now]?.type || null, delay: lastDelay(p.now), group: wantTag, group_type: p.type };
+				return { node: wantTag, type: p.type || null, delay: lastDelay(wantTag), group: null, group_type: null };
+			}
+
+			/* Follow GLOBAL -> proxy group -> leaf node */
+			let groupName = null;
+			let groupType = null;
+			let nodeName  = null;
+
+			const nonProxy = (name) => name === 'direct-out' || name === 'block-out' || !name;
+			const globalNow = proxies['GLOBAL']?.now;
+			if (globalNow && proxies[globalNow] && !nonProxy(globalNow)) {
+				const g = proxies[globalNow];
+				if (g.type === 'URLTest' || g.type === 'Fallback' || g.type === 'Selector') {
+					groupName = globalNow;
+					groupType = g.type;
+					nodeName  = g.now;
+				} else {
+					/* GLOBAL points directly to a leaf node */
+					nodeName = globalNow;
+				}
+			}
+
+			/* Fallback: first URLTest/Fallback/Selector group */
+			if (!nodeName) {
+				for (let name in proxies) {
+					if (name === 'GLOBAL') continue;
+					const p = proxies[name];
+					if ((p.type === 'URLTest' || p.type === 'Fallback' || p.type === 'Selector') && p.now) {
+						groupName = name;
+						groupType = p.type;
+						nodeName  = p.now;
+						break;
+					}
+				}
+			}
+
+			/* Last fallback: main-out (route-based modes) */
+			if (!nodeName && proxies['main-out'])
+				nodeName = 'main-out';
+
+			if (!nodeName)
+				return { error: 'no active proxy node' };
+
+			return {
+				node:       nodeName,
+				type:       proxies[nodeName]?.type || null,
+				delay:      lastDelay(nodeName),
+				group:      groupName,
+				group_type: groupType
+			};
+		}
+	},
+
+	diag_core_check: {
+		call: function() {
+			const core = get_active_core();
+			const binary = core ? core.path : null;
+			const proc_name = core ? core.proc_name : 'sing-box';
+
+			const result = {
+				hiddify_installed: !!access('/usr/bin/hiddify-core'),
+				singbox_installed: !!access('/usr/bin/sing-box'),
+				binary:            binary,
+				version:           null,
+				running:           false,
+				pid:               null,
+				byedpi_installed:  !!access('/usr/bin/ciadpi'),
+				byedpi_running:    false,
+				byedpi_pid:        null,
+				zapret_installed:  !!access('/opt/zapret2/nfq2/nfqws2'),
+				zapret_running:    false,
+				zapret_pid:        null,
+				listen_ports:      []
+			};
+
+			/* ByeDPI (ciadpi) runs independently of the core, so detect it regardless.
+			 * Use pidof, not `pgrep -x` — BusyBox pgrep -x matches argv0 (/usr/bin/ciadpi),
+			 * not the bare name, so it misses the process. */
+			let bfd = popen('pidof ciadpi 2>/dev/null');
+			if (bfd) {
+				const bpid = trim(bfd.read('all'));
+				bfd.close();
+				result.byedpi_running = length(bpid) > 0;
+				result.byedpi_pid = length(bpid) > 0 ? bpid : null;
+			}
+
+			/* Zapret (nfqws2) is the homeproxy-launched packet mangler — detect like ByeDPI. */
+			let zfd = popen('pidof nfqws2 2>/dev/null');
+			if (zfd) {
+				const zpid = trim(zfd.read('all'));
+				zfd.close();
+				result.zapret_running = length(zpid) > 0;
+				result.zapret_pid = length(zpid) > 0 ? zpid : null;
+			}
+
+			if (!binary)
+				return result;
+
+			let fd = popen(binary + ' version 2>&1');
+			if (fd) { result.version = trim(fd.read('all')); fd.close(); }
+
+			fd = popen('pidof ' + shellquote(proc_name) + ' 2>/dev/null');
+			if (fd) {
+				const pid = trim(fd.read('all'));
+				fd.close();
+				result.running = length(pid) > 0;
+				result.pid = length(pid) > 0 ? pid : null;
+			}
+
+			fd = popen('netstat -tlnup 2>/dev/null');
+			if (fd) {
+				const ports = [];
+				for (let line = fd.read('line'); length(line); line = fd.read('line')) {
+					if (match(line, /hiddify|sing.box|ciadpi/))
+						push(ports, trim(line));
+				}
+				fd.close();
+				result.listen_ports = ports;
+			}
+
+			return result;
+		}
+	},
+
+	diag_config_check: {
+		call: function() {
+			const core = get_active_core();
+			const binary = core ? core.path : null;
+			const config_path = RUN_DIR + '/hiddify-c.json';
+
+			if (!binary)
+				return { valid: false, check_output: 'No core binary found', stats: {} };
+
+			const stat = lstat(config_path);
+			if (!stat)
+				return { valid: false, check_output: 'Config not found: ' + config_path, stats: {} };
+
+			/* JSON parse first — it's the validity signal for cores without a `check` command */
+			let stats = { outbounds: 0, rules: 0, inbounds: 0, dns_servers: 0 };
+			let parse_ok = false;
+			const content = readfile(config_path);
+			if (content) {
+				try {
+					const cfg = json(content);
+					stats.outbounds    = length(cfg.outbounds || []);
+					stats.rules        = length((cfg.route || {}).rules || []);
+					stats.inbounds     = length(cfg.inbounds || []);
+					stats.dns_servers  = length(((cfg.dns || {}).servers) || []);
+					parse_ok = true;
+				} catch(e) {}
+			}
+
+			let valid, check_output;
+			if (core.type === 'singbox') {
+				/* sing-box has a real config validator */
+				let fd = popen(binary + ' check -c ' + shellquote(config_path) + ' 2>&1');
+				if (fd) { check_output = trim(fd.read('all')); fd.close(); }
+				valid = (system(binary + ' check -c ' + shellquote(config_path) + ' >/dev/null 2>&1') === 0);
+			} else {
+				/* hiddify-core (HiddifyCli) has no `check` subcommand — fall back to JSON parse */
+				valid = parse_ok;
+				check_output = parse_ok
+					? 'Config parses (JSON OK). Deep validation unavailable — hiddify-core has no "check" command.'
+					: 'Config is not valid JSON.';
+			}
+
+			return {
+				valid:        valid,
+				check_output: check_output,
+				size_bytes:   stat.size,
+				stats:        stats
+			};
+		}
+	},
+
+	diag_dns_ru: {
+		call: function() {
+			let fd = popen('uci get homeproxy.config.routing_mode 2>/dev/null');
+			if (!fd) return { skip: true };
+			const mode = trim(fd.read('all'));
+			fd.close();
+
+			/* The DNS test runs in every selective mode. Region is data: the resolver
+			 * tag and the domestic anchor domain (must be in the region's geosite so it
+			 * routes to the region resolver) differ; the secure-dns test is shared. */
+			const REGION_DIAG = {
+				proxy_banned_ru: { tag: 'russia-dns', label: 'Russia', domain: 'mail.ru' },
+				bypass_cn:       { tag: 'region-dns', label: 'China',  domain: 'baidu.com' },
+				bypass_ir:       { tag: 'region-dns', label: 'Iran',   domain: 'aparat.com' }
+			};
+			const rd = REGION_DIAG[mode];
+			if (!rd) return { skip: true };
+
+			/* Get the region resolver + secure-dns server address from running config */
+			const content = readfile(RUN_DIR + '/hiddify-c.json');
+			if (!content) return { error: 'Config not found — is the service running?' };
+			let cfg;
+			try { cfg = json(content); } catch(e) { return { error: 'Config parse error' }; }
+
+			let region_server = null;
+			let secure_server = null;
+			const dns_servers = (cfg.dns || {}).servers || [];
+			for (let s in dns_servers) {
+				if (s.tag === rd.tag) region_server = s.server || s.address;
+				if (s.tag === 'secure-dns') secure_server = s.server || s.address;
+			}
+			if (!region_server) return { error: rd.tag + ' server not found in config — regenerate and restart' };
+
+			/* Test 1: domestic anchor via default resolver — if HomeProxy routes it to the region resolver, it resolves */
+			let region_ok = false;
+			let region_out = '';
+			fd = popen('nslookup ' + rd.domain + ' 2>&1');
+			if (fd) { region_out = trim(fd.read('all')); fd.close(); }
+			region_ok = !!match(region_out, /Name:/);
+
+			/* Test 2: andrevi.ch via default resolver — HomeProxy routes to secure-dns via proxy */
+			let secure_ok = false;
+			let secure_out = '';
+			fd = popen('nslookup andrevi.ch 2>&1');
+			if (fd) { secure_out = trim(fd.read('all')); fd.close(); }
+			secure_ok = !!match(secure_out, /Name:/);
+
+			return {
+				region_label:  rd.label,
+				region_domain: rd.domain,
+				region_server: region_server,
+				region_ok:     region_ok,
+				region_output: region_out,
+				secure_server: secure_server,
+				bootstrap:     region_server,
+				secure_ok:     secure_ok,
+				secure_output: secure_out
+			};
+		}
+	},
+
+	diag_nftables: {
+		call: function() {
+			let nft_lines = [];
+			let fd = popen('nft list table inet fw4 2>/dev/null');
+			if (fd) {
+				for (let line = fd.read('line'); length(line); line = fd.read('line')) {
+					if (match(line, /homeproxy/))
+						push(nft_lines, trim(line));
+				}
+				fd.close();
+			}
+
+			let uci_lines = [];
+			fd = popen('uci show homeproxy 2>&1');
+			if (fd) {
+				for (let line = fd.read('line'); length(line); line = fd.read('line')) {
+					const l = trim(line);
+					if (match(l, /(proxy_mode|redirect_port|tproxy_port|dns_port|bypass|firewall|intercept)/))
+						push(uci_lines, l);
+				}
+				fd.close();
+			}
+
+			const nft_present = length(nft_lines) > 0;
+
+			/* Zapret queue chain: its counter rules don't contain the word "homeproxy",
+			 * so they are NOT in nft_lines above. Pull the chain explicitly so the packet
+			 * counters (mark 110 tcp/udp → NFQUEUE) are visible. */
+			let zapret_enabled = false;
+			let zfd = popen('uci -q get homeproxy.config.zapret_enabled 2>/dev/null');
+			if (zfd) { zapret_enabled = trim(zfd.read('all')) === '1'; zfd.close(); }
+			let zapret_running = false;
+			zfd = popen('pidof nfqws2 2>/dev/null');
+			if (zfd) { zapret_running = length(trim(zfd.read('all'))) > 0; zfd.close(); }
+
+			let zq_lines = [];
+			fd = popen('nft list chain inet fw4 homeproxy_zapret_queue 2>/dev/null');
+			if (fd) {
+				for (let line = fd.read('line'); length(line); line = fd.read('line')) {
+					const l = trim(line);
+					if (match(l, /(mark|queue|counter|chain)/))
+						push(zq_lines, l);
+				}
+				fd.close();
+			}
+
+			/* UDP TPROXY chains: the full mangle chain plus its _port/_mark companions,
+			 * so the counter on the "tproxy → core" rule (UDP into HomeProxy) is visible
+			 * alongside the rules that return UDP before it. These chains only exist when
+			 * the UDP-tproxy firewall block was emitted (proxy_mode=tproxy + a UDP node). */
+			let udp_lines = [];
+			let uchains = ['homeproxy_mangle_tproxy_port', 'homeproxy_mangle_mark', 'homeproxy_mangle_tproxy'];
+			for (let ch in uchains) {
+				fd = popen('nft list chain inet fw4 ' + ch + ' 2>/dev/null');
+				if (fd) {
+					for (let line = fd.read('line'); length(line); line = fd.read('line')) {
+						const l = trim(line);
+						if (length(l) > 0)
+							push(udp_lines, l);
+					}
+					fd.close();
+				}
+			}
+
+			return {
+				nft_present: nft_present,
+				nft_rules:   join('\n', nft_lines),
+				uci_firewall: join('\n', uci_lines),
+				zapret_enabled: zapret_enabled,
+				zapret_running: zapret_running,
+				zapret_queue: join('\n', zq_lines),
+				udp_tproxy: join('\n', udp_lines)
+			};
+		}
+	},
+
+	diag_service_restart: {
+		call: function() {
+			const exit_code = system('/etc/init.d/homeproxy restart >/dev/null 2>&1');
+			return { result: exit_code === 0, exit_code: exit_code };
+		}
+	},
+
+	diag_report: {
+		call: function() {
+			const lines = [];
+			const add = (s) => push(lines, s);
+
+			add('# HomeProxy Diagnostics Report');
+			let fd = popen('date 2>/dev/null');
+			if (fd) { add('# Generated: ' + trim(fd.read('all'))); fd.close(); }
+			add('');
+
+			add('## System');
+			fd = popen('cat /etc/openwrt_release 2>/dev/null');
+			if (fd) { add(trim(fd.read('all'))); fd.close(); }
+			fd = popen('uname -a 2>/dev/null');
+			if (fd) { add('Kernel: ' + trim(fd.read('all'))); fd.close(); }
+			add('');
+
+			add('## Core Binary');
+			const core = get_active_core();
+			const binary = core ? core.path : null;
+			const proc_name = core ? core.proc_name : 'sing-box';
+			if (binary) {
+				fd = popen(binary + ' version 2>&1');
+				if (fd) { add(trim(fd.read('all'))); fd.close(); }
+				fd = popen('pidof ' + shellquote(proc_name) + ' 2>/dev/null');
+				if (fd) { const pid = trim(fd.read('all')); fd.close(); add('PID: ' + (length(pid) > 0 ? pid : 'not running')); }
+			} else {
+				add('No core binary found');
+			}
+			add('');
+
+			add('## ByeDPI (ciadpi)');
+			if (access('/usr/bin/ciadpi')) {
+				add('Installed: yes');
+				fd = popen('pgrep -x ciadpi 2>/dev/null');
+				if (fd) { const bpid = trim(fd.read('all')); fd.close(); add('PID: ' + (length(bpid) > 0 ? bpid : 'not running')); }
+			} else {
+				add('Installed: no');
+			}
+			add('');
+
+			add('## Zapret (zapret2/nfqws2)');
+			if (access('/opt/zapret2/nfq2/nfqws2')) {
+				add('Installed: yes');
+				fd = popen('uci -q get homeproxy.config.zapret_enabled 2>/dev/null');
+				let zen = '0'; if (fd) { zen = trim(fd.read('all')); fd.close(); }
+				add('Enabled: ' + (zen === '1' ? 'yes' : 'no'));
+				fd = popen('pidof nfqws2 2>/dev/null');
+				if (fd) { const zpid = trim(fd.read('all')); fd.close(); add('PID: ' + (length(zpid) > 0 ? zpid : 'not running')); }
+				fd = popen('uci -q get homeproxy.config.zapret_voice 2>/dev/null');
+				let zvoice = '0'; if (fd) { zvoice = trim(fd.read('all')); fd.close(); }
+				add('Discord calls: ' + (zvoice === '1' ? 'on' : 'off'));
+				fd = popen('uci -q get homeproxy.config.zapret_cmd_opts 2>/dev/null');
+				if (fd) { const zstrat = trim(fd.read('all')); fd.close(); if (length(zstrat)) add('Strategy: ' + zstrat); }
+				fd = popen('nft list chain inet fw4 homeproxy_zapret_queue 2>/dev/null');
+				if (fd) {
+					let any = false;
+					for (let line = fd.read('line'); length(line); line = fd.read('line')) {
+						const l = trim(line);
+						if (match(l, /(mark|queue)/)) { add('  ' + l); any = true; }
+					}
+					fd.close();
+					if (!any) add('Queue chain: not present (firewall rule missing?)');
+				}
+			} else {
+				add('Installed: no');
+			}
+			add('');
+
+			add('## Config Stats');
+			const config_path = RUN_DIR + '/hiddify-c.json';
+			const stat = lstat(config_path);
+			if (stat) {
+				add('Size: ' + stat.size + ' bytes');
+				const content = readfile(config_path);
+				if (content) {
+					try {
+						const cfg = json(content);
+						add('Outbounds: '   + length(cfg.outbounds || []));
+						add('Rules: '       + length((cfg.route || {}).rules || []));
+						add('Inbounds: '    + length(cfg.inbounds || []));
+						add('DNS servers: ' + length(((cfg.dns || {}).servers) || []));
+					} catch(e) { add('Parse error: ' + e); }
+				}
+			} else {
+				add('Config file not found');
+			}
+			add('');
+
+			add('## UCI Config (sanitized)');
+			fd = popen('uci show homeproxy 2>&1');
+			if (fd) {
+				/* uci show prints multi-line option values (PEM keys — ssh_priv_key /
+				 * ssh_host_key) across several physical lines; only the first carries
+				 * `key=`, so a naive per-line redaction leaks the whole key body on the
+				 * lines after it. Every real uci line begins with `homeproxy.`; the value
+				 * continuation lines never do. So after redacting an option, drop the
+				 * following non-`homeproxy.` lines until the next option begins. */
+				let skip_value_body = false;
+				for (let line = fd.read('line'); length(line); line = fd.read('line')) {
+					let out = trim(line);
+					let is_uci_line = match(out, /^homeproxy\./);
+					if (skip_value_body && !is_uci_line)
+						continue;
+					skip_value_body = false;
+					if (is_uci_line && match(out, /(password|private_key|pre_shared_key|uuid|token|secret|subscription_url|address|tls_sni|tls_reality_public_key|tls_reality_short_id|grouphash|username|grpc_servicename|http_path|xhttp_download_server|naive_extra_headers|ssh_priv_key|ssh_host_key)=/)) {
+						out = replace(out, /=.*$/, '=[REDACTED]');
+						skip_value_body = true;
+					}
+					add(out);
+				}
+				fd.close();
+			}
+			add('');
+
+			add('## Listening Ports');
+			fd = popen('netstat -tlnup 2>/dev/null');
+			if (fd) {
+				for (let line = fd.read('line'); length(line); line = fd.read('line')) {
+					if (match(line, /hiddify|sing.box|ciadpi/))
+						add(trim(line));
+				}
+				fd.close();
+			}
+			add('');
+
+			add('## Kernel Modules');
+			fd = popen('lsmod 2>/dev/null | grep -E "nft_tproxy|tun|xt_socket"');
+			if (fd) { const out = trim(fd.read('all')); fd.close(); add(length(out) > 0 ? out : '(none matched)'); }
+			add('');
+
+			add('## DNS Tests');
+			let mode_fd = popen('uci get homeproxy.config.routing_mode 2>/dev/null');
+			if (mode_fd) {
+				const routing_mode = trim(mode_fd.read('all'));
+				mode_fd.close();
+				const REGION_DIAG = {
+					proxy_banned_ru: { tag: 'russia-dns', label: 'Russia', domain: 'mail.ru' },
+					bypass_cn:       { tag: 'region-dns', label: 'China',  domain: 'baidu.com' },
+					bypass_ir:       { tag: 'region-dns', label: 'Iran',   domain: 'aparat.com' }
+				};
+				const rd = REGION_DIAG[routing_mode];
+				if (rd) {
+					let region_server = null;
+					let secure_server = null;
+					const dns_servers = ((() => { try { return json(readfile(RUN_DIR + '/hiddify-c.json')); } catch(e) { return {}; } })().dns || {}).servers || [];
+					for (let s in dns_servers) {
+						if (s.tag === rd.tag) region_server = s.server || s.address;
+						if (s.tag === 'secure-dns') secure_server = s.server || s.address;
+					}
+					add('Mode: ' + routing_mode);
+					add(rd.label + ' DNS server: ' + (region_server || 'not found'));
+					add('Secure DNS server: ' + (secure_server || 'not found'));
+					add('Bootstrap: ' + (region_server || 'not found'));
+					let dns_fd = popen('nslookup ' + rd.domain + ' 2>&1');
+					if (dns_fd) { add('nslookup ' + rd.domain + ':\n' + trim(dns_fd.read('all'))); dns_fd.close(); }
+					dns_fd = popen('nslookup andrevi.ch 2>&1');
+					if (dns_fd) { add('nslookup andrevi.ch:\n' + trim(dns_fd.read('all'))); dns_fd.close(); }
+				} else {
+					add('Mode: ' + routing_mode + ' (DNS test runs in selective modes only)');
+				}
+			}
+			add('');
+
+			add('## Connectivity');
+			/* Same site probes as the interactive Connectivity card (connection_check),
+			 * captured into the report so a copy/download carries them. Exit-IP rows
+			 * (Direct IP / Proxy IP) are intentionally omitted — they are interactive,
+			 * hiddify-only, and expose addresses. */
+			let conn_sites = [
+				['Baidu',     'https://www.baidu.com'],
+				['Google',    'https://www.google.com'],
+				['YouTube',   'https://www.youtube.com'],
+				['Yandex',    'https://ya.ru'],
+				['Speedtest', 'https://www.speedtest.net']
+			];
+			for (let site in conn_sites) {
+				const conn_ok = (system(`/usr/bin/wget --spider -qT3 ${site[1]} 2>"/dev/null"`, 3100) === 0);
+				add(sprintf('%-11s %s', site[0] + ':', conn_ok ? 'OK' : 'FAIL'));
+			}
+			add('');
+
+			add('## HomeProxy Log (last 50 lines)');
+			fd = popen('tail -n 50 ' + RUN_DIR + '/homeproxy.log 2>/dev/null');
+			if (fd) {
+				for (let line = fd.read('line'); length(line); line = fd.read('line'))
+					add(replace(trim(line), /https?:\/\/[^ \t\n]+/, '[REDACTED_URL]'));
+				fd.close();
+			}
+			add('');
+
+			add('## Core Log (last 50 lines)');
+			fd = popen('tail -n 50 ' + RUN_DIR + '/hiddify-c.log 2>/dev/null');
+			if (fd) {
+				for (let line = fd.read('line'); length(line); line = fd.read('line'))
+					add(replace(trim(line), /https?:\/\/[^ \t\n]+/, '[REDACTED_URL]'));
+				fd.close();
+			}
+
+			return { report: join('\n', lines) };
+		}
+	},
+
+	byedpi_status: {
+		call: function(req) {
+			const installed = !!access('/usr/bin/ciadpi');
+			let version = null;
+			if (installed) {
+				if (access('/usr/bin/apk')) {
+					const fd = popen('apk info byedpi 2>/dev/null | head -1');
+					if (fd) {
+						const out = trim(fd.read('all'));
+						fd.close();
+						const m = match(out, /byedpi-([0-9][0-9.]*)/);
+						if (m) version = m[1];
+					}
+				} else if (access('/bin/opkg')) {
+					const fd = popen('opkg status byedpi 2>/dev/null');
+					if (fd) {
+						const out = fd.read('all');
+						fd.close();
+						const m = match(out, /Version: ([0-9][0-9.]*)/);
+						if (m) version = m[1];
+					}
+				}
+			}
+			let running = false;
+			const fd2 = popen('pidof ciadpi 2>/dev/null');
+			if (fd2) {
+				running = length(trim(fd2.read('all'))) > 0;
+				fd2.close();
+			}
+			let pkg_manager = null;
+			if (access('/usr/bin/apk') || access('/sbin/apk') || access('/usr/sbin/apk')) pkg_manager = 'apk';
+			else if (access('/bin/opkg') || access('/usr/bin/opkg')) pkg_manager = 'opkg';
+			let arch = null;
+			const afd = popen("awk -F\\' '/DISTRIB_ARCH/ {print $2}' /etc/openwrt_release 2>/dev/null");
+			if (afd) { arch = trim(afd.read('all')); afd.close(); }
+			return { installed, version, running, pkg_manager, arch };
+		}
+	},
+
+	byedpi_prepare_install: {
+		call: function(req) {
+			let pkg_manager = null;
+			if (access('/usr/bin/apk') || access('/sbin/apk') || access('/usr/sbin/apk')) pkg_manager = 'apk';
+			else if (access('/bin/opkg') || access('/usr/bin/opkg')) pkg_manager = 'opkg';
+			if (!pkg_manager)
+				return { error: 'No supported package manager (apk/opkg)' };
+
+			let arch = null;
+			const afd = popen("awk -F\\' '/DISTRIB_ARCH/ {print $2}' /etc/openwrt_release 2>/dev/null");
+			if (afd) { arch = trim(afd.read('all')); afd.close(); }
+			if (!length(arch))
+				return { error: 'Cannot detect architecture' };
+
+			const token_fd = popen('uci get homeproxy.config.github_token 2>/dev/null');
+			let token = null;
+			if (token_fd) { token = trim(token_fd.read('all')); token_fd.close(); }
+			const auth = length(token) ? `--header="Authorization: token ${token}"` : '';
+
+			const api_fd = popen(`wget -qO- ${auth} "https://api.github.com/repos/1andrevich/ByeDPI-OpenWrt/releases/latest" 2>/dev/null`);
+			if (!api_fd)
+				return { error: 'Failed to fetch release info' };
+			const api_out = api_fd.read('all');
+			api_fd.close();
+
+			const tag_m = match(api_out, /"tag_name"\s*:\s*"([^"]+)"/);
+			if (!tag_m)
+				return { error: 'Cannot parse release tag' };
+			const tag = tag_m[1];
+			const version = replace(tag, /^v/, '');
+
+			const ext = (pkg_manager === 'apk') ? 'apk' : 'ipk';
+			const dl_url = `https://github.com/1andrevich/ByeDPI-OpenWrt/releases/download/${tag}/byedpi_${version}_${arch}.${ext}`;
+			const tmp_path = `/tmp/byedpi_${version}_${arch}.${ext}`;
+
+			return { dl_url, tmp_path, pkg_manager, version };
+		}
+	},
+
+	byedpi_install_pkg: {
+		args: { tmp_path: 'tmp_path', pkg_manager: 'pkg_manager' },
+		call: function(req) {
+			const tmp_path = req.args?.tmp_path;
+			const pkg_manager = req.args?.pkg_manager;
+			if (!tmp_path || !pkg_manager)
+				return { result: false, error: 'Missing arguments' };
+			if (!access(tmp_path))
+				return { result: false, error: 'Package file not found' };
+			let ret;
+			if (pkg_manager === 'apk') {
+				/* Signing key (see zapret_install_pkg): skip the GitHub fetch if it's
+				 * already present (a provisioning tool may pre-place it); otherwise
+				 * a SHORT-timeout best-effort wget so a throttled GitHub can't hang the
+				 * ubus call. Install trusted if the key is there, else --allow-untrusted. */
+				if (!access('/etc/apk/keys/homeproxy-hiddify.pub')) {
+					if (gh_fetch('https://github.com/1andrevich/homeproxy-hiddify/releases/latest/download/homeproxy-hiddify.pub', '/tmp/homeproxy-hiddify.pub', 20000) === 0)
+						system('[ -s /tmp/homeproxy-hiddify.pub ] && cp /tmp/homeproxy-hiddify.pub /etc/apk/keys/ 2>/dev/null; rm -f /tmp/homeproxy-hiddify.pub');
+				}
+				if (access('/etc/apk/keys/homeproxy-hiddify.pub'))
+					ret = system(`apk add ${shellquote(tmp_path)}`, 120000);
+				else
+					ret = system(`apk add --allow-untrusted ${shellquote(tmp_path)}`, 120000);
+			} else {
+				ret = system(`opkg install ${shellquote(tmp_path)}`);
+			}
+			system(`rm -f ${shellquote(tmp_path)}`);
+			/* opkg/apk can exit non-zero on a SUCCESSFUL install (e.g. the package's
+			 * postinst starts its own service and that step fails while every file
+			 * still lands). Trust the installed binary (same probe as byedpi_status),
+			 * not the exit code. */
+			const installed = !!access('/usr/bin/ciadpi');
+			if (installed) {
+				system('/etc/init.d/ciadpi stop 2>/dev/null; true');
+				system('/etc/init.d/ciadpi disable 2>/dev/null; true');
+			}
+			return { result: installed };
+		}
+	},
+
+	byedpi_remove: {
+		call: function(req) {
+			/* Stop the running ciadpi BEFORE pulling the package. Otherwise the live
+			 * process keeps running (Linux keeps a deleted binary's process alive via its
+			 * inode), and byedpi_status — which is just `pidof ciadpi` — still reports
+			 * "running" until the next homeproxy restart. So: disable it in config (so
+			 * homeproxy's procd instance stops and won't respawn), stop/disable the
+			 * standalone service, reload homeproxy, then kill any leftover (e.g.
+			 * strategy-test) instances — and only then remove the package. */
+			system("uci set homeproxy.config.byedpi_enabled='0'; uci commit homeproxy 2>/dev/null; true");
+			system('/etc/init.d/ciadpi stop 2>/dev/null; /etc/init.d/ciadpi disable 2>/dev/null; true');
+			system('/etc/init.d/homeproxy reload 2>/dev/null; true');
+			system('pkill -f ciadpi 2>/dev/null; true');
+			let ret;
+			if (access('/usr/bin/apk'))
+				ret = system('apk del byedpi');
+			else if (access('/bin/opkg'))
+				ret = system('opkg remove byedpi');
+			else
+				return { result: false, error: 'No package manager' };
+			return { result: ret === 0 };
+		}
+	},
+
+	zapret_status: {
+		call: function(req) {
+			const installed = !!access('/opt/zapret2/nfq2/nfqws2');
+			let version = null;
+			if (installed) {
+				if (access('/usr/bin/apk')) {
+					const fd = popen('apk info zapret2 2>/dev/null | head -1');
+					if (fd) {
+						const out = trim(fd.read('all'));
+						fd.close();
+						const m = match(out, /zapret2-([0-9][0-9.]*)/);
+						if (m) version = m[1];
+					}
+				} else if (access('/bin/opkg')) {
+					const fd = popen('opkg status zapret2 2>/dev/null');
+					if (fd) {
+						const out = fd.read('all');
+						fd.close();
+						const m = match(out, /Version: ([0-9][0-9.]*)/);
+						if (m) version = m[1];
+					}
+				}
+			}
+			let running = false;
+			const fd2 = popen('pidof nfqws2 2>/dev/null');
+			if (fd2) {
+				running = length(trim(fd2.read('all'))) > 0;
+				fd2.close();
+			}
+			let pkg_manager = null;
+			if (access('/usr/bin/apk') || access('/sbin/apk') || access('/usr/sbin/apk')) pkg_manager = 'apk';
+			else if (access('/bin/opkg') || access('/usr/bin/opkg')) pkg_manager = 'opkg';
+
+			/* kmod_ok: nfqws2's `nft ... queue num` needs the NFQUEUE kernel module
+			 * (kmod-nft-queue). Without it the firewall rule fails to load and nft
+			 * rejects the whole fw4 set. Check the package first, then a loaded module
+			 * as a fallback (built-in / already-inserted kernels). */
+			let kmod_ok = false;
+			if (pkg_manager === 'apk') {
+				const kf = popen('apk info -e kmod-nft-queue 2>/dev/null');
+				if (kf) { kmod_ok = length(trim(kf.read('all'))) > 0; kf.close(); }
+			} else if (pkg_manager === 'opkg') {
+				const kf = popen('opkg list-installed kmod-nft-queue 2>/dev/null');
+				if (kf) { kmod_ok = length(trim(kf.read('all'))) > 0; kf.close(); }
+			}
+			if (!kmod_ok) {
+				const kf = popen('grep -qE "(^|[[:space:]])(nft_queue|nfnetlink_queue)([[:space:]]|$)" /proc/modules 2>/dev/null && echo y');
+				if (kf) { kmod_ok = trim(kf.read('all')) === 'y'; kf.close(); }
+			}
+
+			let arch = null;
+			const afd = popen("awk -F\\' '/DISTRIB_ARCH/ {print $2}' /etc/openwrt_release 2>/dev/null");
+			if (afd) { arch = trim(afd.read('all')); afd.close(); }
+			return { installed, version, running, pkg_manager, arch, kmod_ok };
+		}
+	},
+
+	zapret_prepare_install: {
+		call: function(req) {
+			let pkg_manager = null;
+			if (access('/usr/bin/apk') || access('/sbin/apk') || access('/usr/sbin/apk')) pkg_manager = 'apk';
+			else if (access('/bin/opkg') || access('/usr/bin/opkg')) pkg_manager = 'opkg';
+			if (!pkg_manager)
+				return { error: 'No supported package manager (apk/opkg)' };
+
+			let arch = null;
+			const afd = popen("awk -F\\' '/DISTRIB_ARCH/ {print $2}' /etc/openwrt_release 2>/dev/null");
+			if (afd) { arch = trim(afd.read('all')); afd.close(); }
+			if (!length(arch))
+				return { error: 'Cannot detect architecture' };
+
+			/* Asset names are version-less, so no GitHub API call is needed —
+			 * releases/latest/download/<name> resolves to the newest release. */
+			const ext = (pkg_manager === 'apk') ? 'apk' : 'ipk';
+			const dl_url = `https://github.com/1andrevich/zapret2-openwrt/releases/latest/download/zapret2_${arch}.${ext}`;
+			const tmp_path = `/tmp/zapret2_${arch}.${ext}`;
+
+			return { dl_url, tmp_path, pkg_manager };
+		}
+	},
+
+	zapret_install_pkg: {
+		args: { tmp_path: 'tmp_path', pkg_manager: 'pkg_manager' },
+		call: function(req) {
+			const tmp_path = req.args?.tmp_path;
+			const pkg_manager = req.args?.pkg_manager;
+			if (!tmp_path || !pkg_manager)
+				return { result: false, error: 'Missing arguments' };
+			if (!access(tmp_path))
+				return { result: false, error: 'Package file not found' };
+			let ret;
+			if (pkg_manager === 'apk') {
+				/* Signing key: if it's ALREADY present (e.g. pre-placed by a provisioning
+				 * tool, or a prior install), skip the GitHub fetch entirely. Only
+				 * if it's missing do a SHORT-timeout best-effort wget — the old un-timed
+				 * one hung on a throttled GitHub until the ubus call timed out (exit 249).
+				 * Then install trusted if the key is there, else --allow-untrusted. */
+				if (!access('/etc/apk/keys/zapret2-1andrevich.pub')) {
+					if (gh_fetch('https://github.com/1andrevich/zapret2-openwrt/releases/latest/download/zapret2-1andrevich.pub', '/tmp/zapret2-1andrevich.pub', 20000) === 0)
+						system('[ -s /tmp/zapret2-1andrevich.pub ] && cp /tmp/zapret2-1andrevich.pub /etc/apk/keys/ 2>/dev/null; rm -f /tmp/zapret2-1andrevich.pub');
+				}
+				if (access('/etc/apk/keys/zapret2-1andrevich.pub'))
+					ret = system(`apk add ${shellquote(tmp_path)}`, 120000);
+				else
+					ret = system(`apk add --allow-untrusted ${shellquote(tmp_path)}`, 120000);
+			} else {
+				system('opkg update 2>/dev/null');
+				ret = system(`opkg install ${shellquote(tmp_path)}`);
+			}
+			system(`rm -f ${shellquote(tmp_path)}`);
+			/* opkg/apk can exit non-zero on a SUCCESSFUL install (e.g. the package's
+			 * postinst starts its own service and that step fails while every file
+			 * still lands). Trust the installed binary (same probe as zapret_status),
+			 * not the exit code. */
+			const installed = !!access('/opt/zapret2/nfq2/nfqws2');
+			if (installed) {
+				/* Keep the package's own service out of the way — HomeProxy runs its own
+				 * nfqws2 instance (qnum 200) and installs the NFQUEUE rule itself. */
+				system('/etc/init.d/zapret2 stop 2>/dev/null; true');
+				system('/etc/init.d/zapret2 disable 2>/dev/null; true');
+			}
+			return { result: installed };
+		}
+	},
+
+	zapret_remove: {
+		call: function(req) {
+			system("uci set homeproxy.config.zapret_enabled='0'; uci commit homeproxy 2>/dev/null; true");
+			system('/etc/init.d/zapret2 stop 2>/dev/null; /etc/init.d/zapret2 disable 2>/dev/null; true');
+			system('/etc/init.d/homeproxy reload 2>/dev/null; true');
+			system('pkill -f nfqws2 2>/dev/null; true');
+			let ret;
+			if (access('/usr/bin/apk'))
+				ret = system('apk del zapret2');
+			else if (access('/bin/opkg'))
+				ret = system('opkg remove zapret2');
+			else
+				return { result: false, error: 'No package manager' };
+			return { result: ret === 0 };
+		}
+	},
+
+	zapret_resolve_hosts: {
+		call: function(req) {
+			/* Resolve the tester's 4 fixed test hosts ONCE (bounded + retried), via
+			 * the router's normal resolver — the same secure-DNS/direct path the live
+			 * config uses for these blocked domains, so the IP stays representative for
+			 * the TLS probe. The full test calls this up front and feeds the IPs to
+			 * every candidate, so the sweep doesn't re-hit DNS 36×. */
+			const fd = popen(`sh /etc/homeproxy/scripts/zapret_resolve.sh 2>/dev/null`);
+			let out = '';
+			if (fd) { out = trim(fd.read('all')); fd.close(); }
+			if (!length(out))
+				out = '{"ok":0,"error":"resolver produced no output"}';
+			return { output: out };
+		}
+	},
+
+	zapret_strategy_test: {
+		args: { cmd_opts: 'cmd_opts', ips: 'ips' },
+		call: function(req) {
+			if (!access('/opt/zapret2/nfq2/nfqws2'))
+				return { output: '{"ok":0,"total":0,"error":"zapret2 not installed"}' };
+			const cmd_opts = req.args?.cmd_opts || '';
+			/* Optional pre-resolved "tag=ip …" from zapret_resolve_hosts; if empty the
+			 * tester resolves the hosts itself (standalone call). */
+			const ips = req.args?.ips || '';
+			/* The tester script runs a candidate nfqws2 on a temp queue scoped to the
+			 * test IPs, probes the TLS handshakes, and prints one JSON line. It self-
+			 * tears-down (trap + 30s watchdog), so live traffic/queue is never left
+			 * touched. We just relay its JSON for the UI to parse. */
+			const fd = popen(`sh /etc/homeproxy/scripts/zapret_test.sh ${shellquote(cmd_opts)} ${shellquote(ips)} 2>/dev/null`);
+			let out = '';
+			if (fd) { out = trim(fd.read('all')); fd.close(); }
+			if (!length(out))
+				out = '{"ok":0,"total":0,"error":"tester produced no output"}';
+			return { output: out };
+		}
+	},
+
+	byedpi_strategy_test: {
+		args: { cmd_opts: 'cmd_opts', port: 'port' },
+		call: function(req) {
+			if (!access('/usr/bin/ciadpi'))
+				return { result: false, error: 'ciadpi not installed' };
+			const cmd_opts = req.args?.cmd_opts || '--disorder 1';
+			const test_port = req.args?.port || 15335;
+			const has_curl = !!access('/usr/bin/curl');
+
+			/* Test panel. Pass = the TLS handshake completes (judged below by time_appconnect),
+			 * which is the precise DPI-bypass signal — not the HTTP status. YouTube probes the
+			 * real video CDN (redirector.googlevideo.com), not the www page: the video path is
+			 * what users care about and what the DPI actually blocks. It returns 404 with no
+			 * path requested — irrelevant, we judge the handshake. Discord/Telegram/Speedtest
+			 * cover the Cloudflare/other edges for a destination spread. */
+			const hosts = [
+				{ tag: 'yt', label: 'YouTube (video)', url: 'https://redirector.googlevideo.com' },
+				{ tag: 'tg', label: 'Telegram',        url: 'https://telegram.org' },
+				{ tag: 'dc', label: 'Discord',         url: 'https://discord.com' },
+				{ tag: 'st', label: 'Speedtest.net',   url: 'https://www.speedtest.net' }
+			];
+
+			/* Detect redirect mode: homeproxy_output_redir intercepts router-originated
+			 * TCP via the OUTPUT chain. Flush it while testing so curl traffic from ciadpi
+			 * goes direct; restore immediately after. LAN clients are unaffected (they
+			 * go through dstnat → homeproxy_redirect_lanac, a separate path). */
+			let out_chain_nfproto = null;
+			const cfd2 = popen('nft list chain inet fw4 homeproxy_output_redir 2>/dev/null');
+			if (cfd2) {
+				const out = cfd2.read('all');
+				cfd2.close();
+				if (length(trim(out)) > 0) {
+					out_chain_nfproto = (index(out, 'ipv6') >= 0) ? '{ ipv4, ipv6 }' : 'ipv4';
+					system('nft flush chain inet fw4 homeproxy_output_redir 2>/dev/null; true');
+				}
+			}
+
+			/* The flush also wiped the ByeDPI skgid exclusion (if present) — capture the gid
+			 * so we can rebuild it on restore, or the live ByeDPI egress would loop afterwards. */
+			let byedpi_gid = null;
+			const efd = popen('uci get homeproxy.config.byedpi_enabled 2>/dev/null');
+			if (efd) {
+				if (trim(efd.read('all')) === '1') {
+					byedpi_gid = '8181';
+					const gfd = popen('uci get homeproxy.infra.byedpi_gid 2>/dev/null');
+					if (gfd) { const g = trim(gfd.read('all')); if (length(g)) byedpi_gid = g; gfd.close(); }
+				}
+				efd.close();
+			}
+			/* Restore command (no nested function — those can crash rpcd call bodies). Rebuilds
+			 * the skgid exclusion first (if ByeDPI is on), then the redirect jump. */
+			let restore_cmd = 'true';
+			if (out_chain_nfproto != null) {
+				restore_cmd = '';
+				if (byedpi_gid != null)
+					restore_cmd += `nft add rule inet fw4 homeproxy_output_redir meta skgid ${byedpi_gid} counter return 2>/dev/null; `;
+				restore_cmd += `nft add rule inet fw4 homeproxy_output_redir meta nfproto ${out_chain_nfproto} meta l4proto tcp jump homeproxy_redirect 2>/dev/null; true`;
+			}
+
+			system(`pkill -f 'ciadpi.*${test_port}' 2>/dev/null; true`);
+			system(`/usr/bin/ciadpi -i 127.0.0.1 -p ${test_port} ${cmd_opts} &`);
+			system('sleep 0.5');
+
+			let running = false;
+			const pfd = popen(`pgrep -f 'ciadpi.*${test_port}' 2>/dev/null`);
+			if (pfd) { running = length(trim(pfd.read('all'))) > 0; pfd.close(); }
+
+			if (!running) {
+				system(restore_cmd);
+				return { result: false, error: 'ciadpi did not start — check arguments', method: 'startup' };
+			}
+
+			if (!has_curl) {
+				system(`pkill -f 'ciadpi.*${test_port}' 2>/dev/null; true`);
+				system(restore_cmd);
+				return { result: true, method: 'startup', results: [] };
+			}
+
+			/* Probe every host in parallel through the one ciadpi instance. Each background
+			 * job writes "<http_code> <time_appconnect> <curl_exit>": time_appconnect is the
+			 * pass signal (non-zero = the TLS handshake completed, i.e. the desync got the
+			 * ClientHello past the DPI), and curl_exit explains a failure (tls reset vs timeout
+			 * vs dns). 15s max-time gives slow/adaptive strategies room to land. */
+			const tmp = `/tmp/byedpi_test_${test_port}`;
+			system(`rm -rf ${tmp}; mkdir -p ${tmp} 2>/dev/null; true`);
+			let cmd = '';
+			for (let i = 0; i < length(hosts); i++)
+				cmd += `( out=$(curl -s --socks5-hostname 127.0.0.1:${test_port} -o /dev/null -w '%{http_code} %{time_appconnect}' --connect-timeout 5 --max-time 15 ${shellquote(hosts[i].url)} 2>/dev/null); echo "$out $?" > ${tmp}/${i} ) & `;
+			cmd += 'wait';
+			system(cmd);
+
+			let results = [];
+			let passed = 0;
+			for (let i = 0; i < length(hosts); i++) {
+				const raw = trim(readfile(`${tmp}/${i}`) || '');
+				const parts = split(raw, ' ');
+				const code = parts[0] || '000';
+				const appconnect = parts[1] || '0';
+				const rc = parts[2] || '';
+				/* Pass = the TLS handshake completed (time_appconnect > 0) — the precise
+				 * DPI-bypass signal. The HTTP status is irrelevant (a 404 from googlevideo is a
+				 * pass). The old criterion (2xx/3xx only) produced false negatives: 4xx replies
+				 * and slow adaptive handshakes were wrongly failed. */
+				const ok = (+appconnect > 0);
+				if (ok) passed++;
+				push(results, {
+					tag:   hosts[i].tag,
+					label: hosts[i].label,
+					host:  hosts[i].url,
+					code:  code,
+					tls:   appconnect,
+					ok:    ok,
+					reason: ok ? null :
+					        (rc === '6')  ? 'dns' :
+					        (rc === '7')  ? 'refused' :
+					        (rc === '28') ? 'timeout' :
+					        (rc in ['35', '51', '53', '56', '58', '59', '60']) ? 'tls' : 'fail'
+				});
+			}
+			system(`rm -rf ${tmp} 2>/dev/null; true`);
+
+			system(`pkill -f 'ciadpi.*${test_port}' 2>/dev/null; true`);
+			system(restore_cmd);
+
+			return {
+				result: passed === length(hosts),
+				passed: passed,
+				total:  length(hosts),
+				method: 'curl',
+				results: results
+			};
+		}
+	},
+
+	curl_status: {
+		call: function(req) {
+			const installed = !!access('/usr/bin/curl');
+			let pkg_manager = null;
+			if (access('/usr/bin/apk') || access('/sbin/apk') || access('/usr/sbin/apk')) pkg_manager = 'apk';
+			else if (access('/bin/opkg') || access('/usr/bin/opkg')) pkg_manager = 'opkg';
+			return { installed, pkg_manager };
+		}
+	},
+
+	curl_install: {
+		call: function(req) {
+			let cmd;
+			if (access('/usr/bin/apk') || access('/sbin/apk') || access('/usr/sbin/apk'))
+				cmd = 'apk add curl 2>&1';
+			else if (access('/bin/opkg') || access('/usr/bin/opkg'))
+				cmd = 'opkg install curl 2>&1';
+			else
+				return { result: false, error: 'No package manager found' };
+			let pipe = popen(cmd, 'r');
+			let output = pipe.read('all');
+			let rc = pipe.close();
+			return { result: rc === 0, error: rc !== 0 ? trim(output) : null };
+		}
+	},
+
+	curl_remove: {
+		call: function(req) {
+			let cmd;
+			if (access('/usr/bin/apk') || access('/sbin/apk') || access('/usr/sbin/apk'))
+				cmd = 'apk del curl 2>&1';
+			else if (access('/bin/opkg') || access('/usr/bin/opkg'))
+				cmd = 'opkg remove curl 2>&1';
+			else
+				return { result: false, error: 'No package manager found' };
+			let pipe = popen(cmd, 'r');
+			let output = pipe.read('all');
+			let rc = pipe.close();
+			return { result: rc === 0, error: rc !== 0 ? trim(output) : null };
 		}
 	}
 };

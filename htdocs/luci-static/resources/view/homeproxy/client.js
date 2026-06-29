@@ -6,9 +6,11 @@
 
 'use strict';
 'require form';
+'require fs';
 'require network';
 'require poll';
 'require rpc';
+'require ui';
 'require uci';
 'require validation';
 'require view';
@@ -21,6 +23,12 @@ const callServiceList = rpc.declare({
 	object: 'service',
 	method: 'list',
 	params: ['name'],
+	expect: { '': {} }
+});
+
+const callActiveNode = rpc.declare({
+	object: 'luci.homeproxy',
+	method: 'clash_active_node',
 	expect: { '': {} }
 });
 
@@ -38,6 +46,50 @@ const callWriteDomainList = rpc.declare({
 	expect: { '': {} }
 });
 
+const CORE_MGMT = '/usr/share/homeproxy/scripts/core_mgmt.uc';
+
+const callByeDPIStatus = rpc.declare({
+	object: 'luci.homeproxy',
+	method: 'byedpi_status',
+	expect: { '': {} }
+});
+
+const callByeDPIPrepareInstall = rpc.declare({
+	object: 'luci.homeproxy',
+	method: 'byedpi_prepare_install',
+	expect: { '': {} }
+});
+
+const callByeDPIInstallPkg = rpc.declare({
+	object: 'luci.homeproxy',
+	method: 'byedpi_install_pkg',
+	params: ['tmp_path', 'pkg_manager'],
+	expect: { '': {} }
+});
+
+const callZapretStatus = rpc.declare({
+	object: 'luci.homeproxy',
+	method: 'zapret_status',
+	expect: { '': {} }
+});
+
+const callZapretPrepareInstall = rpc.declare({
+	object: 'luci.homeproxy',
+	method: 'zapret_prepare_install',
+	expect: { '': {} }
+});
+
+const callZapretInstallPkg = rpc.declare({
+	object: 'luci.homeproxy',
+	method: 'zapret_install_pkg',
+	params: ['tmp_path', 'pkg_manager'],
+	expect: { '': {} }
+});
+
+function callCoreDownload(url, tmpPath) {
+	return fs.exec_direct('/usr/bin/ucode', [CORE_MGMT, 'download_pkg', url, tmpPath], 'json');
+}
+
 function getServiceStatus() {
 	return L.resolveDefault(callServiceList('homeproxy'), {}).then((res) => {
 		let isRunning = false;
@@ -48,14 +100,17 @@ function getServiceStatus() {
 	});
 }
 
-function renderStatus(isRunning, version) {
-	let verStr = version ? 'v' + version : _('unknown');
-	let spanTemp = '<em><span style="color:%s"><strong>%s (hiddify-core %s) %s</strong></span></em>';
+function renderStatus(isRunning, features) {
+	let coreName = features.core_type === 'singbox' ? 'sing-box' :
+	               features.core_type === 'hiddify' ? 'hiddify-core' : null;
+	let verStr = features.version ? 'v' + features.version : _('unknown');
+	let coreStr = coreName ? ('%s %s').format(coreName, verStr) : _('no core installed');
+	let spanTemp = '<em><span style="color:%s"><strong>%s (%s) %s</strong></span></em>';
 	let renderHTML;
 	if (isRunning)
-		renderHTML = spanTemp.format('green', _('HomeProxy-hiddify'), verStr, _('RUNNING'));
+		renderHTML = spanTemp.format('green', _('Re:HomeProxy'), coreStr, _('RUNNING'));
 	else
-		renderHTML = spanTemp.format('red', _('HomeProxy-hiddify'), verStr, _('NOT RUNNING'));
+		renderHTML = spanTemp.format('red', _('Re:HomeProxy'), coreStr, _('NOT RUNNING'));
 
 	return renderHTML;
 }
@@ -77,6 +132,7 @@ return view.extend({
 	load() {
 		return Promise.all([
 			uci.load('homeproxy'),
+			uci.load('luci'),
 			hp.getBuiltinFeatures(),
 			network.getHostHints()
 		]);
@@ -85,8 +141,8 @@ return view.extend({
 	render(data) {
 		let m, s, o, ss, so;
 
-		let features = data[1],
-		    hosts = data[2]?.hosts;
+		let features = data[2],
+		    hosts = data[3]?.hosts;
 
 		/* Cache all configured proxy nodes, they will be called multiple times */
 		let proxy_nodes = {};
@@ -99,15 +155,15 @@ return view.extend({
 					String.format('[%s]', nodeaddr) : nodeaddr) + ':' + nodeport));
 		});
 
-		m = new form.Map('homeproxy', _('HomeProxy-hiddify'),
-			_('The modern ImmortalWrt proxy platform based on hiddify-core.'));
+		m = new form.Map('homeproxy', _('Re:HomeProxy'),
+			_('The modern multi-core proxy platform. Fork of ImmortalWrt.'));
 
 		s = m.section(form.TypedSection);
 		s.render = function () {
 			poll.add(function () {
 				return L.resolveDefault(getServiceStatus()).then((res) => {
 					let view = document.getElementById('service_status');
-					view.innerHTML = renderStatus(res, features.version);
+					view.innerHTML = renderStatus(res, features);
 				});
 			});
 
@@ -120,14 +176,66 @@ return view.extend({
 
 		s.tab('routing', _('Routing Settings'));
 
-		o = s.taboption('routing', form.ListValue, 'main_node', _('Main node'));
+		if (features.available_cores && features.available_cores.length > 1) {
+			o = s.taboption('routing', form.ListValue, 'preferred_core', _('Preferred core'));
+			o.value('auto', _('Auto'));
+			if (features.available_cores.indexOf('hiddify') >= 0)
+				o.value('hiddify', 'hiddify-core');
+			if (features.available_cores.indexOf('singbox') >= 0)
+				o.value('singbox', 'sing-box');
+			o.default = 'auto';
+			o.rmempty = false;
+		}
+
+		o = s.taboption('routing', form.ListValue, 'main_node', _('Main node') + ' 🔗',
+			_('In this mode: only blocked domains are routed through this node — all other traffic goes direct.'));
 		o.value('nil', _('Disable'));
 		o.value('urltest', _('URLTest'));
 		for (let i in proxy_nodes)
 			o.value(i, proxy_nodes[i]);
+		o.value('byedpi-out', _('ByeDPI'));
+		o.value('zapret-out', _('Zapret'));
 		o.default = 'nil';
 		o.depends({'routing_mode': /^((?!custom).)+$/});
 		o.rmempty = false;
+
+		/* Live: which node URLTest currently has selected. Only shown in URLTest mode
+		 * (depends on main_node='urltest'); hidden when a specific node is the main node. */
+		o = s.taboption('routing', form.DummyValue, '_active_urltest_node', _('Active URLTest node'));
+		o.depends('main_node', 'urltest');
+		o.cfgvalue = function() {
+			const el = E('span', { 'style': 'color:gray' }, '—');
+			poll.add(L.bind(function() {
+				return L.resolveDefault(callActiveNode(), {}).then(function(ret) {
+					if (ret && !ret.error && ret.node) {
+						const m = ret.node.match(/^cfg-(.+)-out$/);
+						const name = (m && proxy_nodes[m[1]]) ? proxy_nodes[m[1]] : ret.node;
+						const type = ret.type ? ' (' + ret.type + ')' : '';
+						/* Same 4-colour scheme as the status page: 65535 ms is the
+						   URLTest timeout sentinel (confirmed dead → red); >=3000 ms is
+						   working-but-slow (orange); a real low latency is green; no
+						   delay at all is unmeasured (gray, no number). */
+						let dColor, dStr = '';
+						if (ret.delay === 65535) { dColor = 'red'; dStr = ' — ' + _('timeout'); }
+						else if (ret.delay >= 3000) { dColor = 'orange'; dStr = ' — ' + ret.delay + ' ms'; }
+						else if (ret.delay) { dColor = 'green'; dStr = ' — ' + ret.delay + ' ms'; }
+						else dColor = 'gray';
+						el.textContent = name + type + dStr;
+						el.style.color = dColor;
+					} else {
+						el.textContent = _('No active node');
+						el.style.color = 'gray';
+					}
+				});
+			}));
+			return el;
+		};
+
+		o = s.taboption('routing', form.DummyValue, '_urltest_info', _('URLTest'),
+			_('Automatically picks the fastest node by periodically measuring latency. Traffic is always sent through the lowest-latency node in the pool.<br>If you have connection problems and a node stays orange/grey for a long time, try removing it from the URLTest pool.'));
+		o.depends('main_node', 'urltest');
+		o.rawhtml = true;
+		o.cfgvalue = function() { return ''; };
 
 		o = s.taboption('routing', hp.CBIStaticList, 'main_urltest_nodes', _('URLTest nodes'),
 			_('List of nodes to test.'));
@@ -137,15 +245,15 @@ return view.extend({
 		o.rmempty = false;
 
 		o = s.taboption('routing', form.Value, 'main_urltest_interval', _('Test interval'),
-			_('The test interval in seconds.'));
+			_('How often each node is tested (seconds). Lower = faster failover, higher = less overhead.'));
 		o.datatype = 'uinteger';
 		o.placeholder = '180';
 		o.depends('main_node', 'urltest');
 
 		o = s.taboption('routing', form.Value, 'main_urltest_tolerance', _('Test tolerance'),
-			_('The test tolerance in milliseconds.'));
+			_('Minimum latency gap (ms) required to switch to a faster node — prevents flapping between nodes with close latency values.'));
 		o.datatype = 'uinteger';
-		o.placeholder = '50';
+		o.placeholder = '150';
 		o.depends('main_node', 'urltest');
 
 		o = s.taboption('routing', form.ListValue, 'main_udp_node', _('Main UDP node'));
@@ -154,8 +262,10 @@ return view.extend({
 		o.value('urltest', _('URLTest'));
 		for (let i in proxy_nodes)
 			o.value(i, proxy_nodes[i]);
+		o.value('byedpi-out', _('ByeDPI'));
+		o.value('zapret-out', _('Zapret'));
 		o.default = 'nil';
-		o.depends({'routing_mode': /^((?!custom).)+$/, 'proxy_mode': /^((?!redirect$).)+$/});
+		o.depends({'routing_mode': /^((?!custom|proxy_banned_ru).)+$/, 'proxy_mode': /^((?!redirect$).)+$/});
 		o.rmempty = false;
 
 		o = s.taboption('routing', hp.CBIStaticList, 'main_udp_urltest_nodes', _('URLTest nodes'),
@@ -174,7 +284,7 @@ return view.extend({
 		o = s.taboption('routing', form.Value, 'main_udp_urltest_tolerance', _('Test tolerance'),
 			_('The test tolerance in milliseconds.'));
 		o.datatype = 'uinteger';
-		o.placeholder = '50';
+		o.placeholder = '150';
 		o.depends('main_udp_node', 'urltest');
 
 		o = s.taboption('routing', form.Value, 'dns_server', _('DNS server'),
@@ -189,7 +299,7 @@ return view.extend({
 		o.value('117.50.10.10', _('ThreatBook Public DNS (117.50.10.10)'));
 		o.default = '8.8.8.8';
 		o.rmempty = false;
-		o.depends({'routing_mode': /^((?!custom).)+$/});
+		o.depends('routing_mode', 'global');
 		o.validate = function(section_id, value) {
 			if (section_id && !['wan'].includes(value)) {
 				if (!value)
@@ -222,7 +332,7 @@ return view.extend({
 		o.value('210.2.4.8', _('CNNIC Public DNS (210.2.4.8)'));
 		o.value('119.29.29.29', _('Tencent Public DNS (119.29.29.29)'));
 		o.value('117.50.10.10', _('ThreatBook Public DNS (117.50.10.10)'));
-		o.depends('routing_mode', 'bypass_mainland_china');
+		o.depends('routing_mode', 'bypass_cn');
 		o.default = '223.5.5.5';
 		o.rmempty = false;
 		o.validate = function(section_id, value) {
@@ -249,14 +359,120 @@ return view.extend({
 			return true;
 		}
 
+		o = s.taboption('routing', form.Value, 'iran_dns_server', _('Iran DNS server'),
+			_('The Domain Name Server for resolving Iran Domestic domains only. Your Internet Provider sees these queries in plain text.'));
+		o.value('wan', _('WAN DNS (read from interface)'));
+		o.value('178.22.122.100', _('Shecan (178.22.122.100)'));
+		o.value('185.51.200.2', _('Shecan secondary (185.51.200.2)'));
+		o.value('78.157.42.100', _('Electro/Begzar (78.157.42.100)'));
+		o.value('78.157.42.101', _('Electro/Begzar secondary (78.157.42.101)'));
+		o.value('10.202.10.202', _('403.online (10.202.10.202)'));
+		o.value('10.202.10.102', _('403.online secondary (10.202.10.102)'));
+		o.value('10.202.10.10', _('Radar (10.202.10.10)'));
+		o.value('10.202.10.11', _('Radar secondary (10.202.10.11)'));
+		o.depends('routing_mode', 'bypass_ir');
+		o.default = '178.22.122.100';
+		o.rmempty = false;
+		o.validate = function(section_id, value) {
+			if (section_id && !['wan'].includes(value)) {
+				if (!value)
+					return _('Expecting: %s').format(_('non-empty value'));
+
+				try {
+					let url = new URL(value.replace(/^.*:\/\//, 'http://'));
+					if (stubValidator.apply('hostname', url.hostname))
+						return true;
+					else if (stubValidator.apply('ip4addr', url.hostname))
+						return true;
+					else if (stubValidator.apply('ip6addr', url.hostname.match(/^\[(.+)\]$/)?.[1]))
+						return true;
+					else
+						return _('Expecting: %s').format(_('valid DNS server address'));
+				} catch(e) {}
+
+				if (!stubValidator.apply('ipaddr', value))
+					return _('Expecting: %s').format(_('valid DNS server address'));
+			}
+
+			return true;
+		}
+
+		o = s.taboption('routing', form.Value, 'russia_dns_server', _('Russia DNS server') + ' 🔓',
+			_('Resolves Russian domains directly, without going through the proxy.'));
+		o.value('77.88.8.8', _('Yandex DNS (77.88.8.8)'));
+		o.value('193.58.251.251', _('SkyDNS (193.58.251.251)'));
+		o.value('83.220.169.155', _('Comss.one (83.220.169.155)'));
+		o.value('1.1.1.1', _('Cloudflare DNS UDP (1.1.1.1)'));
+		o.value('8.8.8.8', _('Google DNS UDP (8.8.8.8)'));
+		o.depends('routing_mode', 'proxy_banned_ru');
+		o.default = '77.88.8.8';
+		o.rmempty = false;
+		o.validate = function(section_id, value) {
+			if (section_id && value) {
+				if (!stubValidator.apply('ip4addr', value) && !stubValidator.apply('ip6addr', value))
+					return _('Expecting: %s').format(_('valid DNS server address'));
+			}
+			return true;
+		}
+
+		o = s.taboption('routing', form.Value, 'secure_dns_server', _('Secure DNS server') + ' 🔒',
+			_('Resolves blocked domains via proxy — your ISP cannot see which sites you look up. Uses encrypted DNS (DoH/DoT = DNS over HTTPS/TLS).'));
+		o.value('https://cloudflare-dns.com/dns-query', _('Cloudflare DoH'));
+		o.value('https://dns.quad9.net/dns-query', _('Quad9 DoH'));
+		o.value('https://dns.adguard-dns.com/dns-query', _('AdGuard DoH'));
+		o.value('https://dns.google/dns-query', _('Google DoH'));
+		o.value('tls://cloudflare-dns.com', _('Cloudflare DoT'));
+		o.value('tls://dns.quad9.net', _('Quad9 DoT'));
+		o.value('tls://dns.google', _('Google DoT'));
+		o.depends({'routing_mode': /^(proxy_banned_ru|bypass_cn|bypass_ir)$/});
+		o.default = 'https://cloudflare-dns.com/dns-query';
+		o.rmempty = false;
+		o.validate = function(section_id, value) {
+			if (section_id && value) {
+				try {
+					let url = new URL(value.replace(/^.*:\/\//, 'http://'));
+					if (stubValidator.apply('hostname', url.hostname) || stubValidator.apply('ipaddr', url.hostname))
+						return true;
+				} catch(e) {}
+				return _('Expecting: %s').format(_('valid DNS server address'));
+			}
+			return true;
+		}
+
+		o = s.taboption('routing', form.Flag, 'proxy_calls',
+			_('Proxy calls') + ' 📞',
+			_('Route VoIP call ports (WhatsApp, Telegram, FaceTime, etc.) through the proxy.'));
+		o.depends({'routing_mode': /^(proxy_banned_ru|bypass_cn|bypass_ir)$/});
+		o.default = o.enabled;
+		o.rmempty = false;
+
+		o = s.taboption('routing', form.Flag, 'no_proxy_torrents',
+			_('Do not proxify torrents') + ' 🧲',
+			_('Force torrent traffic (BitTorrent protocol + common ports) to bypass the proxy.'));
+		o.depends({'routing_mode': /^(proxy_banned_ru|bypass_cn|bypass_ir)$/});
+		o.default = o.enabled;
+		o.rmempty = false;
+
+		o = s.taboption('routing', form.Flag, 'show_advanced_rules',
+			_('Advanced custom rules') + ' 👨‍💻',
+			_('Show Routing Nodes and Routing Rules tabs for additional custom rules.'));
+		o.depends({'routing_mode': /^(proxy_banned_ru|bypass_cn|bypass_ir)$/});
+		o.default = o.disabled;
+		o.rmempty = false;
+
 		o = s.taboption('routing', form.ListValue, 'routing_mode', _('Routing mode'));
-		o.value('gfwlist', _('GFWList'));
-		o.value('bypass_mainland_china', _('Bypass mainland China'));
-		o.value('proxy_mainland_china', _('Only proxy mainland China'));
-		o.value('custom', _('Custom routing'));
+		o.value('proxy_banned_ru', _('Russia (Proxy Banned)'));
+		o.value('bypass_cn', _('China (bypass mainland)'));
+		o.value('bypass_ir', _('Iran (bypass domestic)'));
 		o.value('global', _('Global'));
+		o.value('custom', _('Custom routing'));
 		o.value('custom_json', _('Custom JSON'));
-		o.default = 'bypass_mainland_china';
+		const _lang_section = (uci.sections('luci', 'internal') || []).find(s => s['.name'] === 'languages');
+		const _lang_codes = _lang_section ? Object.keys(_lang_section).filter(k => /^[a-z]/.test(k)) : [];
+		o.default = _lang_codes.includes('ru') ? 'proxy_banned_ru' :
+		            _lang_codes.some(k => k.startsWith('zh')) ? 'bypass_cn' :
+		            _lang_codes.some(k => k.startsWith('fa')) ? 'bypass_ir' :
+		            'proxy_banned_ru';
 		o.rmempty = false;
 		o.onchange = function(ev, section_id, value) {
 			if (section_id && (value === 'custom' || value === 'custom_json'))
@@ -288,11 +504,11 @@ return view.extend({
 		o.value('redirect', _('Redirect TCP'));
 		if (features.hp_has_tproxy)
 			o.value('redirect_tproxy', _('Redirect TCP + TProxy UDP'));
-		if (features.hp_has_ip_full && features.hp_has_tun) {
+		if (features.hp_has_tun) {
 			o.value('redirect_tun', _('Redirect TCP + Tun UDP'));
 			o.value('tun', _('Tun TCP/UDP'));
 		} else {
-			o.description = _('To enable Tun support, you need to install <code>ip-full</code> and <code>kmod-tun</code>');
+			o.description = _('To enable Tun support, you need to install <code>kmod-tun</code>');
 		}
 		o.default = 'redirect_tproxy';
 		o.rmempty = false;
@@ -302,6 +518,12 @@ return view.extend({
 		o.default = o.enabled;
 		o.rmempty = false;
 		o.depends({'routing_mode': 'custom_json', '!reverse': true});
+		o.cfgvalue = function(section_id) {
+			const stored = uci.get('homeproxy', section_id, 'ipv6_support');
+			if (stored != null) return stored;
+			return (uci.get('homeproxy', section_id, 'routing_mode') === 'proxy_banned_ru')
+				? this.disabled : this.enabled;
+		};
 
 		/* Custom routing settings start */
 		/* Routing settings start */
@@ -386,6 +608,14 @@ return view.extend({
 
 			this.value('default-dns', _('Default DNS (issued by WAN)'));
 			this.value('system-dns', _('System DNS'));
+			const _rm = uci.get(data[0], 'config', 'routing_mode');
+			if (_rm === 'proxy_banned_ru') {
+				this.value('russia-dns', _('Russia DNS server') + ' 🔓');
+				this.value('secure-dns', _('Secure DNS server') + ' 🔒');
+			} else if (/^bypass_(cn|ir)$/.test(_rm)) {
+				this.value('region-dns', _('Region DNS') + ' 🔓');
+				this.value('secure-dns', _('Secure DNS server') + ' 🔒');
+			}
 			uci.sections(data[0], 'dns_server', (res) => {
 				if (res.enabled === '1')
 					this.value(res['.name'], res.label);
@@ -397,10 +627,281 @@ return view.extend({
 		so.rmempty = false;
 		/* Routing settings end */
 
+		o = s.taboption('routing', form.Flag, 'byedpi_enabled', _('Enable ByeDPI'),
+			_('A free way to unblock throttled sites (e.g. YouTube) without a VPN subscription. ' +
+			  'Works by confusing your ISP\'s traffic analysis — your traffic is NOT encrypted or hidden, your ISP can still see which sites you visit. ' +
+			  'Results depend on your ISP and may require trying different strategies in the ByeDPI tab. ' +
+			  'ByeDPI will be installed automatically on first enable.'));
+		o.default = o.disabled;
+		o.rmempty = false;
+		(function(opt) {
+			const _super = opt.renderWidget.bind(opt);
+			opt.renderWidget = function(section_id, option_index, cfgvalue) {
+				return Promise.resolve(_super(section_id, option_index, cfgvalue)).then(function(node) {
+					node.querySelector('input').addEventListener('change', async function(ev) {
+						if (!ev.target.checked) return;
+						const status = await L.resolveDefault(callByeDPIStatus(), {});
+						if (status.installed) return;
+
+						if (!status.pkg_manager) {
+							ui.addNotification(null, E('p', _('No package manager found. Install ciadpi manually from the Status page.')), 'error');
+							ev.target.checked = false;
+							return;
+						}
+
+						const progressEl = E('p', { style: 'margin:8px 0' }, _('Checking requirements...'));
+						const cancelBtn  = E('button', { class: 'btn cbi-button' }, _('Cancel'));
+						const installBtn = E('button', { class: 'btn cbi-button-action', style: 'margin-left:4px' }, _('Install'));
+						const input = ev.target;
+
+						cancelBtn.addEventListener('click', function() {
+							input.checked = false;
+							ui.hideModal();
+						});
+
+						installBtn.addEventListener('click', async function() {
+							cancelBtn.disabled = true;
+							installBtn.disabled = true;
+
+							progressEl.style.color = '';
+							progressEl.textContent = _('Checking requirements...');
+							const prep = await L.resolveDefault(callByeDPIPrepareInstall(), {});
+							if (prep.error) {
+								progressEl.style.color = 'red';
+								progressEl.textContent = prep.error;
+								cancelBtn.disabled = false;
+								input.checked = false;
+								return;
+							}
+
+							progressEl.textContent = _('Downloading...');
+							const dl = await L.resolveDefault(callCoreDownload(prep.dl_url, prep.tmp_path), {});
+							if (!dl.result) {
+								progressEl.style.color = 'red';
+								progressEl.textContent = dl.error || _('Download failed');
+								cancelBtn.disabled = false;
+								input.checked = false;
+								return;
+							}
+
+							progressEl.textContent = _('Installing...');
+							const inst = await L.resolveDefault(callByeDPIInstallPkg(prep.tmp_path, prep.pkg_manager), {});
+							if (!inst.result) {
+								progressEl.style.color = 'red';
+								progressEl.textContent = inst.error || _('Installation failed');
+								cancelBtn.disabled = false;
+								input.checked = false;
+								return;
+							}
+
+							progressEl.style.color = 'green';
+							progressEl.textContent = _('Installed successfully');
+							setTimeout(() => ui.hideModal(), 1500);
+						});
+
+						ui.showModal(_('Install ByeDPI'), [
+							E('p', _('ByeDPI (ciadpi) is not installed. Install it now?')),
+							progressEl,
+							E('div', { class: 'right' }, [cancelBtn, installBtn])
+						]);
+					});
+					return node;
+				});
+			};
+		})(o);
+
+		o = s.taboption('routing', form.Flag, 'zapret_enabled', _('Enable Zapret'),
+			_('An alternative to ByeDPI: another free way to unblock throttled or blocked sites (YouTube, Discord…) without a VPN subscription. ' +
+			  'Practical difference from ByeDPI: Zapret can work with the QUIC protocol. ' +
+			  'Finding a working strategy is individual and depends on your ISP\'s restrictions. ' +
+			  'Installed automatically on first enable.'));
+		o.default = o.disabled;
+		o.rmempty = false;
+		(function(opt) {
+			const _super = opt.renderWidget.bind(opt);
+			opt.renderWidget = function(section_id, option_index, cfgvalue) {
+				return Promise.resolve(_super(section_id, option_index, cfgvalue)).then(function(node) {
+					node.querySelector('input').addEventListener('change', async function(ev) {
+						if (!ev.target.checked) return;
+						const status = await L.resolveDefault(callZapretStatus(), {});
+						if (status.installed) {
+							/* Installed but the NFQUEUE kmod is missing → enabling would emit
+							 * `queue num` and nft would reject the whole fw4 set. Block it.
+							 * (kmod_ok === false only; undefined = old backend = don't block.) */
+							if (status.kmod_ok === false) {
+								ui.addNotification(null, E('p', _('Zapret is installed, but the NFQUEUE kernel module (kmod-nft-queue) is missing. Enabling it now could break the firewall. Reinstall Zapret or install kmod-nft-queue first.')), 'error');
+								ev.target.checked = false;
+							}
+							return;
+						}
+
+						if (!status.pkg_manager) {
+							ui.addNotification(null, E('p', _('No package manager found. Install zapret2 manually from the Status page.')), 'error');
+							ev.target.checked = false;
+							return;
+						}
+
+						const progressEl = E('p', { style: 'margin:8px 0' }, _('Checking requirements...'));
+						const cancelBtn  = E('button', { class: 'btn cbi-button' }, _('Cancel'));
+						const installBtn = E('button', { class: 'btn cbi-button-action', style: 'margin-left:4px' }, _('Install'));
+						const input = ev.target;
+
+						cancelBtn.addEventListener('click', function() {
+							input.checked = false;
+							ui.hideModal();
+						});
+
+						installBtn.addEventListener('click', async function() {
+							cancelBtn.disabled = true;
+							installBtn.disabled = true;
+
+							progressEl.style.color = '';
+							progressEl.textContent = _('Checking requirements...');
+							const prep = await L.resolveDefault(callZapretPrepareInstall(), {});
+							if (prep.error) {
+								progressEl.style.color = 'red';
+								progressEl.textContent = prep.error;
+								cancelBtn.disabled = false;
+								input.checked = false;
+								return;
+							}
+
+							progressEl.textContent = _('Downloading...');
+							const dl = await L.resolveDefault(callCoreDownload(prep.dl_url, prep.tmp_path), {});
+							if (!dl.result) {
+								progressEl.style.color = 'red';
+								progressEl.textContent = dl.error || _('Download failed');
+								cancelBtn.disabled = false;
+								input.checked = false;
+								return;
+							}
+
+							progressEl.textContent = _('Installing...');
+							const inst = await L.resolveDefault(callZapretInstallPkg(prep.tmp_path, prep.pkg_manager), {});
+							if (!inst.result) {
+								progressEl.style.color = 'red';
+								progressEl.textContent = inst.error || _('Installation failed');
+								cancelBtn.disabled = false;
+								input.checked = false;
+								return;
+							}
+
+							progressEl.style.color = 'green';
+							progressEl.textContent = _('Installed successfully');
+							setTimeout(() => ui.hideModal(), 1500);
+						});
+
+						ui.showModal(_('Install Zapret'), [
+							E('p', _('Zapret (zapret2/nfqws2) is not installed. Install it now?')),
+							progressEl,
+							E('div', { class: 'right' }, [cancelBtn, installBtn])
+						]);
+					});
+					return node;
+				});
+			};
+		})(o);
+
+		/* Proxy Rules start (per-service overrides — RU forward + CN/IR reverse) */
+		s.tab('ru_rules', _('Proxy Rules'));
+		o = s.taboption('ru_rules', form.SectionValue, '_ru_rules', form.TypedSection, 'proxy_ru_rule');
+		o.depends({'routing_mode': /^(proxy_banned_ru|bypass_cn|bypass_ir)$/});
+
+		ss = o.subsection;
+		ss.addremove = true;
+		ss.anonymous = true;
+		ss.sortable = true;
+		ss.nodescriptions = true;
+		/* Forward (RU) vs reverse (CN/IR) invert the meaning of these rules, so the
+		 * description must follow the current mode. */
+		const _rmode_rules = uci.get('homeproxy', 'config', 'routing_mode');
+		if (_rmode_rules === 'bypass_cn' || _rmode_rules === 'bypass_ir') {
+			const _region_name = (_rmode_rules === 'bypass_cn') ? _('China') : _('Iran');
+			ss.description = _('Default route is through the proxy. %s domains and IPs (geosite + geoip) automatically go Direct. Rules added here are per-service overrides applied before that baseline — e.g. force a specific service Direct, or send it through a separate node.').format(_region_name);
+		} else {
+			ss.description = _('Default route is Direct. Added rules are proxied, with automatic priority:<br>1. Smaller lists (YouTube, Discord etc.)<br>2. <b>Russia Inside</b> (1000+ domains, itdoginfo) — the in-Russia must-have set (YouTube, Discord, Telegram, Meta…) routed through the proxy<br>3. <b>Re-filter</b> (60000+ domains + 25000+ IPs) — community blocklist of domains and IPs banned in Russia (Roskomnadzor)');
+		}
+
+		so = ss.option(form.Flag, 'enabled', _('Enable'));
+		so.default = so.enabled;
+		so.rmempty = false;
+		so.editable = true;
+
+		so = ss.option(form.ListValue, 'source', _('Source') + ' ⤵️');
+		/* Russia bulk lists are RU-forward only; CN/IR get geosite/geoip baked into the
+		 * engine baseline, so here they only need per-service overrides. */
+		if (_rmode_rules === 'proxy_banned_ru') {
+			so.value('refilter', _('Re-filter (Russia blocklist: 60000+ banned domains + 25000+ IPs)'));
+			so.value('russia-inside', _('itdoginfo/allow-domains - Russia Inside (1000+ entries)'));
+		}
+		so.value('youtube', _('YouTube'));
+		so.value('twitter', _('Twitter/X'));
+		so.value('tiktok', _('TikTok'));
+		so.value('telegram', _('Telegram'));
+		so.value('roblox', _('Roblox'));
+		so.value('porn', _('Adult content'));
+		so.value('ovh', _('OVH (France cloud hosting)'));
+		so.value('news', _('International news sites'));
+		so.value('meta', _('Meta (Facebook, Instagram)'));
+		so.value('hodca', _('HODCA'));
+		so.value('hetzner', _('Hetzner (Germany cloud hosting)'));
+		so.value('hdrezka', _('HDRezka'));
+		so.value('google_ai', _('Google AI services'));
+		so.value('google_play', _('Google Play'));
+		so.value('geoblock', _('GeoBlock services'));
+		so.value('anime', _('Anime streaming'));
+		so.value('cloudflare', _('Cloudflare CDN'));
+		so.value('cloudfront', _('CloudFront CDN'));
+		so.value('discord', _('Discord'));
+		so.value('digitalocean', _('DigitalOcean cloud hosting'));
+		so.rmempty = false;
+		so.editable = true;
+		so.validate = function(section_id, value) {
+			for (const sid of this.section.cfgsections()) {
+				if (sid !== section_id && this.cfgvalue(sid) === value)
+					return _('Duplicate source — only the first rule will take effect');
+			}
+			return true;
+		};
+
+		so = ss.option(form.ListValue, 'node', _('Node') + ' 🔗');
+		so.value('main-out', _('Same as main node'));
+		so.value('urltest', _('Separate URLTest'));
+		for (let i in proxy_nodes)
+			so.value(i, proxy_nodes[i]);
+		so.value('byedpi-out', _('ByeDPI'));
+		so.value('zapret-out', _('Zapret'));
+		so.rmempty = false;
+		so.editable = true;
+
+		so = ss.option(hp.CBIStaticList, 'urltest_nodes', _('URLTest nodes'),
+			_('List of nodes to test.'));
+		for (let i in proxy_nodes)
+			so.value(i, proxy_nodes[i]);
+		so.depends('node', 'urltest');
+		so.rmempty = false;
+		so.modalonly = true;
+
+		so = ss.option(form.Value, 'urltest_interval', _('Test interval'),
+			_('The test interval in seconds.'));
+		so.datatype = 'uinteger';
+		so.placeholder = '180';
+		so.depends('node', 'urltest');
+		so.modalonly = true;
+
+		so = ss.option(form.Value, 'urltest_tolerance', _('Test tolerance'),
+			_('The test tolerance in milliseconds.'));
+		so.datatype = 'uinteger';
+		so.placeholder = '150';
+		so.depends('node', 'urltest');
+		so.modalonly = true;
+		/* RU Proxy Rules end */
+
 		/* Routing nodes start */
 		s.tab('routing_node', _('Routing Nodes'));
 		o = s.taboption('routing_node', form.SectionValue, '_routing_node', form.GridSection, 'routing_node');
 		o.depends('routing_mode', 'custom');
+		o.depends({'routing_mode': /^(proxy_banned_ru|bypass_cn|bypass_ir)$/, 'show_advanced_rules': '1'});
 
 		ss = o.subsection;
 		ss.addremove = true;
@@ -423,6 +924,10 @@ return view.extend({
 
 		so = ss.option(form.ListValue, 'node', _('Node'),
 			_('Outbound node'));
+		/* "Same as main node" exists in every mode EXCEPT custom routing and custom JSON */
+		const _rmode = uci.get('homeproxy', 'config', 'routing_mode');
+		if (_rmode !== 'custom' && _rmode !== 'custom_json')
+			so.value('main-out', _('Same as main node') + ' 🔗');
 		so.value('urltest', _('URLTest'));
 		for (let i in proxy_nodes)
 			so.value(i, proxy_nodes[i]);
@@ -438,6 +943,14 @@ return view.extend({
 			this.value('', _('Default'));
 			this.value('default-dns', _('Default DNS (issued by WAN)'));
 			this.value('system-dns', _('System DNS'));
+			const _rm = uci.get(data[0], 'config', 'routing_mode');
+			if (_rm === 'proxy_banned_ru') {
+				this.value('russia-dns', _('Russia DNS server') + ' 🔓');
+				this.value('secure-dns', _('Secure DNS server') + ' 🔒');
+			} else if (/^bypass_(cn|ir)$/.test(_rm)) {
+				this.value('region-dns', _('Region DNS') + ' 🔓');
+				this.value('secure-dns', _('Secure DNS server') + ' 🔒');
+			}
 			uci.sections(data[0], 'dns_server', (res) => {
 				if (res.enabled === '1')
 					this.value(res['.name'], res.label);
@@ -469,6 +982,8 @@ return view.extend({
 			delete this.vallist;
 
 			this.value('', _('Direct'));
+			if (/^(proxy_banned_ru|bypass_cn|bypass_ir)$/.test(uci.get(data[0], 'config', 'routing_mode')))
+				this.value('main-out', _('Same as main node') + ' 🔗');
 			uci.sections(data[0], 'routing_node', (res) => {
 				if (res['.name'] !== section_id && res.enabled === '1')
 					this.value(res['.name'], res.label);
@@ -572,6 +1087,7 @@ return view.extend({
 		s.tab('routing_rule', _('Routing Rules'));
 		o = s.taboption('routing_rule', form.SectionValue, '_routing_rule', form.GridSection, 'routing_rule');
 		o.depends('routing_mode', 'custom');
+		o.depends({'routing_mode': /^(proxy_banned_ru|bypass_cn|bypass_ir)$/, 'show_advanced_rules': '1'});
 
 		ss = o.subsection;
 		ss.addremove = true;
@@ -708,6 +1224,19 @@ return view.extend({
 			delete this.vallist;
 
 			this.value('direct-out', _('Direct'));
+			/* "Same as main node" (main-out) exists only OUTSIDE custom mode: custom mode
+			 * hides the main-node selector and the generator never emits a main-out there
+			 * (its default/final is default_outbound). So gate it on the mode, not on a
+			 * possibly-stale main_node value, to avoid offering a tag that won't exist. */
+			if (uci.get(data[0], 'config', 'routing_mode') !== 'custom' &&
+			    uci.get(data[0], 'config', 'main_node'))
+				this.value('main-out', _('Same as main node') + ' 🔗');
+			/* byedpi-out, by contrast, IS emitted in every routing mode whenever ByeDPI is
+			 * enabled — so a custom-mode rule can target it directly, no routing node needed. */
+			if (uci.get(data[0], 'config', 'byedpi_enabled') === '1')
+				this.value('byedpi-out', _('ByeDPI'));
+			if (uci.get(data[0], 'config', 'zapret_enabled') === '1')
+				this.value('zapret-out', _('Zapret'));
 			uci.sections(data[0], 'routing_node', (res) => {
 				if (res.enabled === '1')
 					this.value(res['.name'], res.label);
@@ -912,6 +1441,14 @@ return view.extend({
 
 			this.value('default-dns', _('Default DNS (issued by WAN)'));
 			this.value('system-dns', _('System DNS'));
+			const _rm = uci.get(data[0], 'config', 'routing_mode');
+			if (_rm === 'proxy_banned_ru') {
+				this.value('russia-dns', _('Russia DNS server') + ' 🔓');
+				this.value('secure-dns', _('Secure DNS server') + ' 🔒');
+			} else if (/^bypass_(cn|ir)$/.test(_rm)) {
+				this.value('region-dns', _('Region DNS') + ' 🔓');
+				this.value('secure-dns', _('Secure DNS server') + ' 🔒');
+			}
 			uci.sections(data[0], 'dns_server', (res) => {
 				if (res.enabled === '1')
 					this.value(res['.name'], res.label);
@@ -1186,6 +1723,14 @@ return view.extend({
 
 			this.value('default-dns', _('Default DNS (issued by WAN)'));
 			this.value('system-dns', _('System DNS'));
+			const _rm = uci.get(data[0], 'config', 'routing_mode');
+			if (_rm === 'proxy_banned_ru') {
+				this.value('russia-dns', _('Russia DNS server') + ' 🔓');
+				this.value('secure-dns', _('Secure DNS server') + ' 🔒');
+			} else if (/^bypass_(cn|ir)$/.test(_rm)) {
+				this.value('region-dns', _('Region DNS') + ' 🔓');
+				this.value('secure-dns', _('Secure DNS server') + ' 🔒');
+			}
 			uci.sections(data[0], 'dns_server', (res) => {
 				if (res.enabled === '1')
 					this.value(res['.name'], res.label);
@@ -1427,24 +1972,10 @@ return view.extend({
 		o = s.taboption('control', form.SectionValue, '_control', form.NamedSection, 'control', 'homeproxy');
 		ss = o.subsection;
 
-		/* Interface control start */
-		ss.tab('interface', _('Interface Control'));
-
-		so = ss.taboption('interface', widgets.DeviceSelect, 'listen_interfaces', _('Listen interfaces'),
-			_('Only process traffic from specific interfaces. Leave empty for all.'));
-		so.multiple = true;
-		so.noaliases = true;
-
-		so = ss.taboption('interface', widgets.DeviceSelect, 'bind_interface', _('Bind interface'),
-			_('Bind outbound traffic to specific interface. Leave empty to auto detect.'));
-		so.multiple = false;
-		so.noaliases = true;
-		/* Interface control end */
-
 		/* LAN IP policy start */
 		ss.tab('lan_ip_policy', _('LAN IP Policy'));
 
-		so = ss.taboption('lan_ip_policy', form.ListValue, 'lan_proxy_mode', _('Proxy filter mode'));
+		so = ss.taboption('lan_ip_policy', form.ListValue, 'lan_proxy_mode', _('Proxy mode for devices'));
 		so.value('disabled', _('Disable'));
 		so.value('listed_only', _('Proxy listed only'));
 		so.value('except_listed', _('Proxy all except listed'));
@@ -1469,14 +2000,14 @@ return view.extend({
 		so = fwtool.addMACOption(ss, 'lan_ip_policy', 'lan_proxy_mac_addrs', _('Proxy MAC-s'), null, hosts);
 		so.depends('lan_proxy_mode', 'listed_only');
 
-		so = fwtool.addIPOption(ss, 'lan_ip_policy', 'lan_gaming_mode_ipv4_ips', _('Gaming mode IPv4 IP-s'), null, 'ipv4', hosts, true);
+		so = fwtool.addIPOption(ss, 'lan_ip_policy', 'lan_gaming_mode_ipv4_ips', _('Gaming mode IPv4 IP-s'), _('In gaming mode, only TCP traffic from the selected device is proxied.'), 'ipv4', hosts, true);
 
 		so = fwtool.addIPOption(ss, 'lan_ip_policy', 'lan_gaming_mode_ipv6_ips', _('Gaming mode IPv6 IP-s'), null, 'ipv6', hosts, true);
 		so.depends('homeproxy.config.ipv6_support', '1');
 
 		so = fwtool.addMACOption(ss, 'lan_ip_policy', 'lan_gaming_mode_mac_addrs', _('Gaming mode MAC-s'), null, hosts);
 
-		so = fwtool.addIPOption(ss, 'lan_ip_policy', 'lan_global_proxy_ipv4_ips', _('Global proxy IPv4 IP-s'), null, 'ipv4', hosts, true);
+		so = fwtool.addIPOption(ss, 'lan_ip_policy', 'lan_global_proxy_ipv4_ips', _('Global proxy IPv4 IP-s'), _('In global proxy mode, all traffic from the selected device goes through the proxy.'), 'ipv4', hosts, true);
 		so.depends({'homeproxy.config.routing_mode': 'custom', '!reverse': true});
 
 		so = fwtool.addIPOption(ss, 'lan_ip_policy', 'lan_global_proxy_ipv6_ips', _('Global proxy IPv6 IP-s'), null, 'ipv6', hosts, true);
@@ -1567,7 +2098,23 @@ return view.extend({
 			return true;
 		}
 		/* Direct domain list end */
+
+		/* Interface control start (placed last so it's the last Access Control tab) */
+		ss.tab('interface', _('Interface Control'));
+
+		so = ss.taboption('interface', widgets.DeviceSelect, 'listen_interfaces', _('Listen interfaces'),
+			_('Only process traffic from specific interfaces. Leave empty for all.'));
+		so.multiple = true;
+		so.noaliases = true;
+
+		so = ss.taboption('interface', widgets.DeviceSelect, 'bind_interface', _('Bind interface'),
+			_('Bind outbound traffic to specific interface. Leave empty to auto detect.'));
+		so.multiple = false;
+		so.noaliases = true;
+		/* Interface control end */
 		/* ACL settings end */
+
+		/* ByeDPI settings are on the Node Settings page */
 
 		return m.render();
 	}

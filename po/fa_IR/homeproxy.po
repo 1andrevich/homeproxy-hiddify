@@ -1,21 +1,27 @@
 msgid ""
-msgstr "Content-Type: text/plain; charset=UTF-8"
+msgstr ""
+"Project-Id-Version: HomeProxy v1\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: fa_IR\n"
+"Language-Team: Persian\n"
+"MIME-Version: 1.0\n"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js:206
 msgid "%s log"
-msgstr ""
+msgstr "گزارش %s"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1456
 msgid "%s nodes removed"
-msgstr ""
+msgstr "%s گره حذف شد"
 
 #: htdocs/luci-static/resources/homeproxy.js:279
 msgid "/etc/homeproxy/certs/..., /etc/acme/..., /etc/ssl/..."
-msgstr ""
+msgstr "/etc/homeproxy/certs/...، /etc/acme/...، /etc/ssl/..."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:609
 msgid "4 or 6. Not limited if empty."
-msgstr ""
+msgstr "4 یا 6. محدودیتی ندارد اگر خالی باشد."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:775
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1210
@@ -23,174 +29,169 @@ msgid ""
 "<code>%s</code> will be temporarily overwritten to <code>%s</code> after 50 "
 "triggers in 30s if not enabled."
 msgstr ""
+"<code>%s</code> اگر فعال نشود، بعد از 50 بار در 30 ثانیه موقتاً با <code>%s</code> بازنویسی می‌شود."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1086
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1105
 #: htdocs/luci-static/resources/view/homeproxy/server.js:768
 #: htdocs/luci-static/resources/view/homeproxy/server.js:787
 msgid "<strong>Save your configuration before uploading files!</strong>"
-msgstr ""
+msgstr "<strong>پیش از آپلود فایل‌ها تنظیمات خود را ذخیره کنید!</strong>"
 
 #: htdocs/luci-static/resources/view/homeproxy/server.js:664
 msgid "API token"
-msgstr ""
+msgstr "توکن API"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:670
 msgid "Accept any if empty."
-msgstr ""
+msgstr "اگر خالی باشد هرچیزی قبول کن."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1138
 msgid "Accept empty query response"
-msgstr ""
+msgstr "پاسخ پرس‌و‌جوی خالی را قبول کن"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1399
 msgid "Access Control"
-msgstr ""
+msgstr "کنترل دسترسی"
 
 #: htdocs/luci-static/resources/view/homeproxy/server.js:647
 msgid "Access key ID"
-msgstr ""
+msgstr "شناسه کلید دسترسی"
 
 #: htdocs/luci-static/resources/view/homeproxy/server.js:653
 msgid "Access key secret"
-msgstr ""
+msgstr "رمز کلید دسترسی"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:669
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1146
 msgid "Action"
-msgstr ""
+msgstr "عمل"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1056
 msgid "Add a DNS rule"
-msgstr ""
+msgstr "اضافه کردن یک قانون DNS"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:933
 msgid "Add a DNS server"
-msgstr ""
+msgstr "اضافه کردن یک سرور DNS"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:396
 msgid "Add a node"
-msgstr ""
+msgstr "اضافه کردن یک گره"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:405
 msgid "Add a routing node"
-msgstr ""
+msgstr "اضافه کردن یک گره مسیریابی"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:576
 msgid "Add a routing rule"
-msgstr ""
+msgstr "اضافه کردن یک قانون مسیریابی"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1320
 msgid "Add a rule set"
-msgstr ""
+msgstr "اضافه کردن مجموعه قانون"
 
 #: htdocs/luci-static/resources/view/homeproxy/server.js:156
 msgid "Add a server"
-msgstr ""
+msgstr "اضافه کردن یک سرور"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:975
 msgid "Additional headers to be sent to the DNS server."
-msgstr ""
+msgstr "سرصحفه‌های اضافی برای ارسال به سرور DNS."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:957
 #: htdocs/luci-static/resources/view/homeproxy/node.js:448
 msgid "Address"
-msgstr ""
+msgstr "آدرس"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:988
 msgid "Address resolver"
-msgstr ""
+msgstr "حل‌کننده آدرس"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1020
 msgid "Address strategy"
-msgstr ""
+msgstr "استراتژی آدرس"
 
 #: htdocs/luci-static/resources/view/homeproxy/server.js:640
 msgid "Alibaba Cloud DNS"
-msgstr ""
+msgstr "Alibaba Cloud DNS"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:186
 #: htdocs/luci-static/resources/view/homeproxy/client.js:220
 msgid "Aliyun Public DNS (223.5.5.5)"
-msgstr ""
+msgstr "Aliyun DNS عمومی (223.5.5.5)"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:266
 msgid "All ports"
-msgstr ""
+msgstr "تمام درگاه‌ها"
 
-#: htdocs/luci-static/resources/view/homeproxy/server.js:172
+#: htdocs/luci-static/resources/view/homeproxy/server.js:122
 msgid "Allow access from the Internet."
-msgstr ""
+msgstr "اجازه دسترسی از اینترنت."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1040
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1382
 msgid "Allow insecure"
-msgstr ""
+msgstr "اجازه ناامن"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1041
 msgid "Allow insecure connection at TLS client."
-msgstr ""
+msgstr "اجازه اتصال ناامن در کلاینت TLS."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1383
 msgid "Allow insecure connection by default when add nodes from subscriptions."
-msgstr ""
+msgstr "اجازه اتصال ناامن به‌طور پیش‌فرض هنگام اضافه‌کردن گره‌ها از اشتراک‌نامه‌ها."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:874
 #: htdocs/luci-static/resources/view/homeproxy/server.js:482
 msgid "Allowed payload size is in the request."
-msgstr ""
+msgstr "اندازه بار مجاز در درخواست است."
 
-#: htdocs/luci-static/resources/view/homeproxy/status.js:95
+#: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "Active Node"
-msgstr ""
+msgstr "گره فعال"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "No active node"
-msgstr ""
+msgstr "گره‌ای فعال نیست"
 
-msgid "hiddify-core with sing-box syntax compatibility. Supports Hiddify App protocols and advanced features. Best compatibility with Hiddify Manager protocols."
-msgstr ""
-
-msgid "Extended sing-box with additional protocols including AmneziaWG and TrustTunnel support. Created by shtorm-7."
-msgstr ""
-
-#: htdocs/luci-static/resources/view/homeproxy/status.js
+#: htdocs/luci-static/resources/view/homeproxy/status.js:95
 msgid "Already at the latest version."
-msgstr ""
+msgstr "در حال‌حاضر در آخرین نسخه است."
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js:92
 msgid "Already in updating."
-msgstr ""
+msgstr "در حال‌حاضر در حال به‌روزرسانی است."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:742
 #: htdocs/luci-static/resources/view/homeproxy/server.js:391
 msgid "Alter ID"
-msgstr ""
+msgstr "شناسه تغییر"
 
-#: htdocs/luci-static/resources/view/homeproxy/server.js:678
+#: htdocs/luci-static/resources/view/homeproxy/server.js:157
 msgid "Alternative HTTP port"
-msgstr ""
+msgstr "درگاه HTTP جایگزین"
 
-#: htdocs/luci-static/resources/view/homeproxy/server.js:684
+#: htdocs/luci-static/resources/view/homeproxy/server.js:184
 msgid "Alternative TLS port"
-msgstr ""
+msgstr "درگاه TLS جایگزین"
 
-#: htdocs/luci-static/resources/view/homeproxy/node.js:1419
+#: htdocs/luci-static/resources/view/homeproxy/node.js:1165
 msgid "An error occurred during updating subscriptions: %s"
-msgstr ""
+msgstr "خطایی در حین به‌روزرسانی اشتراک‌نامه‌ها رخ داد: %s"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1227
 msgid "Answer"
-msgstr ""
+msgstr "پاسخ"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:429
-#: htdocs/luci-static/resources/view/homeproxy/server.js:176
+#: htdocs/luci-static/resources/view/homeproxy/server.js:174
 msgid "AnyTLS"
-msgstr ""
+msgstr "AnyTLS"
 
 #: htdocs/luci-static/resources/view/homeproxy/server.js:245
 msgid "AnyTLS padding scheme in array."
-msgstr ""
+msgstr "طرح padding AnyTLS در آرایه."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:799
 #: htdocs/luci-static/resources/view/homeproxy/client.js:909
@@ -200,94 +201,96 @@ msgid ""
 "prefix to every query by default.<br/>If value is an IP address instead of "
 "prefix, <code>/32</code> or <code>/128</code> will be appended automatically."
 msgstr ""
+"یک رکورد اضافی <code>edns0-subnet</code> OPT با پیشوند IP مشخص‌شده به هر پرس‌و‌جو اضافه کنید.<br/>اگر مقدار یک آدرس IP باشد، <code>/32</code> یا <code>/128</code> به‌طور خودکار اضافه خواهد شد."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1072
 msgid "Append self-signed certificate"
-msgstr ""
+msgstr "الحاق گواهی خود امضاء"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:407
 msgid "Applied"
-msgstr ""
+msgstr "اعمال شد"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:400
 #: htdocs/luci-static/resources/view/homeproxy/node.js:410
 msgid "Apply"
-msgstr ""
+msgstr "اعمال کنید"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:18
 msgid "Are you sure to allow insecure?"
-msgstr ""
+msgstr "آیا مطمئن هستید اجازه ناامن دهید؟"
 
-#: htdocs/luci-static/resources/view/homeproxy/server.js:363
+#: htdocs/luci-static/resources/view/homeproxy/server.js:208
 msgid "Auth timeout"
-msgstr ""
+msgstr "انقضای تایید هویت"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:766
 msgid "Authenticated length"
-msgstr ""
+msgstr "طول احراز هویت"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:561
-#: htdocs/luci-static/resources/view/homeproxy/server.js:282
+#: htdocs/luci-static/resources/view/homeproxy/server.js:217
 msgid "Authentication payload"
-msgstr ""
+msgstr "بار احراز هویت"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:554
-#: htdocs/luci-static/resources/view/homeproxy/server.js:275
+#: htdocs/luci-static/resources/view/homeproxy/server.js:222
 msgid "Authentication type"
-msgstr ""
+msgstr "نوع احراز هویت"
 
-#: htdocs/luci-static/resources/view/homeproxy/node.js:1335
+#: htdocs/luci-static/resources/view/homeproxy/node.js:1225
 msgid "Auto update"
-msgstr ""
+msgstr "به‌روزرسانی خودکار"
 
-#: htdocs/luci-static/resources/view/homeproxy/node.js:1336
+#: htdocs/luci-static/resources/view/homeproxy/node.js:1231
 msgid "Auto update subscriptions and geodata."
-msgstr ""
+msgstr "به‌روزرسانی خودکار اشتراک‌نامه‌ها و داده‌های جغرافیایی."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:702
 msgid "BBR"
-msgstr ""
+msgstr "BBR"
 
-#: htdocs/luci-static/resources/view/homeproxy/status.js:235
+#: htdocs/luci-static/resources/view/homeproxy/status.js:239
 msgid "BaiDu"
-msgstr ""
+msgstr "بایدو"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:556
-#: htdocs/luci-static/resources/view/homeproxy/server.js:277
+#: htdocs/luci-static/resources/view/homeproxy/server.js:243
 msgid "Base64"
-msgstr ""
+msgstr "Base64"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:323
 msgid "Based on google/gvisor."
-msgstr ""
+msgstr "مبتنی بر google/gvisor."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1341
 msgid "Binary file"
-msgstr ""
+msgstr "فایل باینری"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:453
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1412
 #: htdocs/luci-static/resources/view/homeproxy/server.js:874
 msgid "Bind interface"
-msgstr ""
+msgstr "رابط اتصال"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1413
 msgid ""
 "Bind outbound traffic to specific interface. Leave empty to auto detect."
 msgstr ""
+"ترافیک خروجی را به رابط خاصی متصل کنید. خالی بگذارید تا خودکار تشخیص دهد."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:617
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1106
 msgid "BitTorrent"
-msgstr ""
+msgstr "BitTorrent"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1369
 msgid "Blacklist mode"
-msgstr ""
+msgstr "حالت لیست سیاه"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:365
 msgid "Block"
-msgstr ""
+msgstr "مسدود کنید"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:612
 #: htdocs/luci-static/resources/view/homeproxy/client.js:640
@@ -295,67 +298,64 @@ msgstr ""
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1102
 #: htdocs/luci-static/resources/view/homeproxy/server.js:869
 msgid "Both"
-msgstr ""
+msgstr "هردو"
 
-#: htdocs/luci-static/resources/view/homeproxy/client.js:343
+#: htdocs/luci-static/resources/view/homeproxy/client.js:287
 msgid "Bypass CN traffic"
-msgstr ""
+msgstr "دور زدن ترافیک چین"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:253
 msgid "Bypass mainland China"
-msgstr ""
+msgstr "دور زدن چین سرزمینی"
 
-#: htdocs/luci-static/resources/view/homeproxy/client.js:344
+#: htdocs/luci-static/resources/view/homeproxy/client.js:295
 msgid "Bypass mainland China traffic via firewall rules by default."
-msgstr ""
+msgstr "به‌طور پیش‌فرض ترافیک چین سرزمینی را از طریق قوانین دیوار آتش دور بزنید."
 
-#: htdocs/luci-static/resources/view/homeproxy/server.js:627
+#: htdocs/luci-static/resources/view/homeproxy/server.js:299
 msgid "CA provider"
-msgstr ""
+msgstr "فراهم‌کننده CA"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:221
 msgid "CNNIC Public DNS (210.2.4.8)"
-msgstr ""
+msgstr "CNNIC DNS عمومی (210.2.4.8)"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:700
 msgid "CUBIC"
-msgstr ""
+msgstr "CUBIC"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1239
 msgid "Cancel"
-msgstr ""
+msgstr "لغو"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1077
 #: htdocs/luci-static/resources/view/homeproxy/server.js:756
 msgid "Certificate path"
-msgstr ""
+msgstr "مسیر گواهی"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js:57
 msgid "Check"
-msgstr ""
+msgstr "بررسی"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js:105
 msgid "Check update"
-msgstr ""
+msgstr "بررسی به‌روزرسانی"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:217
 msgid "China DNS server"
-msgstr ""
+msgstr "سرور DNS چین"
 
 msgid "Iran DNS server"
-msgstr ""
-
-msgid "DNS (direct)"
-msgstr ""
+msgstr "سرور DNS ایران"
 
 msgid "The Domain Name Server for resolving Iran Domestic domains only. Your Internet Provider sees these queries in plain text."
-msgstr ""
+msgstr "سرور DNS فقط برای حل دامنه‌های داخلی ایران. ارائه‌دهنده اینترنت شما این درخواست‌ها را به صورت متن ساده می‌بیند."
 
 msgid "China"
-msgstr ""
+msgstr "چین"
 
 msgid "Iran"
-msgstr ""
+msgstr "ایران"
 
 msgid ""
 "Default route is through the proxy. %s domains and IPs (geosite + geoip) "
@@ -363,121 +363,125 @@ msgid ""
 "before that baseline — e.g. force a specific service Direct, or send it "
 "through a separate node."
 msgstr ""
+"مسیر پیش‌فرض از طریق پروکسی است. دامنه‌ها و IPهای %s (geosite + geoip) به‌طور "
+"خودکار مستقیم می‌شوند. قوانین افزوده‌شده در اینجا بازنویسی‌های هر سرویس هستند که "
+"پیش از آن قانون پایه اعمال می‌شوند — مثلاً یک سرویس خاص را مستقیم کنید یا از "
+"طریق یک نود جداگانه بفرستید."
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js:244
 msgid "China IPv4 list version"
-msgstr ""
+msgstr "نسخه لیست IPv4 چین"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js:248
 msgid "China IPv6 list version"
-msgstr ""
+msgstr "نسخه لیست IPv6 چین"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js:252
 msgid "China list version"
-msgstr ""
+msgstr "نسخه لیست چین"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:629
 msgid "Chromium / Cronet"
-msgstr ""
+msgstr "Chromium / Cronet"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1064
-#: htdocs/luci-static/resources/view/homeproxy/server.js:586
+#: htdocs/luci-static/resources/view/homeproxy/server.js:590
 msgid "Cipher suites"
-msgstr ""
+msgstr "مجموعه‌های رمز"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:183
 msgid "Cisco Public DNS (208.67.222.222)"
-msgstr ""
+msgstr "Cisco DNS عمومی (208.67.222.222)"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js:214
 msgid "Clean log"
-msgstr ""
+msgstr "پاک کردن گزارش"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:627
 msgid "Client"
-msgstr ""
+msgstr "کلاینت"
 
 #: root/usr/share/luci/menu.d/luci-app-homeproxy-hiddify.json:14
 msgid "Client Settings"
-msgstr ""
+msgstr "تنظیمات کلاینت"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:664
 msgid "Client version"
-msgstr ""
+msgstr "نسخه کلاینت"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:182
 msgid "CloudFlare Public DNS (1.1.1.1)"
-msgstr ""
+msgstr "CloudFlare DNS عمومی (1.1.1.1)"
 
 #: htdocs/luci-static/resources/view/homeproxy/server.js:641
 msgid "Cloudflare"
-msgstr ""
+msgstr "Cloudflare"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:114
 #: htdocs/luci-static/resources/view/homeproxy/server.js:142
 #: htdocs/luci-static/resources/view/homeproxy/status.js:176
 msgid "Collecting data..."
-msgstr ""
+msgstr "جمع‌آوری داده‌ها..."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:267
 msgid "Common ports only (bypass P2P traffic)"
-msgstr ""
+msgstr "فقط درگاه‌های معمولی (دور زدن ترافیک P2P)"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:698
 #: htdocs/luci-static/resources/view/homeproxy/server.js:354
 msgid "Congestion control algorithm"
-msgstr ""
+msgstr "الگوریتم کنترل ازدحام"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js:232
 msgid "Connection check"
-msgstr ""
+msgstr "بررسی اتصال"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:255
 msgid "Custom routing"
-msgstr ""
+msgstr "مسیریابی سفارشی"
 
-#: htdocs/luci-static/resources/view/homeproxy/client.js:618
+#: htdocs/luci-static/resources/view/homeproxy/client.js:404
 msgid "DNS"
-msgstr ""
+msgstr "DNS"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1047
 msgid "DNS Rules"
-msgstr ""
+msgstr "قوانین DNS"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:924
 msgid "DNS Servers"
-msgstr ""
+msgstr "سرورهای DNS"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:872
 msgid "DNS Settings"
-msgstr ""
+msgstr "تنظیمات DNS"
 
-#: htdocs/luci-static/resources/view/homeproxy/server.js:639
+#: htdocs/luci-static/resources/view/homeproxy/server.js:420
 msgid "DNS provider"
-msgstr ""
+msgstr "فراهم‌کننده DNS"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1056
 msgid "DNS rule"
-msgstr ""
+msgstr "قانون DNS"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:179
 #: htdocs/luci-static/resources/view/homeproxy/client.js:749
 #: htdocs/luci-static/resources/view/homeproxy/client.js:933
 msgid "DNS server"
-msgstr ""
+msgstr "سرور DNS"
 
-#: htdocs/luci-static/resources/view/homeproxy/server.js:635
+#: htdocs/luci-static/resources/view/homeproxy/server.js:434
 msgid "DNS01 challenge"
-msgstr ""
+msgstr "چالش DNS01"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:619
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1107
 msgid "DTLS"
-msgstr ""
+msgstr "DTLS"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js:136
 msgid "Debug"
-msgstr ""
+msgstr "خرابی‌یابی"
 
 #: htdocs/luci-static/resources/homeproxy.js:17
 #: htdocs/luci-static/resources/view/homeproxy/client.js:433
@@ -487,7 +491,7 @@ msgstr ""
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1381
 #: htdocs/luci-static/resources/view/homeproxy/node.js:710
 msgid "Default"
-msgstr ""
+msgstr "پیش‌فرض"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:382
 #: htdocs/luci-static/resources/view/homeproxy/client.js:434
@@ -496,39 +500,39 @@ msgstr ""
 #: htdocs/luci-static/resources/view/homeproxy/client.js:995
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1161
 msgid "Default DNS (issued by WAN)"
-msgstr ""
+msgstr "DNS پیش‌فرض (صادره شده توسط WAN)"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:882
 msgid "Default DNS server"
-msgstr ""
+msgstr "سرور DNS پیش‌فرض"
 
-#: htdocs/luci-static/resources/view/homeproxy/client.js:377
+#: htdocs/luci-static/resources/view/homeproxy/client.js:470
 msgid "Default DNS server for resolving domain name in the server address."
-msgstr ""
+msgstr "سرور DNS پیش‌فرض برای حل نام دامنه در آدرس سرور."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:877
 msgid "Default DNS strategy"
-msgstr ""
+msgstr "استراتژی DNS پیش‌فرض"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:357
 msgid "Default outbound"
-msgstr ""
+msgstr "خروجی پیش‌فرض"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:376
 msgid "Default outbound DNS"
-msgstr ""
+msgstr "DNS خروجی پیش‌فرض"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:358
 msgid "Default outbound for connections not matched by any routing rules."
-msgstr ""
+msgstr "خروجی پیش‌فرض برای اتصال‌هایی که با هیچ قانون مسیریابی منطبق نیستند."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1389
 msgid "Default packet encoding"
-msgstr ""
+msgstr "کدگذاری بسته‌ی پیش‌فرض"
 
 #: htdocs/luci-static/resources/view/homeproxy/server.js:606
 msgid "Default server name"
-msgstr ""
+msgstr "نام سرور پیش‌فرض"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:364
 #: htdocs/luci-static/resources/view/homeproxy/client.js:466
@@ -537,25 +541,25 @@ msgstr ""
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1382
 #: htdocs/luci-static/resources/view/homeproxy/node.js:428
 msgid "Direct"
-msgstr ""
+msgstr "مستقیم"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1514
 msgid "Direct Domain List"
-msgstr ""
+msgstr "لیست دامنه‌های مستقیم"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1428
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1473
 msgid "Direct IPv4 IP-s"
-msgstr ""
+msgstr "آدرس IPv4 مستقیم"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1431
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1476
 msgid "Direct IPv6 IP-s"
-msgstr ""
+msgstr "آدرس IPv6 مستقیم"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1434
 msgid "Direct MAC-s"
-msgstr ""
+msgstr "آدرس MAC مستقیم"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:123
 #: htdocs/luci-static/resources/view/homeproxy/client.js:151
@@ -568,49 +572,49 @@ msgstr ""
 #: htdocs/luci-static/resources/view/homeproxy/server.js:276
 #: htdocs/luci-static/resources/view/homeproxy/server.js:289
 msgid "Disable"
-msgstr ""
+msgstr "غیرفعال"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:363
 msgid "Disable (the service)"
-msgstr ""
+msgstr "غیرفعال‌کردن (سرویس)"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:787
 #: htdocs/luci-static/resources/view/homeproxy/client.js:899
 msgid "Disable DNS cache"
-msgstr ""
+msgstr "غیرفعال‌کردن ذخیره‌ی DNS"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:788
 msgid "Disable DNS cache in this query."
-msgstr ""
+msgstr "غیرفعال‌کردن ذخیره‌ی DNS در این پرس‌و‌جو."
 
 #: htdocs/luci-static/resources/view/homeproxy/server.js:670
 msgid "Disable HTTP challenge"
-msgstr ""
+msgstr "غیرفعال‌کردن چالش HTTP"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:605
 #: htdocs/luci-static/resources/view/homeproxy/server.js:321
 msgid "Disable Path MTU discovery"
-msgstr ""
+msgstr "غیرفعال‌کردن کشف مسیر MTU"
 
 #: htdocs/luci-static/resources/view/homeproxy/server.js:674
 msgid "Disable TLS ALPN challenge"
-msgstr ""
+msgstr "غیرفعال‌کردن چالش TLS ALPN"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:710
 msgid "Disable UDP domain unmapping"
-msgstr ""
+msgstr "غیرفعال‌کردن حذف نقشه دامنه‌ی UDP"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1182
 msgid "Disable cache and save cache in this query."
-msgstr ""
+msgstr "غیرفعال‌کردن ذخیره و ذخیره‌ی ذخیره در این پرس‌و‌جو."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:901
 msgid "Disable cache expire"
-msgstr ""
+msgstr "غیرفعال‌کردن انقضای ذخیره"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1181
 msgid "Disable dns cache"
-msgstr ""
+msgstr "غیرفعال‌کردن ذخیره‌ی DNS"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:606
 #: htdocs/luci-static/resources/view/homeproxy/server.js:322
@@ -618,72 +622,73 @@ msgid ""
 "Disables Path MTU Discovery (RFC 8899). Packets will then be at most 1252 "
 "(IPv4) / 1232 (IPv6) bytes in size."
 msgstr ""
+"کشف مسیر MTU (RFC 8899) را غیرفعال می‌کند. بسته‌ها حداکثر 1252 (IPv4) / 1232 (IPv6) بایت خواهند بود."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:814
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1251
 msgid "Domain keyword"
-msgstr ""
+msgstr "کلمه‌ی کلیدی دامنه"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:805
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1242
 msgid "Domain name"
-msgstr ""
+msgstr "نام دامنه"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:818
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1255
 msgid "Domain regex"
-msgstr ""
+msgstr "regex دامنه"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:427
 msgid "Domain resolver"
-msgstr ""
+msgstr "حل‌کننده‌ی دامنه"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:347
 #: htdocs/luci-static/resources/view/homeproxy/client.js:446
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1174
 msgid "Domain strategy"
-msgstr ""
+msgstr "استراتژی دامنه"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:781
 msgid "Domain strategy for resolving the domain names."
-msgstr ""
+msgstr "استراتژی دامنه برای حل نام‌های دامنه."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:810
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1247
 msgid "Domain suffix"
-msgstr ""
+msgstr "پسوند دامنه"
 
-#: htdocs/luci-static/resources/view/homeproxy/server.js:600
+#: htdocs/luci-static/resources/view/homeproxy/server.js:621
 msgid "Domains"
-msgstr ""
+msgstr "دامنه‌ها"
 
-#: htdocs/luci-static/resources/view/homeproxy/client.js:774
+#: htdocs/luci-static/resources/view/homeproxy/client.js:625
 msgid "Don't drop packets"
-msgstr ""
+msgstr "بسته‌ها را حذف نکنید"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1209
 msgid "Don't drop requests"
-msgstr ""
+msgstr "درخواست‌ها را حذف نکنید"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:989
 #: htdocs/luci-static/resources/view/homeproxy/server.js:517
 msgid "Download bandwidth"
-msgstr ""
+msgstr "پهنای باند دانلود"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:990
 #: htdocs/luci-static/resources/view/homeproxy/server.js:518
 msgid "Download bandwidth in Mbps."
-msgstr ""
+msgstr "پهنای باند دانلود در Mbps."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:770
 #: htdocs/luci-static/resources/view/homeproxy/client.js:776
 msgid "Drop packets"
-msgstr ""
+msgstr "حذف بسته‌ها"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1204
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1211
 msgid "Drop requests"
-msgstr ""
+msgstr "حذف درخواست‌ها"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1375
 msgid ""
@@ -691,10 +696,11 @@ msgid ""
 "href=\"https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/"
 "Regular_Expressions\">Regex</a> is supported."
 msgstr ""
+"حذف/نگه‌داری گره‌هایی که دارای کلمات کلیدی خاص هستند. <a target=\"_blank\" href=\"https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions\">Regex</a> پشتیبانی می‌شود."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1367
 msgid "Drop/keep specific nodes from subscriptions."
-msgstr ""
+msgstr "حذف/نگه‌داری گره‌های خاص از اشتراک‌نامه‌ها."
 
 #: htdocs/luci-static/resources/view/homeproxy/server.js:691
 msgid ""
@@ -703,53 +709,55 @@ msgid ""
 "bindings are \"used to associate an ACME account with an existing account in "
 "a non-ACME system, such as a CA customer database."
 msgstr ""
+"EAB (External Account Binding) حاوی اطلاعات لازم برای اتصال یا نگاشت یک حساب ACME به حسابی دیگر شناخته‌شده توسط CA است.<br/>اتصالات حساب خارجی برای \"مرتبط کردن یک حساب ACME با یک حساب موجود در سیستمی غیر ACME، مثل پایگاه داده‌ی مشتری CA\" استفاده می‌شوند."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1094
 msgid ""
 "ECH (Encrypted Client Hello) is a TLS extension that allows a client to "
 "encrypt the first part of its ClientHello message."
 msgstr ""
+"ECH (Encrypted Client Hello) یک توسیع TLS است که به کلاینت اجازه می‌دهد بخش اول پیام ClientHello خود را رمزگذاری کند."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1109
 #: htdocs/luci-static/resources/view/homeproxy/server.js:835
 msgid "ECH config"
-msgstr ""
+msgstr "تنظیمات ECH"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1098
 msgid "ECH config path"
-msgstr ""
+msgstr "مسیر تنظیمات ECH"
 
 #: htdocs/luci-static/resources/view/homeproxy/server.js:794
 msgid "ECH key"
-msgstr ""
+msgstr "کلید ECH"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:798
 #: htdocs/luci-static/resources/view/homeproxy/client.js:908
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1194
 msgid "EDNS Client subnet"
-msgstr ""
+msgstr "زیرشبکه‌ی کلاینت EDNS"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:873
-#: htdocs/luci-static/resources/view/homeproxy/server.js:481
+#: htdocs/luci-static/resources/view/homeproxy/server.js:485
 msgid "Early data"
-msgstr ""
+msgstr "داده‌ی زودهنگام"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:880
-#: htdocs/luci-static/resources/view/homeproxy/server.js:488
+#: htdocs/luci-static/resources/view/homeproxy/server.js:492
 msgid "Early data header name"
-msgstr ""
+msgstr "نام سرصحفه‌ی داده‌ی زودهنگام"
 
-#: htdocs/luci-static/resources/view/homeproxy/server.js:489
+#: htdocs/luci-static/resources/view/homeproxy/server.js:493
 msgid "Early data is sent in path instead of header by default."
-msgstr ""
+msgstr "داده‌ی زودهنگام به‌طور پیش‌فرض در مسیر به‌جای سرصحفه ارسال می‌شود."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1211
 msgid "Edit nodes"
-msgstr ""
+msgstr "ویرایش گره‌ها"
 
-#: htdocs/luci-static/resources/view/homeproxy/server.js:612
+#: htdocs/luci-static/resources/view/homeproxy/server.js:712
 msgid "Email"
-msgstr ""
+msgstr "ایمیل"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:414
 #: htdocs/luci-static/resources/view/homeproxy/client.js:590
@@ -757,9 +765,9 @@ msgstr ""
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1070
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1329
 #: htdocs/luci-static/resources/view/homeproxy/server.js:148
-#: htdocs/luci-static/resources/view/homeproxy/server.js:166
+#: htdocs/luci-static/resources/view/homeproxy/server.js:170
 msgid "Enable"
-msgstr ""
+msgstr "فعال کنید"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:722
 #: htdocs/luci-static/resources/view/homeproxy/server.js:371
@@ -768,62 +776,64 @@ msgid ""
 "impacting much on the performance, as the protocol is fully multiplexed.<br/"
 ">Disabling this is highly recommended, as it is vulnerable to replay attacks."
 msgstr ""
+"دست‌دهی اتصال QUIC 0-RTT را در سمت کلاینت فعال کنید. این تأثیری زیادی بر عملکرد ندارد، زیرا پروتکل به‌طور کامل multiplexed است.<br/>غیرفعال‌کردن این به‌شدت توصیه می‌شود، زیرا در برابر حملات replay آسیب‌پذیر است."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:721
 #: htdocs/luci-static/resources/view/homeproxy/server.js:370
 msgid "Enable 0-RTT handshake"
-msgstr ""
+msgstr "فعال‌کردن دست‌دهی 0-RTT"
 
-#: htdocs/luci-static/resources/view/homeproxy/server.js:595
+#: htdocs/luci-static/resources/view/homeproxy/server.js:599
 msgid "Enable ACME"
-msgstr ""
+msgstr "فعال‌کردن ACME"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1093
 msgid "Enable ECH"
-msgstr ""
+msgstr "فعال‌کردن ECH"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:984
-#: htdocs/luci-static/resources/view/homeproxy/server.js:512
+#: htdocs/luci-static/resources/view/homeproxy/server.js:516
 msgid "Enable TCP Brutal"
-msgstr ""
+msgstr "فعال‌کردن TCP Brutal"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:985
-#: htdocs/luci-static/resources/view/homeproxy/server.js:513
+#: htdocs/luci-static/resources/view/homeproxy/server.js:517
 msgid "Enable TCP Brutal congestion control algorithm"
-msgstr ""
+msgstr "فعال‌کردن الگوریتم کنترل ازدحام TCP Brutal"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1168
-#: htdocs/luci-static/resources/view/homeproxy/server.js:855
+#: htdocs/luci-static/resources/view/homeproxy/server.js:859
 msgid "Enable UDP fragmentation."
-msgstr ""
+msgstr "فعال‌کردن تکه‌کردن UDP."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:328
 msgid "Enable endpoint-independent NAT"
-msgstr ""
+msgstr "فعال‌کردن NAT مستقل از نقطه‌ی انتهایی"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:980
-#: htdocs/luci-static/resources/view/homeproxy/server.js:507
+#: htdocs/luci-static/resources/view/homeproxy/server.js:511
 msgid "Enable padding"
-msgstr ""
+msgstr "فعال‌کردن padding"
 
 #: htdocs/luci-static/resources/view/homeproxy/server.js:846
 msgid "Enable tcp fast open for listener."
-msgstr ""
+msgstr "فعال‌کردن tcp fast open برای شنونده."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1172
 msgid ""
 "Enable the SUoT protocol, requires server support. Conflict with multiplex."
 msgstr ""
+"فعال‌کردن پروتکل SUoT، نیاز به پشتیبانی سرور دارد. تضاد با multiplex."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:612
 #: htdocs/luci-static/resources/view/homeproxy/node.js:748
-#: htdocs/luci-static/resources/view/homeproxy/server.js:338
+#: htdocs/luci-static/resources/view/homeproxy/server.js:342
 msgid "Encrypt method"
-msgstr ""
+msgstr "روش رمزگذاری"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js:139
 msgid "Error"
-msgstr ""
+msgstr "خطا"
 
 #: htdocs/luci-static/resources/homeproxy.js:237
 #: htdocs/luci-static/resources/homeproxy.js:271
@@ -853,200 +863,202 @@ msgstr ""
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1302
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1356
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1359
-#: htdocs/luci-static/resources/view/homeproxy/server.js:235
-#: htdocs/luci-static/resources/view/homeproxy/server.js:618
-#: htdocs/luci-static/resources/view/homeproxy/server.js:620
+#: htdocs/luci-static/resources/view/homeproxy/server.js:239
+#: htdocs/luci-static/resources/view/homeproxy/server.js:622
+#: htdocs/luci-static/resources/view/homeproxy/server.js:624
 msgid "Expecting: %s"
-msgstr ""
+msgstr "انتظار: %s"
 
-#: htdocs/luci-static/resources/view/homeproxy/server.js:690
+#: htdocs/luci-static/resources/view/homeproxy/server.js:694
 msgid "External Account Binding"
-msgstr ""
+msgstr "اتصال حساب خارجی"
 
-#: htdocs/luci-static/resources/view/homeproxy/server.js:702
+#: htdocs/luci-static/resources/view/homeproxy/server.js:706
 msgid "External account MAC key"
-msgstr ""
+msgstr "کلید MAC حساب خارجی"
 
-#: htdocs/luci-static/resources/view/homeproxy/server.js:696
+#: htdocs/luci-static/resources/view/homeproxy/server.js:700
 msgid "External account key ID"
-msgstr ""
+msgstr "شناسه‌ی کلید حساب خارجی"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1237
 msgid "Extra records"
-msgstr ""
+msgstr "رکوردهای اضافی"
 
 #: htdocs/luci-static/resources/view/homeproxy/server.js:86
 msgid "Failed to generate %s, error: %s."
-msgstr ""
+msgstr "خرابی در تولید %s، خطا: %s."
 
 #: htdocs/luci-static/resources/homeproxy.js:261
 msgid "Failed to upload %s, error: %s."
-msgstr ""
+msgstr "خرابی در آپلود %s، خطا: %s."
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js:140
 msgid "Fatal"
-msgstr ""
+msgstr "فاجعه‌آمیز"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1374
 msgid "Filter keywords"
-msgstr ""
+msgstr "کلمات کلیدی فیلتر"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1366
 msgid "Filter nodes"
-msgstr ""
+msgstr "گره‌های فیلتر"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:630
 msgid "Firefox / uquic firefox"
-msgstr ""
+msgstr "Firefox / uquic firefox"
 
-#: htdocs/luci-static/resources/view/homeproxy/server.js:171
+#: htdocs/luci-static/resources/view/homeproxy/server.js:175
 msgid "Firewall"
-msgstr ""
+msgstr "دیوار آتش"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:736
-#: htdocs/luci-static/resources/view/homeproxy/server.js:385
+#: htdocs/luci-static/resources/view/homeproxy/server.js:389
 msgid "Flow"
-msgstr ""
+msgstr "جریان"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:428
 msgid "For resolving domain name in the server address."
-msgstr ""
+msgstr "برای حل نام دامنه در آدرس سرور."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1340
 msgid "Format"
-msgstr ""
+msgstr "قالب"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:730
 msgid "Fragment TLS handshake into multiple TLS records."
-msgstr ""
+msgstr "تکه‌کردن دست‌دهی TLS به رکوردهای TLS متعدد."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:736
 msgid ""
 "Fragment TLS handshakes. Due to poor performance, try <code>%s</code> first."
 msgstr ""
+"تکه‌کردن دست‌دهی TLS. به دلیل عملکرد ضعیف، ابتدا <code>%s</code> را امتحان کنید."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:742
 msgid "Fragment fallback delay"
-msgstr ""
+msgstr "تأخیر بازگشت تکه"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:842
 msgid "GET"
-msgstr ""
+msgstr "GET"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js:256
 msgid "GFW list version"
-msgstr ""
+msgstr "نسخه‌ی لیست GFW"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:252
 msgid "GFWList"
-msgstr ""
+msgstr "لیست GFW"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1446
 msgid "Gaming mode IPv4 IP-s"
-msgstr ""
+msgstr "آدرس IPv4 حالت بازی"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1448
 msgid "Gaming mode IPv6 IP-s"
-msgstr ""
+msgstr "آدرس IPv6 حالت بازی"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1451
 msgid "Gaming mode MAC-s"
-msgstr ""
+msgstr "آدرس MAC حالت بازی"
 
 #: htdocs/luci-static/resources/view/homeproxy/server.js:36
 #: htdocs/luci-static/resources/view/homeproxy/server.js:38
 #: htdocs/luci-static/resources/view/homeproxy/server.js:827
 msgid "Generate"
-msgstr ""
+msgstr "تولید"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js:260
 msgid "GitHub token"
-msgstr ""
+msgstr "توکن GitHub"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js:261
 msgid "Used to check for ByeDPI and Zapret updates. Without a token, GitHub limits anonymous requests to 60/hour. Create at github.com → Settings → Developer settings → Personal access tokens (no scopes needed)."
-msgstr ""
+msgstr "برای بررسی به‌روزرسانی‌های ByeDPI و Zapret استفاده می‌شود. بدون توکن، GitHub درخواست‌های ناشناس را به ۶۰ بار در ساعت محدود می‌کند. ایجاد: github.com → Settings → Developer settings → Personal access tokens (نیازی به مجوز نیست)."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:256
 msgid "Global"
-msgstr ""
+msgstr "جهانی"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:759
 msgid "Global padding"
-msgstr ""
+msgstr "padding جهانی"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1453
 msgid "Global proxy IPv4 IP-s"
-msgstr ""
+msgstr "آدرس IPv4 پروکسی جهانی"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1456
 msgid "Global proxy IPv6 IP-s"
-msgstr ""
+msgstr "آدرس IPv6 پروکسی جهانی"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1459
 msgid "Global proxy MAC-s"
-msgstr ""
+msgstr "آدرس MAC پروکسی جهانی"
 
-#: htdocs/luci-static/resources/view/homeproxy/server.js:146
+#: htdocs/luci-static/resources/view/homeproxy/server.js:150
 msgid "Global settings"
-msgstr ""
+msgstr "تنظیمات جهانی"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js:238
 msgid "Google"
-msgstr ""
+msgstr "گوگل"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:184
 msgid "Google Public DNS (8.8.8.8)"
-msgstr ""
+msgstr "DNS عمومی گوگل (8.8.8.8)"
 
 #: root/usr/share/rpcd/acl.d/luci-app-homeproxy-hiddify.json:3
 msgid "Grant access to homeproxy configuration"
-msgstr ""
+msgstr "اعطای دسترسی به تنظیمات homeproxy"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:620
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1108
 #: htdocs/luci-static/resources/view/homeproxy/node.js:430
 #: htdocs/luci-static/resources/view/homeproxy/node.js:777
-#: htdocs/luci-static/resources/view/homeproxy/server.js:177
-#: htdocs/luci-static/resources/view/homeproxy/server.js:403
+#: htdocs/luci-static/resources/view/homeproxy/server.js:181
+#: htdocs/luci-static/resources/view/homeproxy/server.js:407
 msgid "HTTP"
-msgstr ""
+msgstr "HTTP"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:952
 msgid "HTTP/3"
-msgstr ""
+msgstr "HTTP/3"
 
-#: htdocs/luci-static/resources/view/homeproxy/server.js:332
+#: htdocs/luci-static/resources/view/homeproxy/server.js:336
 msgid ""
 "HTTP3 server behavior when authentication fails.<br/>A 404 page will be "
 "returned if empty."
 msgstr ""
+"رفتار سرور HTTP3 هنگام شکست احراز هویت.<br/>اگر خالی باشد صفحه 404 بازگردانده می‌شود."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:951
 msgid "HTTPS"
-msgstr ""
+msgstr "HTTPS"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:778
-#: htdocs/luci-static/resources/view/homeproxy/server.js:404
+#: htdocs/luci-static/resources/view/homeproxy/server.js:408
 msgid "HTTPUpgrade"
-msgstr ""
+msgstr "HTTPUpgrade"
 
-#: htdocs/luci-static/resources/view/homeproxy/server.js:744
+#: htdocs/luci-static/resources/view/homeproxy/server.js:748
 msgid "Handshake server address"
-msgstr ""
+msgstr "آدرس سرور دست‌دهی"
 
-#: htdocs/luci-static/resources/view/homeproxy/server.js:750
+#: htdocs/luci-static/resources/view/homeproxy/server.js:754
 msgid "Handshake server port"
-msgstr ""
+msgstr "درگاه سرور دست‌دهی"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:974
 msgid "Headers"
-msgstr ""
+msgstr "سرصحفه‌ها"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:727
-#: htdocs/luci-static/resources/view/homeproxy/server.js:376
+#: htdocs/luci-static/resources/view/homeproxy/server.js:380
 msgid "Heartbeat interval"
-msgstr ""
+msgstr "فاصله نبض قلب"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:55
 #: htdocs/luci-static/resources/view/homeproxy/client.js:57
@@ -1054,247 +1066,256 @@ msgstr ""
 #: htdocs/luci-static/resources/view/homeproxy/status.js:282
 #: root/usr/share/luci/menu.d/luci-app-homeproxy-hiddify.json:3
 msgid "HomeProxy"
-msgstr ""
+msgstr "HomeProxy"
 
 #: htdocs/luci-static/resources/view/homeproxy/server.js:58
 #: htdocs/luci-static/resources/view/homeproxy/server.js:60
-#: htdocs/luci-static/resources/view/homeproxy/server.js:129
+#: htdocs/luci-static/resources/view/homeproxy/server.js:133
 msgid "HomeProxy Server"
-msgstr ""
+msgstr "سرور HomeProxy"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:535
 msgid "Hop interval"
-msgstr ""
+msgstr "فاصله پرش"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:529
 msgid "Hopping port"
-msgstr ""
+msgstr "درگاه پرش"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:826
 #: htdocs/luci-static/resources/view/homeproxy/node.js:831
 #: htdocs/luci-static/resources/view/homeproxy/node.js:865
-#: htdocs/luci-static/resources/view/homeproxy/server.js:437
-#: htdocs/luci-static/resources/view/homeproxy/server.js:442
-#: htdocs/luci-static/resources/view/homeproxy/server.js:473
+#: htdocs/luci-static/resources/view/homeproxy/server.js:441
+#: htdocs/luci-static/resources/view/homeproxy/server.js:446
+#: htdocs/luci-static/resources/view/homeproxy/server.js:477
 msgid "Host"
-msgstr ""
+msgstr "میزبان"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:669
 msgid "Host key"
-msgstr ""
+msgstr "کلید میزبان"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:674
 msgid "Host key algorithms"
-msgstr ""
+msgstr "الگوریتم‌های کلید میزبان"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:581
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1061
 msgid "Host/IP fields"
-msgstr ""
+msgstr "فیلدهای میزبان/IP"
 
 #: htdocs/luci-static/resources/view/homeproxy/server.js:364
 msgid ""
 "How long the server should wait for the client to send the authentication "
 "command (in seconds)."
 msgstr ""
+"سرور باید چقدر برای ارسال دستور احراز هویت از سوی کلاینت صبر کند (بر حسب ثانیه)."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:432
-#: htdocs/luci-static/resources/view/homeproxy/server.js:179
+#: htdocs/luci-static/resources/view/homeproxy/server.js:182
 msgid "Hysteria"
-msgstr ""
+msgstr "Hysteria"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:433
-#: htdocs/luci-static/resources/view/homeproxy/server.js:180
+#: htdocs/luci-static/resources/view/homeproxy/server.js:183
 msgid "Hysteria2"
-msgstr ""
+msgstr "Hysteria2"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:830
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1267
 msgid "IP CIDR"
-msgstr ""
+msgstr "IP CIDR"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:608
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1089
 msgid "IP version"
-msgstr ""
+msgstr "نسخه IP"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:610
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1090
 msgid "IPv4"
-msgstr ""
+msgstr "IPv4"
 
 #: htdocs/luci-static/resources/homeproxy.js:20
 msgid "IPv4 only"
-msgstr ""
+msgstr "فقط IPv4"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:611
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1091
 msgid "IPv6"
-msgstr ""
+msgstr "IPv6"
 
 #: htdocs/luci-static/resources/homeproxy.js:21
 msgid "IPv6 only"
-msgstr ""
+msgstr "فقط IPv6"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:297
 msgid "IPv6 support"
-msgstr ""
+msgstr "پشتیبانی IPv6"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:506
 msgid "Idle session check interval"
-msgstr ""
+msgstr "فاصله‌ی بررسی نشست بی‌فعال"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:513
 msgid "Idle session check timeout"
-msgstr ""
+msgstr "انقضای بررسی نشست بی‌فعال"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:553
 #: htdocs/luci-static/resources/view/homeproxy/node.js:847
-#: htdocs/luci-static/resources/view/homeproxy/server.js:456
+#: htdocs/luci-static/resources/view/homeproxy/server.js:460
 msgid "Idle timeout"
-msgstr ""
+msgstr "انقضای بی‌فعالی"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:717
 msgid ""
 "If enabled, attempts to connect UDP connection to the destination instead of "
 "listen."
 msgstr ""
+"اگر فعال باشد، سعی کنید اتصال UDP را به مقصد متصل کنید نه اینکه گوش دهید."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:711
 msgid ""
 "If enabled, for UDP proxy requests addressed to a domain, the original "
 "packet address will be sent in the response instead of the mapped domain."
 msgstr ""
+"اگر فعال باشد، برای درخواست‌های UDP proxy که به دامنه‌ای معطوف هستند، آدرس بسته‌ی اصلی به‌جای دامنه‌ی نگاشت شده ارسال می‌شود."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:819
 msgid ""
 "If enabled, the client transport sends keepalive pings even with no active "
 "connections."
 msgstr ""
+"اگر فعال باشد، حمل‌ونقل کلاینت حتی بدون اتصالات فعال، پالس‌های keepalive می‌فرستد."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:348
 msgid ""
 "If set, the requested domain name will be resolved to IP before routing."
 msgstr ""
+"اگر تنظیم شود، نام دامنه‌ی درخواست‌شده قبل از مسیریابی به IP حل خواهد شد."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:804
-#: htdocs/luci-static/resources/view/homeproxy/server.js:425
+#: htdocs/luci-static/resources/view/homeproxy/server.js:429
 msgid ""
 "If the transport doesn't see any activity after a duration of this time (in "
 "seconds), it pings the client to check if the connection is still active."
 msgstr ""
+"اگر حمل‌ونقل پس از این مدت (بر حسب ثانیه) هیچ فعالیتی نبیند، پالس‌ی به کلاینت می‌فرستد تا بررسی کند آیا اتصال هنوز فعال است."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1073
 msgid ""
 "If you have the root certificate, use this option instead of allowing "
 "insecure."
 msgstr ""
+"اگر شما گواهی ریشه دارید، به‌جای اجازه‌ی ناامن از این گزینه استفاده کنید."
 
-#: htdocs/luci-static/resources/view/homeproxy/server.js:326
+#: htdocs/luci-static/resources/view/homeproxy/server.js:330
 msgid "Ignore client bandwidth"
-msgstr ""
+msgstr "نادیده‌گرفتن پهنای باند کلاینت"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1285
 msgid "Import"
-msgstr ""
+msgstr "واردات"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1232
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1311
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1313
 msgid "Import share links"
-msgstr ""
+msgstr "واردات پیوند‌های اشتراکی"
 
 msgid "Support Amnezia (vpn://), Hysteria, Mieru, NaïveProxy (naive://), Shadowsocks (ss://), SSH, Trojan, v2rayN (VMess), WireGuard, and VLESS (vless://) online configuration delivery standard."
-msgstr ""
+msgstr "پشتیبانی از Amnezia (vpn://)، Hysteria، Mieru، NaïveProxy (naive://)، Shadowsocks (ss://)، SSH، Trojan، v2rayN (VMess)، WireGuard و VLESS (vless://)."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js
 msgid "Import .conf file"
-msgstr ""
+msgstr "وارد کردن فایل .conf"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js
 msgid "Import .conf"
-msgstr ""
+msgstr "وارد کردن .conf"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js
 msgid "Select a WireGuard or AmneziaWG .conf file."
-msgstr ""
+msgstr "یک فایل .conf برای WireGuard یا AmneziaWG انتخاب کنید."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js
 msgid "No valid WireGuard/AmneziaWG config found."
-msgstr ""
+msgstr "پیکربندی معتبر WireGuard/AmneziaWG یافت نشد."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js
 msgid "Successfully imported node: %s"
-msgstr ""
+msgstr "نود با موفقیت وارد شد: %s"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:336
-#: htdocs/luci-static/resources/view/homeproxy/server.js:860
+#: htdocs/luci-static/resources/view/homeproxy/server.js:864
 msgid "In seconds."
-msgstr ""
+msgstr "بر حسب ثانیه."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:937
 msgid "In seconds. Disabled by default."
-msgstr ""
+msgstr "بر حسب ثانیه. به‌طور پیش‌فرض غیرفعال است."
 
-#: htdocs/luci-static/resources/view/homeproxy/node.js:521
+#: htdocs/luci-static/resources/view/homeproxy/node.js:1177
 msgid ""
 "In the check, at least the first <code>n</code> idle sessions are kept open."
 msgstr ""
+"در بررسی، حداقل نشست‌های بی‌فعال <code>n</code> اول باز نگه‌داشته می‌شوند."
 
-#: htdocs/luci-static/resources/view/homeproxy/node.js:514
+#: htdocs/luci-static/resources/view/homeproxy/node.js:1182
 msgid ""
 "In the check, close sessions that have been idle for longer than this, in "
 "seconds."
 msgstr ""
+"در بررسی، نشست‌هایی را بسته کنید که بیش از این مدت بی‌فعال بوده‌اند، بر حسب ثانیه."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:904
 msgid "Independent cache per server"
-msgstr ""
+msgstr "ذخیره‌ی مستقل برای هر سرور"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js:137
 msgid "Info"
-msgstr ""
+msgstr "اطلاعات"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1405
 msgid "Interface Control"
-msgstr ""
+msgstr "کنترل رابط"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:560
 msgid "Interrupt existing connections"
-msgstr ""
+msgstr "قطع اتصالات موجود"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:561
 msgid "Interrupt existing connections when the selected outbound has changed."
-msgstr ""
+msgstr "اتصالات موجود را قطع کنید هنگام تغییر خروجی انتخاب‌شده."
 
-#: htdocs/luci-static/resources/view/homeproxy/node.js:507
+#: htdocs/luci-static/resources/view/homeproxy/node.js:1207
 msgid "Interval checking for idle sessions, in seconds."
-msgstr ""
+msgstr "بررسی فاصله برای نشست‌های بی‌فعال، بر حسب ثانیه."
 
-#: htdocs/luci-static/resources/view/homeproxy/node.js:728
-#: htdocs/luci-static/resources/view/homeproxy/server.js:377
+#: htdocs/luci-static/resources/view/homeproxy/node.js:1212
 msgid ""
 "Interval for sending heartbeat packets for keeping the connection alive (in "
 "seconds)."
 msgstr ""
+"فاصله برای ارسال بسته‌های نبض قلب برای نگه‌داشتن اتصال زنده (بر حسب ثانیه)."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:665
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1142
 msgid "Invert"
-msgstr ""
+msgstr "معکوس"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:666
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1143
 msgid "Invert match result."
-msgstr ""
+msgstr "نتیجه‌ی تطابق معکوس."
 
-#: htdocs/luci-static/resources/view/homeproxy/server.js:775
+#: htdocs/luci-static/resources/view/homeproxy/server.js:779
 msgid "Key path"
-msgstr ""
+msgstr "مسیر کلید"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1419
 msgid "LAN IP Policy"
-msgstr ""
+msgstr "سیاست IP LAN"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:409
 #: htdocs/luci-static/resources/view/homeproxy/client.js:585
@@ -1302,592 +1323,599 @@ msgstr ""
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1065
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1324
 #: htdocs/luci-static/resources/view/homeproxy/node.js:422
-#: htdocs/luci-static/resources/view/homeproxy/server.js:160
+#: htdocs/luci-static/resources/view/homeproxy/server.js:164
 msgid "Label"
-msgstr ""
+msgstr "برچسب"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:743
-#: htdocs/luci-static/resources/view/homeproxy/server.js:392
+#: htdocs/luci-static/resources/view/homeproxy/server.js:396
 msgid ""
 "Legacy protocol support (VMess MD5 Authentication) is provided for "
 "compatibility purposes only, use of alterId > 1 is not recommended."
 msgstr ""
+"پشتیبانی پروتکل میراثی (احراز هویت MD5 VMess) فقط برای اهداف سازگاری فراهم می‌شود، استفاده از alterId > 1 توصیه نمی‌شود."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:325
 msgid "Less compatibility and sometimes better performance."
-msgstr ""
+msgstr "سازگاری کم‌تر و گاهی عملکرد بهتر."
 
-#: htdocs/luci-static/resources/view/homeproxy/server.js:629
+#: htdocs/luci-static/resources/view/homeproxy/server.js:633
 msgid "Let's Encrypt"
-msgstr ""
+msgstr "Let's Encrypt"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:897
 msgid ""
 "List of IP (v4 or v6) addresses prefixes to be assigned to the interface."
 msgstr ""
+"لیست پیشوند‌های آدرس IP (v4 یا v6) برای اختصاص به رابط."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:132
 #: htdocs/luci-static/resources/view/homeproxy/client.js:161
 #: htdocs/luci-static/resources/view/homeproxy/client.js:497
 msgid "List of nodes to test."
-msgstr ""
+msgstr "لیست گره‌های آزمایشی."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1036
-#: htdocs/luci-static/resources/view/homeproxy/server.js:566
+#: htdocs/luci-static/resources/view/homeproxy/server.js:570
 msgid "List of supported application level protocols, in order of preference."
-msgstr ""
+msgstr "لیست پروتکل‌های سطح کاربرد پشتیبانی‌شده، به ترتیب ترجیح."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1228
 msgid "List of text DNS record to respond as answers."
-msgstr ""
+msgstr "لیست رکورد متن DNS برای پاسخ به‌عنوان پاسخ."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1238
 msgid "List of text DNS record to respond as extra records."
-msgstr ""
+msgstr "لیست رکورد متن DNS برای پاسخ به‌عنوان رکوردهای اضافی."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1233
 msgid "List of text DNS record to respond as name servers."
-msgstr ""
+msgstr "لیست رکورد متن DNS برای پاسخ به‌عنوان سرورهای نام."
 
-#: htdocs/luci-static/resources/view/homeproxy/server.js:193
+#: htdocs/luci-static/resources/view/homeproxy/server.js:297
 msgid "Listen address"
-msgstr ""
+msgstr "آدرس گوش دادن"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1407
 msgid "Listen interfaces"
-msgstr ""
+msgstr "رابط‌های گوش دادن"
 
-#: htdocs/luci-static/resources/view/homeproxy/server.js:198
+#: htdocs/luci-static/resources/view/homeproxy/server.js:202
 msgid "Listen port"
-msgstr ""
+msgstr "درگاه گوش دادن"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js:174
 msgid "Loading"
-msgstr ""
+msgstr "درحال بارگذاری"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1335
 msgid "Local"
-msgstr ""
+msgstr "محلی"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:896
 msgid "Local address"
-msgstr ""
+msgstr "آدرس محلی"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js:191
 msgid "Log file does not exist."
-msgstr ""
+msgstr "فایل گزارش وجود ندارد."
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js:184
 msgid "Log is empty."
-msgstr ""
+msgstr "گزارش خالی است."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:930
 msgid "MTU"
-msgstr ""
+msgstr "MTU"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:150
 msgid "Main UDP node"
-msgstr ""
+msgstr "گره UDP اصلی"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:122
 msgid "Main node"
-msgstr ""
+msgstr "گره اصلی"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:662
 msgid "Make IP CIDR in rule set used to match the source IP."
-msgstr ""
+msgstr "IP CIDR را در مجموعه قانون برای تطابق IP منبع استفاده کنید."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1135
 msgid "Make IP CIDR in rule sets match the source IP."
-msgstr ""
+msgstr "IP CIDR در مجموعه قوانین را برای تطابق IP منبع کنید."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1139
 msgid "Make IP CIDR in rule-sets accept empty query response."
-msgstr ""
+msgstr "IP CIDR در مجموعه قوانین را برای قبول پاسخ پرس‌و‌جوی خالی کنید."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:905
 msgid ""
 "Make each DNS server's cache independent for special purposes. If enabled, "
 "will slightly degrade performance."
 msgstr ""
+"ذخیره‌ی هر سرور DNS را برای اهداف خاص مستقل کنید. اگر فعال باشد، عملکرد را کمی کاهش می‌دهد."
 
-#: htdocs/luci-static/resources/view/homeproxy/server.js:331
+#: htdocs/luci-static/resources/view/homeproxy/server.js:356
 msgid "Masquerade"
-msgstr ""
+msgstr "نقاب"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1268
 msgid ""
 "Match IP CIDR with query response. Current rule will be skipped if not match."
 msgstr ""
+"IP CIDR را با پاسخ پرس‌و‌جو تطابق دهید. قانون فعلی اگر تطابق نداشته باشد نادیده‌گرفته می‌شود."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:831
 msgid "Match IP CIDR."
-msgstr ""
+msgstr "IP CIDR را تطابق دهید."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:811
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1248
 msgid "Match domain suffix."
-msgstr ""
+msgstr "پسوند دامنه را تطابق دهید."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:815
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1252
 msgid "Match domain using keyword."
-msgstr ""
+msgstr "دامنه را با استفاده از کلمه‌ی کلیدی تطابق دهید."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:819
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1256
 msgid "Match domain using regular expression."
-msgstr ""
+msgstr "دامنه را با استفاده از عبارت‌های منطقی تطابق دهید."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:806
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1243
 msgid "Match full domain."
-msgstr ""
+msgstr "دامنه‌ی کامل را تطابق دهید."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:854
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1292
 msgid "Match port range. Format as START:/:END/START:END."
-msgstr ""
+msgstr "محدوده‌ی درگاه را تطابق دهید. قالب: START:/:END/START:END."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:849
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1287
 msgid "Match port."
-msgstr ""
+msgstr "درگاه را تطابق دهید."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:835
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1272
 msgid "Match private IP"
-msgstr ""
+msgstr "IP خصوصی را تطابق دهید"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1273
 msgid "Match private IP with query response."
-msgstr ""
+msgstr "IP خصوصی را با پاسخ پرس‌و‌جو تطابق دهید."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:827
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1264
 msgid "Match private source IP"
-msgstr ""
+msgstr "IP منبع خصوصی را تطابق دهید"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:859
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1297
 msgid "Match process name."
-msgstr ""
+msgstr "نام فرآیند را تطابق دهید."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:867
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1305
 msgid "Match process path using regular expression."
-msgstr ""
+msgstr "مسیر فرآیند را با استفاده از عبارت‌های منطقی تطابق دهید."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:863
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1301
 msgid "Match process path."
-msgstr ""
+msgstr "مسیر فرآیند را تطابق دهید."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1096
 msgid "Match query type."
-msgstr ""
+msgstr "نوع پرس‌و‌جو را تطابق دهید."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:647
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1120
 msgid "Match rule set."
-msgstr ""
+msgstr "مجموعه‌ی قانون را تطابق دهید."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:823
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1260
 msgid "Match source IP CIDR."
-msgstr ""
+msgstr "CIDR IP منبع را تطابق دهید."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:844
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1282
 msgid "Match source port range. Format as START:/:END/START:END."
-msgstr ""
+msgstr "محدوده‌ی درگاه منبع را تطابق دهید. قالب: START:/:END/START:END."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:839
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1277
 msgid "Match source port."
-msgstr ""
+msgstr "درگاه منبع را تطابق دهید."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:643
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1116
 msgid "Match user name."
-msgstr ""
+msgstr "نام کاربر را تطابق دهید."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:579
-#: htdocs/luci-static/resources/view/homeproxy/server.js:261
+#: htdocs/luci-static/resources/view/homeproxy/server.js:265
 msgid "Max download speed"
-msgstr ""
+msgstr "حداکثر سرعت دانلود"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:580
-#: htdocs/luci-static/resources/view/homeproxy/server.js:262
+#: htdocs/luci-static/resources/view/homeproxy/server.js:266
 msgid "Max download speed in Mbps."
-msgstr ""
+msgstr "حداکثر سرعت دانلود در Mbps."
 
-#: htdocs/luci-static/resources/view/homeproxy/server.js:739
+#: htdocs/luci-static/resources/view/homeproxy/server.js:747
 msgid "Max time difference"
-msgstr ""
+msgstr "حداکثر اختلاف زمانی"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:586
-#: htdocs/luci-static/resources/view/homeproxy/server.js:268
+#: htdocs/luci-static/resources/view/homeproxy/server.js:272
 msgid "Max upload speed"
-msgstr ""
+msgstr "حداکثر سرعت آپلود"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:587
-#: htdocs/luci-static/resources/view/homeproxy/server.js:269
+#: htdocs/luci-static/resources/view/homeproxy/server.js:273
 msgid "Max upload speed in Mbps."
-msgstr ""
+msgstr "حداکثر سرعت آپلود در Mbps."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1056
-#: htdocs/luci-static/resources/view/homeproxy/server.js:578
+#: htdocs/luci-static/resources/view/homeproxy/server.js:582
 msgid "Maximum TLS version"
-msgstr ""
+msgstr "حداکثر نسخه TLS"
 
-#: htdocs/luci-static/resources/view/homeproxy/node.js:961
+#: htdocs/luci-static/resources/view/homeproxy/node.js:1483
 #: htdocs/luci-static/resources/view/homeproxy/node.js:975
 msgid "Maximum connections"
-msgstr ""
+msgstr "حداکثر اتصالات"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:973
 msgid ""
 "Maximum multiplexed streams in a connection before opening a new connection."
 "<br/>Conflict with <code>%s</code> and <code>%s</code>."
 msgstr ""
+"حداکثر جریان‌های multiplexed در اتصال قبل از باز کردن اتصال جدید.<br/>تضاد با <code>%s</code> و <code>%s</code>."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:972
 msgid "Maximum streams"
-msgstr ""
+msgstr "حداکثر جریان‌ها"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:768
 #: htdocs/luci-static/resources/view/homeproxy/client.js:776
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1202
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1211
 #: htdocs/luci-static/resources/view/homeproxy/node.js:841
-#: htdocs/luci-static/resources/view/homeproxy/server.js:452
+#: htdocs/luci-static/resources/view/homeproxy/server.js:456
 msgid "Method"
-msgstr ""
+msgstr "روش"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1048
-#: htdocs/luci-static/resources/view/homeproxy/server.js:570
+#: htdocs/luci-static/resources/view/homeproxy/server.js:574
 msgid "Minimum TLS version"
-msgstr ""
+msgstr "حداقل نسخه TLS"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:520
 msgid "Minimum idle sessions"
-msgstr ""
+msgstr "حداقل نشست‌های بی‌فعال"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:967
 msgid ""
 "Minimum multiplexed streams in a connection before opening a new connection."
 msgstr ""
+"حداقل جریان‌های multiplexed در اتصال قبل از باز کردن اتصال جدید."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:966
 #: htdocs/luci-static/resources/view/homeproxy/node.js:975
 msgid "Minimum streams"
-msgstr ""
+msgstr "حداقل جریان‌ها"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:310
-#: htdocs/luci-static/resources/view/homeproxy/server.js:183
+#: htdocs/luci-static/resources/view/homeproxy/server.js:187
 msgid "Mixed"
-msgstr ""
+msgstr "مخلوط"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:321
 msgid "Mixed <code>system</code> TCP stack and <code>gVisor</code> UDP stack."
-msgstr ""
+msgstr "پشته‌ی TCP <code>system</code> و پشته‌ی UDP <code>gVisor</code> مخلوط."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:595
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1075
 msgid "Mode"
-msgstr ""
+msgstr "حالت"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1164
-#: htdocs/luci-static/resources/view/homeproxy/server.js:850
+#: htdocs/luci-static/resources/view/homeproxy/server.js:854
 msgid "MultiPath TCP"
-msgstr ""
+msgstr "TCP چند مسیره"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:944
-#: htdocs/luci-static/resources/view/homeproxy/server.js:500
+#: htdocs/luci-static/resources/view/homeproxy/server.js:504
 msgid "Multiplex"
-msgstr ""
+msgstr "Multiplex"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:952
 msgid "Multiplex protocol."
-msgstr ""
+msgstr "پروتکل Multiplex."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:57
 #: htdocs/luci-static/resources/view/homeproxy/server.js:60
 msgid "NOT RUNNING"
-msgstr ""
+msgstr "در حال اجرا نیست"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1395
 msgid "NOTE: Save current settings before updating subscriptions."
-msgstr ""
+msgstr "توجه: تنظیمات فعلی را قبل از به‌روزرسانی اشتراک‌نامه‌ها ذخیره کنید."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1232
 msgid "NS"
-msgstr ""
+msgstr "NS"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:711
 msgid "Native"
-msgstr ""
+msgstr "بومی"
 
-#: htdocs/luci-static/resources/view/homeproxy/server.js:181
+#: htdocs/luci-static/resources/view/homeproxy/server.js:185
 msgid "NaïveProxy"
-msgstr ""
+msgstr "NaïveProxy"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:637
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1099
-#: htdocs/luci-static/resources/view/homeproxy/server.js:866
+#: htdocs/luci-static/resources/view/homeproxy/server.js:870
 msgid "Network"
-msgstr ""
+msgstr "شبکه"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:701
 msgid "New Reno"
-msgstr ""
+msgstr "New Reno"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:774
 #: htdocs/luci-static/resources/view/homeproxy/node.js:791
-#: htdocs/luci-static/resources/view/homeproxy/server.js:400
-#: htdocs/luci-static/resources/view/homeproxy/server.js:417
+#: htdocs/luci-static/resources/view/homeproxy/server.js:404
+#: htdocs/luci-static/resources/view/homeproxy/server.js:421
 msgid "No TCP transport, plain HTTP is merged into the HTTP transport."
-msgstr ""
+msgstr "بدون حمل‌ونقل TCP، HTTP ساده در حمل‌ونقل HTTP ادغام شده است."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:789
-#: htdocs/luci-static/resources/view/homeproxy/server.js:415
+#: htdocs/luci-static/resources/view/homeproxy/server.js:419
 msgid "No additional encryption support: It's basically duplicate encryption."
-msgstr ""
+msgstr "بدون پشتیبانی رمزگذاری اضافی: اساساً تکرار رمزگذاری است."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1412
 msgid "No subscription available"
-msgstr ""
+msgstr "هیچ اشتراک‌نامه‌ای موجود نیست"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1437
 msgid "No subscription node"
-msgstr ""
+msgstr "گره‌ی اشتراک‌نامه نیست"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1271
 msgid "No valid share link found."
-msgstr ""
+msgstr "هیچ پیوند اشتراک‌ی معتبر یافت نشد."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:419
 #: htdocs/luci-static/resources/view/homeproxy/node.js:396
 msgid "Node"
-msgstr ""
+msgstr "گره"
 
 #: root/usr/share/luci/menu.d/luci-app-homeproxy-hiddify.json:22
 msgid "Node Settings"
-msgstr ""
+msgstr "تنظیمات گره"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1217
 msgid "Nodes"
-msgstr ""
+msgstr "گره‌ها"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:994
 #: htdocs/luci-static/resources/view/homeproxy/node.js:737
 #: htdocs/luci-static/resources/view/homeproxy/node.js:775
-#: htdocs/luci-static/resources/view/homeproxy/server.js:386
-#: htdocs/luci-static/resources/view/homeproxy/server.js:401
+#: htdocs/luci-static/resources/view/homeproxy/server.js:390
+#: htdocs/luci-static/resources/view/homeproxy/server.js:405
 msgid "None"
-msgstr ""
+msgstr "هیچ"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:573
-#: htdocs/luci-static/resources/view/homeproxy/server.js:294
+#: htdocs/luci-static/resources/view/homeproxy/server.js:298
 msgid "Obfuscate password"
-msgstr ""
+msgstr "رمز پوشش"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:567
-#: htdocs/luci-static/resources/view/homeproxy/server.js:288
+#: htdocs/luci-static/resources/view/homeproxy/server.js:292
 msgid "Obfuscate type"
-msgstr ""
+msgstr "نوع پوشش"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1408
 msgid "Only process traffic from specific interfaces. Leave empty for all."
-msgstr ""
+msgstr "فقط ترافیک را از رابط‌های خاص پردازش کنید. برای همه خالی بگذارید."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:254
 msgid "Only proxy mainland China"
-msgstr ""
+msgstr "فقط پروکسی چین سرزمینی"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:580
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1060
 msgid "Other fields"
-msgstr ""
+msgstr "فیلدهای دیگر"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:460
 #: htdocs/luci-static/resources/view/homeproxy/client.js:678
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1027
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1375
 msgid "Outbound"
-msgstr ""
+msgstr "خروجی"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:420
 msgid "Outbound node"
-msgstr ""
+msgstr "گره‌ی خروجی"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:696
 msgid "Override address"
-msgstr ""
+msgstr "نوشتن‌رفتن آدرس"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:352
 msgid "Override destination"
-msgstr ""
+msgstr "نوشتن‌رفتن مقصد"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:703
 msgid "Override port"
-msgstr ""
+msgstr "نوشتن‌رفتن درگاه"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:353
 msgid "Override the connection destination address with the sniffed domain."
-msgstr ""
+msgstr "آدرس مقصد اتصال را با دامنه‌ی شناخت‌شده نوشتن‌رفت کنید."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:697
 msgid "Override the connection destination address."
-msgstr ""
+msgstr "آدرس مقصد اتصال را نوشتن‌رفت کنید."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:704
 msgid "Override the connection destination port."
-msgstr ""
+msgstr "درگاه مقصد اتصال را نوشتن‌رفت کنید."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:843
 msgid "PUT"
-msgstr ""
+msgstr "PUT"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:886
 msgid "Packet encoding"
-msgstr ""
+msgstr "کدگذاری بسته"
 
-#: htdocs/luci-static/resources/view/homeproxy/server.js:244
+#: htdocs/luci-static/resources/view/homeproxy/server.js:248
 msgid "Padding scheme"
-msgstr ""
+msgstr "طرح padding"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js:141
 msgid "Panic"
-msgstr ""
+msgstr "وحشت"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:464
-#: htdocs/luci-static/resources/view/homeproxy/server.js:210
+#: htdocs/luci-static/resources/view/homeproxy/server.js:214
 msgid "Password"
-msgstr ""
+msgstr "رمز"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:967
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1346
 #: htdocs/luci-static/resources/view/homeproxy/node.js:836
 #: htdocs/luci-static/resources/view/homeproxy/node.js:869
-#: htdocs/luci-static/resources/view/homeproxy/server.js:447
-#: htdocs/luci-static/resources/view/homeproxy/server.js:477
+#: htdocs/luci-static/resources/view/homeproxy/server.js:451
+#: htdocs/luci-static/resources/view/homeproxy/server.js:481
 msgid "Path"
-msgstr ""
+msgstr "مسیر"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:911
 msgid "Peer pubkic key"
-msgstr ""
+msgstr "کلید عمومی همتا"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:329
 msgid ""
 "Performance may degrade slightly, so it is not recommended to enable on when "
 "it is not needed."
 msgstr ""
+"عملکرد ممکن است کمی کاهش یابد، بنابراین توصیه نمی‌شود هنگام عدم نیاز فعال کنید."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:936
 msgid "Persistent keepalive interval"
-msgstr ""
+msgstr "فاصله‌ی keepalive پایدار"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:855
-#: htdocs/luci-static/resources/view/homeproxy/server.js:464
+#: htdocs/luci-static/resources/view/homeproxy/server.js:468
 msgid "Ping timeout"
-msgstr ""
+msgstr "انقضای ping"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:630
 msgid "Plugin"
-msgstr ""
+msgstr "افزونه"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:637
 msgid "Plugin opts"
-msgstr ""
+msgstr "گزینه‌های افزونه"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1126
 msgid "ShadowTLS transport"
-msgstr ""
+msgstr "انتقال ShadowTLS"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1127
 msgid "Wrap this Shadowsocks connection in ShadowTLS for TLS camouflage."
-msgstr ""
+msgstr "این اتصال Shadowsocks را در ShadowTLS برای پنهان‌سازی TLS بپوشانید."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1132
 msgid "ShadowTLS password"
-msgstr ""
+msgstr "رمز عبور ShadowTLS"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:848
 #: htdocs/luci-static/resources/view/homeproxy/client.js:962
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1286
 #: htdocs/luci-static/resources/view/homeproxy/node.js:453
 msgid "Port"
-msgstr ""
+msgstr "درگاه"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:276
 msgid "Port %s alrealy exists!"
-msgstr ""
+msgstr "درگاه %s در حال‌حاضر وجود دارد!"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:582
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1062
 msgid "Port fields"
-msgstr ""
+msgstr "فیلدهای درگاه"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:536
 msgid "Port hopping interval in seconds."
-msgstr ""
+msgstr "فاصله‌ی پرش درگاه بر حسب ثانیه."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:853
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1291
 msgid "Port range"
-msgstr ""
+msgstr "محدوده‌ی درگاه"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:918
 msgid "Pre-shared key"
-msgstr ""
+msgstr "کلید پیش‌اشتراک‌شده"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1150
 msgid "Predefined"
-msgstr ""
+msgstr "از قبل تعریف‌شده"
 
 #: htdocs/luci-static/resources/homeproxy.js:18
 msgid "Prefer IPv4"
-msgstr ""
+msgstr "ترجیح IPv4"
 
 #: htdocs/luci-static/resources/homeproxy.js:19
 msgid "Prefer IPv6"
-msgstr ""
+msgstr "ترجیح IPv6"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Preferred core"
-msgstr ""
+msgstr "هسته ترجیحی"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:678
 #: htdocs/luci-static/resources/view/homeproxy/node.js:903
 msgid "Private key"
-msgstr ""
+msgstr "کلید خصوصی"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:683
 msgid "Private key passphrase"
-msgstr ""
+msgstr "عبارت عبور کلید خصوصی"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:583
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1063
 msgid "Process fields"
-msgstr ""
+msgstr "فیلدهای فرآیند"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:858
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1296
 msgid "Process name"
-msgstr ""
+msgstr "نام فرآیند"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:862
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1300
 msgid "Process path"
-msgstr ""
+msgstr "مسیر فرآیند"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:866
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1304
 msgid "Process path (regex)"
-msgstr ""
+msgstr "مسیر فرآیند (regex)"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:615
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1104
@@ -1895,55 +1923,56 @@ msgstr ""
 #: htdocs/luci-static/resources/view/homeproxy/node.js:951
 #: htdocs/luci-static/resources/view/homeproxy/server.js:250
 msgid "Protocol"
-msgstr ""
+msgstr "پروتکل"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:767
 msgid "Protocol parameter. Enable length block encryption."
-msgstr ""
+msgstr "پارامتر پروتکل. رمزگذاری بلوک طول را فعال می‌کند."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:760
 msgid ""
 "Protocol parameter. Will waste traffic randomly if enabled (enabled by "
 "default in v2ray and cannot be disabled)."
 msgstr ""
+"پارامتر پروتکل. در صورت فعال بودن به‌طور تصادفی ترافیک هدر می‌دهد (در v2ray به‌طور پیش‌فرض فعال است و نمی‌توان غیرفعال کرد)."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1482
 msgid "Proxy Domain List"
-msgstr ""
+msgstr "لیست دامنه‌های پروکسی"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1437
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1466
 msgid "Proxy IPv4 IP-s"
-msgstr ""
+msgstr "آدرس‌های IPv4 پروکسی"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1440
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1469
 msgid "Proxy IPv6 IP-s"
-msgstr ""
+msgstr "آدرس‌های IPv6 پروکسی"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1443
 msgid "Proxy MAC-s"
-msgstr ""
+msgstr "آدرس‌های MAC پروکسی"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1424
 msgid "Proxy all except listed"
-msgstr ""
+msgstr "پروکسی همه به‌جز موارد لیست‌شده"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1421
 msgid "Proxy filter mode"
-msgstr ""
+msgstr "حالت فیلتر پروکسی"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1423
 msgid "Proxy listed only"
-msgstr ""
+msgstr "فقط موارد لیست‌شده را پروکسی کن"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:284
 msgid "Proxy mode"
-msgstr ""
+msgstr "حالت پروکسی"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:497
 msgid "Proxy protocol"
-msgstr ""
+msgstr "پروتکل پروکسی"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:621
 #: htdocs/luci-static/resources/view/homeproxy/client.js:953
@@ -1952,400 +1981,401 @@ msgstr ""
 #: htdocs/luci-static/resources/view/homeproxy/node.js:779
 #: htdocs/luci-static/resources/view/homeproxy/server.js:405
 msgid "QUIC"
-msgstr ""
+msgstr "QUIC"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:699
 #: htdocs/luci-static/resources/view/homeproxy/server.js:355
 msgid "QUIC congestion control algorithm."
-msgstr ""
+msgstr "الگوریتم کنترل ازدحام QUIC."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:599
 #: htdocs/luci-static/resources/view/homeproxy/server.js:307
 msgid "QUIC connection receive window"
-msgstr ""
+msgstr "پنجره‌ی دریافت اتصال QUIC"
 
 #: htdocs/luci-static/resources/view/homeproxy/server.js:314
 msgid "QUIC maximum concurrent bidirectional streams"
-msgstr ""
+msgstr "حداکثر جریان‌های دوطرفه همزمان QUIC"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:593
 #: htdocs/luci-static/resources/view/homeproxy/server.js:300
 msgid "QUIC stream receive window"
-msgstr ""
+msgstr "پنجره‌ی دریافت جریان QUIC"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1095
 msgid "Query type"
-msgstr ""
+msgstr "نوع پرس‌و‌جو"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1215
 msgid "RCode"
-msgstr ""
+msgstr "RCode"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:622
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1110
 msgid "RDP"
-msgstr ""
+msgstr "RDP"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:917
 msgid "RDRC timeout"
-msgstr ""
+msgstr "انقضای RDRC"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1142
 #: htdocs/luci-static/resources/view/homeproxy/server.js:709
 msgid "REALITY"
-msgstr ""
+msgstr "REALITY"
 
 #: htdocs/luci-static/resources/view/homeproxy/server.js:714
 msgid "REALITY private key"
-msgstr ""
+msgstr "کلید خصوصی REALITY"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1147
 #: htdocs/luci-static/resources/view/homeproxy/server.js:730
 msgid "REALITY public key"
-msgstr ""
+msgstr "کلید عمومی REALITY"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1153
 #: htdocs/luci-static/resources/view/homeproxy/server.js:734
 msgid "REALITY short ID"
-msgstr ""
+msgstr "شناسه کوتاه REALITY"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:55
 #: htdocs/luci-static/resources/view/homeproxy/server.js:58
 msgid "RUNNING"
-msgstr ""
+msgstr "در حال اجرا"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:665
 msgid "Random version will be used if empty."
-msgstr ""
+msgstr "اگر خالی باشد نسخه‌ای تصادفی استفاده خواهد شد."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:488
 msgid "Recursive outbound detected!"
-msgstr ""
+msgstr "خروجی بازگشتی شناسایی شد!"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1013
 msgid "Recursive resolver detected!"
-msgstr ""
+msgstr "حل‌کننده‌ی بازگشتی شناسایی شد!"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:285
 msgid "Redirect TCP"
-msgstr ""
+msgstr "تغییر مسیر TCP"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:287
 msgid "Redirect TCP + TProxy UDP"
-msgstr ""
+msgstr "تغییر مسیر TCP + TProxy UDP"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:289
 msgid "Redirect TCP + Tun UDP"
-msgstr ""
+msgstr "تغییر مسیر TCP + Tun UDP"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js:219
 msgid "Refresh every %s seconds."
-msgstr ""
+msgstr "هر %s ثانیه یک‌بار تازه‌سازی می‌شود."
 
 #: htdocs/luci-static/resources/view/homeproxy/server.js:659
 msgid "Region ID"
-msgstr ""
+msgstr "شناسه‌ی منطقه"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:672
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1149
 msgid "Reject"
-msgstr ""
+msgstr "رد کردن"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1336
 msgid "Remote"
-msgstr ""
+msgstr "راه‌دور"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1434
 msgid "Remove %s nodes"
-msgstr ""
+msgstr "حذف %s گره"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1424
 msgid "Remove all nodes from subscriptions"
-msgstr ""
+msgstr "حذف همه‌ی گره‌ها از اشتراک‌نامه‌ها"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1203
 msgid "Reply with REFUSED"
-msgstr ""
+msgstr "پاسخ با REFUSED"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:769
 msgid "Reply with TCP RST / ICMP port unreachable"
-msgstr ""
+msgstr "پاسخ با TCP RST / درگاه ICMP غیرقابل دسترس"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:925
 msgid "Reserved field bytes"
-msgstr ""
+msgstr "بایت‌های فیلد رزرو شده"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:673
 msgid "Resolve"
-msgstr ""
+msgstr "حل کردن"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:780
 msgid "Resolve strategy"
-msgstr ""
+msgstr "استراتژی حل‌کردن"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js:241
 msgid "Resources management"
-msgstr ""
+msgstr "مدیریت منابع"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "Core management"
-msgstr ""
+msgstr "مدیریت هسته"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "Package manager"
-msgstr ""
+msgstr "مدیر بسته"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "Architecture"
-msgstr ""
+msgstr "معماری"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "Free /tmp"
-msgstr ""
+msgstr "فضای آزاد /tmp"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "Free overlay"
-msgstr ""
+msgstr "فضای آزاد overlay"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "none detected"
-msgstr ""
+msgstr "تشخیص داده نشد"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "Not installed"
-msgstr ""
+msgstr "نصب نشده"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "Latest"
-msgstr ""
+msgstr "آخرین"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "Checking..."
-msgstr ""
+msgstr "در حال بررسی..."
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "Checking requirements..."
-msgstr ""
+msgstr "در حال بررسی پیش‌نیازها..."
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "Downloading..."
-msgstr ""
+msgstr "در حال دانلود..."
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "Installing package..."
-msgstr ""
+msgstr "در حال نصب بسته..."
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "Installing kernel modules..."
-msgstr ""
+msgstr "در حال نصب ماژول‌های هسته..."
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "Download failed"
-msgstr ""
+msgstr "دانلود ناموفق"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "Install"
-msgstr ""
+msgstr "نصب"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "Update"
-msgstr ""
+msgstr "به‌روزرسانی"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "Remove"
-msgstr ""
+msgstr "حذف"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "No supported package manager detected"
-msgstr ""
+msgstr "مدیر بسته پشتیبانی‌شده‌ای یافت نشد"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "Installing..."
-msgstr ""
+msgstr "در حال نصب..."
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "Installed successfully"
-msgstr ""
+msgstr "با موفقیت نصب شد"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "Installation failed"
-msgstr ""
+msgstr "نصب ناموفق"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "Unknown"
-msgstr ""
+msgstr "ناشناخته"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "Removing..."
-msgstr ""
+msgstr "در حال حذف..."
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "Removed successfully"
-msgstr ""
+msgstr "با موفقیت حذف شد"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "Removal failed"
-msgstr ""
+msgstr "حذف ناموفق"
 
 #: htdocs/luci-static/resources/view/homeproxy/server.js:880
 msgid "Reuse address"
-msgstr ""
+msgstr "استفاده‌ی مجدد از آدرس"
 
 #: htdocs/luci-static/resources/view/homeproxy/server.js:881
 msgid "Reuse listener address."
-msgstr ""
+msgstr "استفاده‌ی مجدد از آدرس شنونده."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:792
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1187
 msgid "Rewrite TTL"
-msgstr ""
+msgstr "بازنویسی TTL"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:793
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1188
 msgid "Rewrite TTL in DNS responses."
-msgstr ""
+msgstr "بازنویسی TTL در پاسخ‌های DNS."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:670
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1147
 msgid "Route"
-msgstr ""
+msgstr "مسیریابی"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:671
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1148
 msgid "Route options"
-msgstr ""
+msgstr "گزینه‌های مسیریابی"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:396
 msgid "Routing Nodes"
-msgstr ""
+msgstr "گره‌های مسیریابی"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:567
 msgid "Routing Rules"
-msgstr ""
+msgstr "قوانین مسیریابی"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:120
 msgid "Routing Settings"
-msgstr ""
+msgstr "تنظیمات مسیریابی"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:251
 msgid "Routing mode"
-msgstr ""
+msgstr "حالت مسیریابی"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:405
 msgid "Routing node"
-msgstr ""
+msgstr "گره‌ی مسیریابی"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:264
 msgid "Routing ports"
-msgstr ""
+msgstr "درگاه‌های مسیریابی"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:576
 msgid "Routing rule"
-msgstr ""
+msgstr "قانون مسیریابی"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1311
 msgid "Rule Set"
-msgstr ""
+msgstr "مجموعه قانون"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:646
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1119
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1320
 msgid "Rule set"
-msgstr ""
+msgstr "مجموعه قانون"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:661
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1134
 msgid "Rule set IP CIDR as source IP"
-msgstr ""
+msgstr "IP CIDR مجموعه قانون به‌عنوان IP منبع"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1353
 msgid "Rule set URL"
-msgstr ""
+msgstr "URL مجموعه قانون"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:623
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1111
 #: htdocs/luci-static/resources/view/homeproxy/node.js:438
 msgid "SSH"
-msgstr ""
+msgstr "SSH"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:624
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1112
 msgid "STUN"
-msgstr ""
+msgstr "STUN"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1177
 msgid "SUoT version"
-msgstr ""
+msgstr "نسخه‌ی SUoT"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:632
 msgid "Safari / Apple Network API"
-msgstr ""
+msgstr "Safari / Apple Network API"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:569
 #: htdocs/luci-static/resources/view/homeproxy/server.js:290
 msgid "Salamander"
-msgstr ""
+msgstr "Salamander"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:152
 msgid "Same as main node"
-msgstr ""
+msgstr "همانند گره اصلی"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js:267
 #: htdocs/luci-static/resources/view/homeproxy/status.js:273
 msgid "Save"
-msgstr ""
+msgstr "ذخیره"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1397
 msgid "Save current settings"
-msgstr ""
+msgstr "ذخیره‌ی تنظیمات فعلی"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1394
 msgid "Save subscriptions settings"
-msgstr ""
+msgstr "ذخیره‌ی تنظیمات اشتراک‌نامه‌ها"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1155
 #: htdocs/luci-static/resources/view/homeproxy/server.js:156
 msgid "Server"
-msgstr ""
+msgstr "سرور"
 
 #: root/usr/share/luci/menu.d/luci-app-homeproxy-hiddify.json:30
 msgid "Server Settings"
-msgstr ""
+msgstr "تنظیمات سرور"
 
 #: htdocs/luci-static/resources/view/homeproxy/server.js:607
 msgid ""
 "Server name to use when choosing a certificate if the ClientHello's "
 "ServerName field is empty."
 msgstr ""
+"نام سرور برای استفاده هنگام انتخاب گواهی در صورتی که فیلد ServerName در ClientHello خالی باشد."
 
 #: htdocs/luci-static/resources/view/homeproxy/server.js:151
 msgid "Server settings"
-msgstr ""
+msgstr "تنظیمات سرور"
 
 #: root/usr/share/luci/menu.d/luci-app-homeproxy-hiddify.json:38
 msgid "Service Status"
-msgstr ""
+msgstr "وضعیت سرویس"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1175
 msgid "Set domain strategy for this query."
-msgstr ""
+msgstr "استراتژی دامنه را برای این پرس‌و‌جو تنظیم کنید."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:436
 msgid "ShadowTLS"
-msgstr ""
+msgstr "ShadowTLS"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:644
 msgid "ShadowTLS version"
-msgstr ""
+msgstr "نسخه‌ی ShadowTLS"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:435
 #: htdocs/luci-static/resources/view/homeproxy/server.js:184
 msgid "Shadowsocks"
-msgstr ""
+msgstr "Shadowsocks"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:628
 msgid "Sniffed client type (QUIC client type or SSH client name)."
-msgstr ""
+msgstr "نوع کلاینت شناسایی‌شده (نوع کلاینت QUIC یا نام کلاینت SSH)."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:616
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1105
@@ -2353,51 +2383,53 @@ msgid ""
 "Sniffed protocol, see <a target=\"_blank\" href=\"https://sing-box.sagernet."
 "org/configuration/route/sniff/\">Sniff</a> for details."
 msgstr ""
+"پروتکل شناسایی‌شده، برای جزئیات به <a target=\"_blank\" href=\"https://sing-box.sagernet.org/configuration/route/sniff/\">Sniff</a> مراجعه کنید."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:437
 #: htdocs/luci-static/resources/view/homeproxy/server.js:185
 msgid "Socks"
-msgstr ""
+msgstr "Socks"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:654
 msgid "Socks version"
-msgstr ""
+msgstr "نسخه‌ی Socks"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:655
 msgid "Socks4"
-msgstr ""
+msgstr "Socks4"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:656
 msgid "Socks4A"
-msgstr ""
+msgstr "Socks4A"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:657
 msgid "Socks5"
-msgstr ""
+msgstr "Socks5"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:822
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1259
 msgid "Source IP CIDR"
-msgstr ""
+msgstr "CIDR IP منبع"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1342
 msgid "Source file"
-msgstr ""
+msgstr "فایل منبع"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:838
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1276
 msgid "Source port"
-msgstr ""
+msgstr "درگاه منبع"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:843
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1281
 msgid "Source port range"
-msgstr ""
+msgstr "محدوده‌ی درگاه منبع"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:750
 msgid ""
 "Specifies DNS server tag to use instead of selecting through DNS routing."
 msgstr ""
+"برچسب سرور DNS را برای استفاده به‌جای انتخاب از طریق مسیریابی DNS مشخص می‌کند."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:796
 #: htdocs/luci-static/resources/view/homeproxy/node.js:848
@@ -2408,6 +2440,7 @@ msgid ""
 "frame, so if there is no other traffic on the connection, the health check "
 "will be executed every interval."
 msgstr ""
+"دوره‌ی زمانی (بر حسب ثانیه) را مشخص می‌کند که پس از آن، در صورت عدم دریافت فریم در اتصال، با یک فریم ping بررسی سلامت انجام می‌شود.<br/>توجه داشته باشید که پاسخ ping به‌عنوان فریم دریافت‌شده در نظر گرفته می‌شود، بنابراین در صورت عدم وجود ترافیک دیگری در اتصال، بررسی سلامت در هر فاصله اجرا خواهد شد."
 
 #: htdocs/luci-static/resources/view/homeproxy/server.js:422
 #: htdocs/luci-static/resources/view/homeproxy/server.js:457
@@ -2415,6 +2448,7 @@ msgid ""
 "Specifies the time (in seconds) until idle clients should be closed with a "
 "GOAWAY frame. PING frames are not considered as activity."
 msgstr ""
+"زمان (بر حسب ثانیه) را مشخص می‌کند که پس از آن کلاینت‌های بی‌فعال باید با فریم GOAWAY بسته شوند. فریم‌های PING به‌عنوان فعالیت در نظر گرفته نمی‌شوند."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:800
 #: htdocs/luci-static/resources/view/homeproxy/node.js:856
@@ -2424,47 +2458,50 @@ msgid ""
 "frame is not received within the specified timeout duration, the connection "
 "will be closed."
 msgstr ""
+"مدت زمان انقضا (بر حسب ثانیه) را پس از ارسال یک فریم PING مشخص می‌کند که در آن باید پاسخی دریافت شود.<br/>اگر پاسخی به فریم PING در مدت انقضای مشخص‌شده دریافت نشود، اتصال بسته خواهد شد."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:265
 msgid ""
 "Specify target ports to be proxied. Multiple ports must be separated by "
 "commas."
 msgstr ""
+"درگاه‌های هدف برای پروکسی را مشخص کنید. چند درگاه باید با ویرگول جدا شوند."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:913
 msgid "Store RDRC"
-msgstr ""
+msgstr "ذخیره‌ی RDRC"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:914
 msgid ""
 "Store rejected DNS response cache.<br/>The check results of <code>Address "
 "filter DNS rule items</code> will be cached until expiration."
 msgstr ""
+"ذخیره‌ی کش پاسخ DNS رد شده.<br/>نتایج بررسی <code>موارد قانون DNS فیلتر آدرس</code> تا انقضا ذخیره خواهند شد."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:557
 #: htdocs/luci-static/resources/view/homeproxy/server.js:278
 msgid "String"
-msgstr ""
+msgstr "رشته"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1322
 msgid "Sub (%s)"
-msgstr ""
+msgstr "زیر (%s)"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1349
 msgid "Subscription URL-s"
-msgstr ""
+msgstr "URL های اشتراک‌نامه"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1333
 msgid "Subscriptions"
-msgstr ""
+msgstr "اشتراک‌نامه‌ها"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1273
 msgid "Successfully imported %s nodes of total %s."
-msgstr ""
+msgstr "%s گره از مجموع %s با موفقیت وارد شد."
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js:86
 msgid "Successfully updated."
-msgstr ""
+msgstr "با موفقیت به‌روز شد."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1233
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1350
@@ -2472,15 +2509,17 @@ msgid ""
 "Support Hysteria, Shadowsocks, Trojan, v2rayN (VMess), and XTLS (VLESS) "
 "online configuration delivery standard."
 msgstr ""
+"پشتیبانی از استاندارد تحویل تنظیمات آنلاین Hysteria، Shadowsocks، Trojan، v2rayN (VMess) و XTLS (VLESS)."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:180
 msgid ""
 "Support UDP, TCP, DoH, DoQ, DoT. TCP protocol will be used if not specified."
 msgstr ""
+"پشتیبانی از UDP، TCP، DoH، DoQ، DoT. اگر مشخص نشود از پروتکل TCP استفاده خواهد شد."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:313
 msgid "System"
-msgstr ""
+msgstr "سیستم"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:383
 #: htdocs/luci-static/resources/view/homeproxy/client.js:435
@@ -2489,27 +2528,27 @@ msgstr ""
 #: htdocs/luci-static/resources/view/homeproxy/client.js:996
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1162
 msgid "System DNS"
-msgstr ""
+msgstr "DNS سیستم"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:638
 #: htdocs/luci-static/resources/view/homeproxy/client.js:949
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1100
 #: htdocs/luci-static/resources/view/homeproxy/server.js:867
 msgid "TCP"
-msgstr ""
+msgstr "TCP"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1161
 #: htdocs/luci-static/resources/view/homeproxy/server.js:845
 msgid "TCP fast open"
-msgstr ""
+msgstr "باز کردن سریع TCP"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:307
 msgid "TCP/IP stack"
-msgstr ""
+msgstr "پشته‌ی TCP/IP"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:308
 msgid "TCP/IP stack."
-msgstr ""
+msgstr "پشته‌ی TCP/IP."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:625
 #: htdocs/luci-static/resources/view/homeproxy/client.js:950
@@ -2517,122 +2556,126 @@ msgstr ""
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1003
 #: htdocs/luci-static/resources/view/homeproxy/server.js:532
 msgid "TLS"
-msgstr ""
+msgstr "TLS"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1035
 #: htdocs/luci-static/resources/view/homeproxy/server.js:565
 msgid "TLS ALPN"
-msgstr ""
+msgstr "TLS ALPN"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:980
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1030
 #: htdocs/luci-static/resources/view/homeproxy/server.js:560
 msgid "TLS SNI"
-msgstr ""
+msgstr "TLS SNI"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:735
 msgid "TLS fragment"
-msgstr ""
+msgstr "تکه‌ی TLS"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:787
 #: htdocs/luci-static/resources/view/homeproxy/server.js:413
 msgid "TLS is not enforced. If TLS is not configured, plain HTTP 1.1 is used."
-msgstr ""
+msgstr "TLS اجباری نیست. اگر TLS تنظیم نشده باشد، از HTTP 1.1 ساده استفاده می‌شود."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:729
 #: htdocs/luci-static/resources/view/homeproxy/client.js:737
 msgid "TLS record fragment"
-msgstr ""
+msgstr "تکه‌ی رکورد TLS"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:989
 msgid ""
 "Tag of a another server to resolve the domain name in the address. Required "
 "if address contains domain."
 msgstr ""
+"برچسب سرور دیگری برای حل نام دامنه در آدرس. در صورتی که آدرس حاوی دامنه باشد الزامی است."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1028
 msgid "Tag of an outbound for connecting to the dns server."
-msgstr ""
+msgstr "برچسب خروجی برای اتصال به سرور DNS."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1376
 msgid "Tag of the outbound to download rule set."
-msgstr ""
+msgstr "برچسب خروجی برای دانلود مجموعه قانون."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1156
 msgid "Tag of the target dns server."
-msgstr ""
+msgstr "برچسب سرور DNS هدف."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:679
 msgid "Tag of the target outbound."
-msgstr ""
+msgstr "برچسب خروجی هدف."
 
 #: htdocs/luci-static/resources/view/homeproxy/server.js:327
 msgid ""
 "Tell the client to use the BBR flow control algorithm instead of Hysteria CC."
 msgstr ""
+"به کلاینت بگویید از الگوریتم کنترل جریان BBR به‌جای Hysteria CC استفاده کند."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:187
 #: htdocs/luci-static/resources/view/homeproxy/client.js:222
 msgid "Tencent Public DNS (119.29.29.29)"
-msgstr ""
+msgstr "DNS عمومی Tencent (119.29.29.29)"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:510
 msgid "Test URL"
-msgstr ""
+msgstr "URL آزمایش"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:138
 #: htdocs/luci-static/resources/view/homeproxy/client.js:167
 #: htdocs/luci-static/resources/view/homeproxy/client.js:530
 msgid "Test interval"
-msgstr ""
+msgstr "فاصله‌ی آزمایش"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:538
 msgid "Test interval must be less or equal than idle timeout."
-msgstr ""
+msgstr "فاصله‌ی آزمایش باید کمتر یا مساوی انقضای بی‌فعالی باشد."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:144
 #: htdocs/luci-static/resources/view/homeproxy/client.js:173
 #: htdocs/luci-static/resources/view/homeproxy/client.js:546
 msgid "Test tolerance"
-msgstr ""
+msgstr "تحمل آزمایش"
 
 #: htdocs/luci-static/resources/view/homeproxy/server.js:628
 msgid "The ACME CA provider to use."
-msgstr ""
+msgstr "فراهم‌کننده‌ی CA برای ACME که باید استفاده شود."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:878
 msgid "The DNS strategy for resolving the domain name in the address."
-msgstr ""
+msgstr "استراتژی DNS برای حل نام دامنه در آدرس."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:600
 #: htdocs/luci-static/resources/view/homeproxy/server.js:308
 msgid "The QUIC connection-level flow control window for receiving data."
-msgstr ""
+msgstr "پنجره‌ی کنترل جریان سطح اتصال QUIC برای دریافت داده."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:594
 #: htdocs/luci-static/resources/view/homeproxy/server.js:301
 msgid "The QUIC stream-level flow control window for receiving data."
-msgstr ""
+msgstr "پنجره‌ی کنترل جریان سطح جریان QUIC برای دریافت داده."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:511
 msgid "The URL to test."
-msgstr ""
+msgstr "URL برای آزمایش."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:958
 msgid "The address of the dns server."
-msgstr ""
+msgstr "آدرس سرور DNS."
 
 #: htdocs/luci-static/resources/view/homeproxy/server.js:679
 msgid ""
 "The alternate port to use for the ACME HTTP challenge; if non-empty, this "
 "port will be used instead of 80 to spin up a listener for the HTTP challenge."
 msgstr ""
+"درگاه جایگزین برای استفاده در چالش HTTP مربوط به ACME؛ اگر غیر خالی باشد، این درگاه به‌جای 80 برای راه‌اندازی یک شنونده برای چالش HTTP استفاده خواهد شد."
 
 #: htdocs/luci-static/resources/view/homeproxy/server.js:685
 msgid ""
 "The alternate port to use for the ACME TLS-ALPN challenge; the system must "
 "forward 443 to this port for challenge to succeed."
 msgstr ""
+"درگاه جایگزین برای استفاده در چالش TLS-ALPN مربوط به ACME؛ سیستم باید 443 را به این درگاه فوروارد کند تا چالش موفق شود."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:596
 msgid ""
@@ -2644,6 +2687,7 @@ msgid ""
 "code>.<br/>Additionally, included rule sets can be considered merged rather "
 "than as a single rule sub-item."
 msgstr ""
+"قانون پیش‌فرض از منطق تطابق زیر استفاده می‌کند:<br/><code>(domain || domain_suffix || domain_keyword || domain_regex || ip_cidr || ip_is_private)</code> &&<br/><code>(port || port_range)</code> &&<br/><code>(source_ip_cidr || source_ip_is_private)</code> &&<br/><code>(source_port || source_port_range)</code> &&<br/><code>سایر فیلدها</code>.<br/>علاوه بر این، مجموعه‌های قانون موجود را می‌توان به‌عنوان ادغام‌شده در نظر گرفت نه به‌عنوان یک زیرآیتم قانون واحد."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1076
 msgid ""
@@ -2654,16 +2698,18 @@ msgid ""
 "><code>other fields</code>.<br/>Additionally, included rule sets can be "
 "considered merged rather than as a single rule sub-item."
 msgstr ""
+"قانون پیش‌فرض از منطق تطابق زیر استفاده می‌کند:<br/><code>(domain || domain_suffix || domain_keyword || domain_regex)</code> &&<br/><code>(port || port_range)</code> &&<br/><code>(source_ip_cidr || source_ip_is_private)</code> &&<br/><code>(source_port || source_port_range)</code> &&<br/><code>سایر فیلدها</code>.<br/>علاوه بر این، مجموعه‌های قانون موجود را می‌توان به‌عنوان ادغام‌شده در نظر گرفت."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:218
 msgid ""
 "The dns server for resolving China domains. Support UDP, TCP, DoH, DoQ, DoT."
 msgstr ""
+"سرور DNS برای حل دامنه‌های چینی. پشتیبانی از UDP، TCP، DoH، DoQ، DoT."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:447
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1021
 msgid "The domain strategy for resolving the domain name in the address."
-msgstr ""
+msgstr "استراتژی دامنه برای حل نام دامنه در آدرس."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1065
 #: htdocs/luci-static/resources/view/homeproxy/server.js:587
@@ -2671,109 +2717,113 @@ msgid ""
 "The elliptic curves that will be used in an ECDHE handshake, in preference "
 "order. If empty, the default will be used."
 msgstr ""
+"منحنی‌های بیضوی که در یک دست‌دهی ECDHE استفاده خواهند شد، به ترتیب ترجیح. اگر خالی باشد از پیش‌فرض استفاده می‌شود."
 
 #: htdocs/luci-static/resources/view/homeproxy/server.js:613
 msgid ""
 "The email address to use when creating or selecting an existing ACME server "
 "account."
 msgstr ""
+"آدرس ایمیل برای استفاده هنگام ایجاد یا انتخاب یک حساب سرور ACME موجود."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:743
 msgid ""
 "The fallback value in milliseconds used when TLS segmentation cannot "
 "automatically determine the wait time."
 msgstr ""
+"مقدار بازگشتی بر حسب میلی‌ثانیه که هنگامی که تقسیم‌بندی TLS نمی‌تواند زمان انتظار را به‌طور خودکار تعیین کند استفاده می‌شود."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:554
 msgid "The idle timeout in seconds."
-msgstr ""
+msgstr "انقضای بی‌فعالی بر حسب ثانیه."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1057
 #: htdocs/luci-static/resources/view/homeproxy/server.js:579
 msgid "The maximum TLS version that is acceptable."
-msgstr ""
+msgstr "حداکثر نسخه‌ی TLS که قابل قبول است."
 
 #: htdocs/luci-static/resources/view/homeproxy/server.js:315
 msgid ""
 "The maximum number of QUIC concurrent bidirectional streams that a peer is "
 "allowed to open."
 msgstr ""
+"حداکثر تعداد جریان‌های دوطرفه همزمان QUIC که یک همتا مجاز به باز کردن آن‌هاست."
 
 #: htdocs/luci-static/resources/view/homeproxy/server.js:740
 msgid "The maximum time difference between the server and the client."
-msgstr ""
+msgstr "حداکثر اختلاف زمانی بین سرور و کلاینت."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1049
 #: htdocs/luci-static/resources/view/homeproxy/server.js:571
 msgid "The minimum TLS version that is acceptable."
-msgstr ""
+msgstr "حداقل نسخه‌ی TLS که قابل قبول است."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:102
 #: htdocs/luci-static/resources/view/homeproxy/server.js:130
 msgid "The modern ImmortalWrt proxy platform for ARM64/AMD64."
-msgstr ""
+msgstr "پلتفرم مدرن پروکسی ImmortalWrt برای ARM64/AMD64."
 
-#: htdocs/luci-static/resources/view/homeproxy/client.js:107
-#: htdocs/luci-static/resources/view/homeproxy/server.js:134
-msgid "The modern multi-core ImmortalWrt proxy platform."
-msgstr ""
+msgid "The modern multi-core proxy platform. Fork of ImmortalWrt."
+msgstr "پلتفرم پروکسی چندهسته‌ای مدرن. فورک ImmortalWrt."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:454
 #: htdocs/luci-static/resources/view/homeproxy/server.js:875
 msgid "The network interface to bind to."
-msgstr ""
+msgstr "رابط شبکه برای اتصال."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:968
 msgid "The path of the DNS server."
-msgstr ""
+msgstr "مسیر سرور DNS."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1099
 msgid ""
 "The path to the ECH config, in PEM format. If empty, load from DNS will be "
 "attempted."
 msgstr ""
+"مسیر تنظیمات ECH، در قالب PEM. اگر خالی باشد سعی می‌شود از DNS بارگذاری شود."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1078
 msgid "The path to the server certificate, in PEM format."
-msgstr ""
+msgstr "مسیر گواهی سرور، در قالب PEM."
 
 #: htdocs/luci-static/resources/view/homeproxy/server.js:199
 msgid "The port must be unique."
-msgstr ""
+msgstr "درگاه باید منحصربه‌فرد باشد."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:963
 msgid "The port of the DNS server."
-msgstr ""
+msgstr "درگاه سرور DNS."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1216
 msgid "The response code."
-msgstr ""
+msgstr "کد پاسخ."
 
 #: htdocs/luci-static/resources/view/homeproxy/server.js:776
 msgid "The server private key, in PEM format."
-msgstr ""
+msgstr "کلید خصوصی سرور، در قالب PEM."
 
 #: htdocs/luci-static/resources/view/homeproxy/server.js:757
 msgid "The server public key, in PEM format."
-msgstr ""
+msgstr "کلید عمومی سرور، در قالب PEM."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:461
 msgid ""
 "The tag of the upstream outbound.<br/>Other dial fields will be ignored when "
 "enabled."
 msgstr ""
+"برچسب خروجی بالادست.<br/>سایر فیلدهای اتصال هنگام فعال‌بودن نادیده‌گرفته می‌شوند."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:139
 #: htdocs/luci-static/resources/view/homeproxy/client.js:168
 #: htdocs/luci-static/resources/view/homeproxy/client.js:531
 msgid "The test interval in seconds."
-msgstr ""
+msgstr "فاصله‌ی آزمایش بر حسب ثانیه."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:145
 #: htdocs/luci-static/resources/view/homeproxy/client.js:174
 #: htdocs/luci-static/resources/view/homeproxy/client.js:547
 msgid "The test tolerance in milliseconds."
-msgstr ""
+msgstr "تحمل آزمایش بر حسب میلی‌ثانیه."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:807
 #: htdocs/luci-static/resources/view/homeproxy/server.js:465
@@ -2782,6 +2832,7 @@ msgid ""
 "will wait for activity. If no activity is detected, the connection will be "
 "closed."
 msgstr ""
+"انقضا (بر حسب ثانیه) که پس از انجام بررسی keepalive، کلاینت منتظر فعالیت می‌ماند. اگر فعالیتی شناسایی نشود، اتصال بسته خواهد شد."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1043
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1385
@@ -2789,207 +2840,213 @@ msgid ""
 "This is <strong>DANGEROUS</strong>, your traffic is almost like "
 "<strong>PLAIN TEXT</strong>! Use at your own risk!"
 msgstr ""
+"این <strong>خطرناک</strong> است، ترافیک شما تقریباً مانند <strong>متن ساده</strong> است! با مسئولیت خودتان استفاده کنید!"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:717
 msgid ""
 "This is the TUIC port of the UDP over TCP protocol, designed to provide a "
 "QUIC stream based UDP relay mode that TUIC does not provide."
 msgstr ""
+"این درگاه TUIC پروتکل UDP over TCP است که برای ارائه یک حالت رله UDP مبتنی بر جریان QUIC که TUIC فراهم نمی‌کند طراحی شده است."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:188
 #: htdocs/luci-static/resources/view/homeproxy/client.js:223
 msgid "ThreatBook Public DNS (117.50.10.10)"
-msgstr ""
+msgstr "DNS عمومی ThreatBook (117.50.10.10)"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:723
 msgid ""
 "Timeout for UDP connections.<br/>Setting a larger value than the UDP timeout "
 "in inbounds will have no effect."
 msgstr ""
+"انقضا برای اتصالات UDP.<br/>تنظیم مقداری بزرگ‌تر از انقضای UDP در ورودی‌ها تأثیری نخواهد داشت."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:918
 msgid ""
 "Timeout of rejected DNS response cache in seconds. <code>604800 (7d)</code> "
 "is used by default."
 msgstr ""
+"انقضای ذخیره‌ی پاسخ DNS رد شده بر حسب ثانیه. <code>604800 (7 روز)</code> به‌طور پیش‌فرض استفاده می‌شود."
 
 #: htdocs/luci-static/resources/view/homeproxy/server.js:491
 msgid ""
 "To be compatible with Xray-core, set this to <code>Sec-WebSocket-Protocol</"
 "code>."
 msgstr ""
+"برای سازگاری با Xray-core، این را روی <code>Sec-WebSocket-Protocol</code> تنظیم کنید."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:292
 msgid ""
 "To enable Tun support, you need to install <code>ip-full</code> and "
 "<code>kmod-tun</code>"
 msgstr ""
+"برای فعال کردن پشتیبانی Tun، باید <code>kmod-tun</code> را نصب کنید."
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js:135
 msgid "Trace"
-msgstr ""
+msgstr "ردیابی"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:773
 #: htdocs/luci-static/resources/view/homeproxy/server.js:399
 msgid "Transport"
-msgstr ""
+msgstr "حمل‌ونقل"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:439
 #: htdocs/luci-static/resources/view/homeproxy/server.js:186
 msgid "Trojan"
-msgstr ""
+msgstr "Trojan"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:441
 #: htdocs/luci-static/resources/view/homeproxy/server.js:188
 msgid "Tuic"
-msgstr ""
+msgstr "Tuic"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:290
 msgid "Tun TCP/UDP"
-msgstr ""
+msgstr "Tun TCP/UDP"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:947
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1334
 #: htdocs/luci-static/resources/view/homeproxy/node.js:427
 #: htdocs/luci-static/resources/view/homeproxy/server.js:175
 msgid "Type"
-msgstr ""
+msgstr "نوع"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:639
 #: htdocs/luci-static/resources/view/homeproxy/client.js:948
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1101
 #: htdocs/luci-static/resources/view/homeproxy/server.js:868
 msgid "UDP"
-msgstr ""
+msgstr "UDP"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1167
 #: htdocs/luci-static/resources/view/homeproxy/server.js:854
 msgid "UDP Fragment"
-msgstr ""
+msgstr "تکه‌کردن UDP"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:335
 #: htdocs/luci-static/resources/view/homeproxy/server.js:859
 msgid "UDP NAT expiration time"
-msgstr ""
+msgstr "زمان انقضای NAT UDP"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1171
 msgid "UDP over TCP"
-msgstr ""
+msgstr "UDP روی TCP"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:716
 msgid "UDP over stream"
-msgstr ""
+msgstr "UDP روی جریان"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:709
 msgid "UDP packet relay mode."
-msgstr ""
+msgstr "حالت رله‌ی بسته‌ی UDP."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:708
 msgid "UDP relay mode"
-msgstr ""
+msgstr "حالت رله‌ی UDP"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:722
 msgid "UDP timeout"
-msgstr ""
+msgstr "انقضای UDP"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:124
 #: htdocs/luci-static/resources/view/homeproxy/client.js:153
 #: htdocs/luci-static/resources/view/homeproxy/client.js:421
 msgid "URLTest"
-msgstr ""
+msgstr "URLTest"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Separate URLTest"
-msgstr ""
+msgstr "URLTest جداگانه"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:131
 #: htdocs/luci-static/resources/view/homeproxy/client.js:160
 #: htdocs/luci-static/resources/view/homeproxy/client.js:496
 msgid "URLTest nodes"
-msgstr ""
+msgstr "گره‌های URLTest"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:690
 #: htdocs/luci-static/resources/view/homeproxy/server.js:346
 msgid "UUID"
-msgstr ""
+msgstr "UUID"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js:98
 msgid "Unknown error."
-msgstr ""
+msgstr "خطای ناشناخته."
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js:195
 msgid "Unknown error: %s"
-msgstr ""
+msgstr "خطای ناشناخته: %s"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1135
 msgid "Unsupported fingerprint!"
-msgstr ""
+msgstr "اثرانگشت پشتیبانی‌نشده!"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1409
 msgid "Update %s subscriptions"
-msgstr ""
+msgstr "به‌روزرسانی %s اشتراک‌نامه"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js:89
 msgid "Update failed."
-msgstr ""
+msgstr "به‌روزرسانی ناموفق بود."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1392
 msgid "Update interval"
-msgstr ""
+msgstr "فاصله‌ی به‌روزرسانی"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1393
 msgid "Update interval of rule set."
-msgstr ""
+msgstr "فاصله‌ی به‌روزرسانی مجموعه قانون."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1404
 msgid "Update nodes from subscriptions"
-msgstr ""
+msgstr "به‌روزرسانی گره‌ها از اشتراک‌نامه‌ها"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1346
 msgid "Update subscriptions via proxy."
-msgstr ""
+msgstr "به‌روزرسانی اشتراک‌نامه‌ها از طریق پروکسی."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1339
 msgid "Update time"
-msgstr ""
+msgstr "زمان به‌روزرسانی"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1345
 msgid "Update via proxy"
-msgstr ""
+msgstr "به‌روزرسانی از طریق پروکسی"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1104
 msgid "Upload ECH config"
-msgstr ""
+msgstr "آپلود تنظیمات ECH"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:995
 #: htdocs/luci-static/resources/view/homeproxy/server.js:523
 msgid "Upload bandwidth"
-msgstr ""
+msgstr "پهنای باند آپلود"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:996
 #: htdocs/luci-static/resources/view/homeproxy/server.js:524
 msgid "Upload bandwidth in Mbps."
-msgstr ""
+msgstr "پهنای باند آپلود در Mbps."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1085
 #: htdocs/luci-static/resources/view/homeproxy/server.js:767
 msgid "Upload certificate"
-msgstr ""
+msgstr "آپلود گواهی"
 
 #: htdocs/luci-static/resources/view/homeproxy/server.js:786
 msgid "Upload key"
-msgstr ""
+msgstr "آپلود کلید"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1088
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1107
 #: htdocs/luci-static/resources/view/homeproxy/server.js:770
 #: htdocs/luci-static/resources/view/homeproxy/server.js:789
 msgid "Upload..."
-msgstr ""
+msgstr "در حال آپلود..."
 
 #: htdocs/luci-static/resources/view/homeproxy/server.js:596
 msgid "Use ACME TLS certificate issuer."
-msgstr ""
+msgstr "از صادرکننده‌ی گواهی TLS مربوط به ACME استفاده کنید."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1031
 #: htdocs/luci-static/resources/view/homeproxy/server.js:561
@@ -2997,127 +3054,128 @@ msgid ""
 "Used to verify the hostname on the returned certificates unless insecure is "
 "given."
 msgstr ""
+"برای تأیید نام میزبان در گواهی‌های بازگشتی استفاده می‌شود مگر اینکه ناامن مشخص شده باشد."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:981
 msgid "Used to verify the hostname on the returned certificates."
-msgstr ""
+msgstr "برای تأیید نام میزبان در گواهی‌های بازگشتی استفاده می‌شود."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:642
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1115
 msgid "User"
-msgstr ""
+msgstr "کاربر"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1379
 msgid "User-Agent"
-msgstr ""
+msgstr "User-Agent"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:458
 #: htdocs/luci-static/resources/view/homeproxy/server.js:203
 msgid "Username"
-msgstr ""
+msgstr "نام کاربری"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:444
 #: htdocs/luci-static/resources/view/homeproxy/server.js:189
 msgid "VLESS"
-msgstr ""
+msgstr "VLESS"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:445
 #: htdocs/luci-static/resources/view/homeproxy/server.js:190
 msgid "VMess"
-msgstr ""
+msgstr "VMess"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:181
 #: htdocs/luci-static/resources/view/homeproxy/client.js:219
 msgid "WAN DNS (read from interface)"
-msgstr ""
+msgstr "DNS WAN (خوانده‌شده از رابط)"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1464
 msgid "WAN IP Policy"
-msgstr ""
+msgstr "سیاست IP WAN"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js:138
 msgid "Warn"
-msgstr ""
+msgstr "هشدار"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:780
 #: htdocs/luci-static/resources/view/homeproxy/server.js:406
 msgid "WebSocket"
-msgstr ""
+msgstr "WebSocket"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1370
 msgid "Whitelist mode"
-msgstr ""
+msgstr "حالت لیست سفید"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:443
 msgid "WireGuard"
-msgstr ""
+msgstr "WireGuard"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:912
 msgid "WireGuard peer public key."
-msgstr ""
+msgstr "کلید عمومی همتای WireGuard."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:919
 msgid "WireGuard pre-shared key."
-msgstr ""
+msgstr "کلید پیش‌اشتراک‌شده‌ی WireGuard."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:904
 msgid "WireGuard requires base64-encoded private keys."
-msgstr ""
+msgstr "WireGuard به کلیدهای خصوصی رمزگذاری‌شده با base64 نیاز دارد."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:498
 msgid "Write proxy protocol in the connection header."
-msgstr ""
+msgstr "پروتکل پروکسی را در سرصحفه‌ی اتصال بنویس."
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:889
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1392
 msgid "Xudp (Xray-core)"
-msgstr ""
+msgstr "Xudp (Xray-core)"
 
 #: htdocs/luci-static/resources/homeproxy.js:259
 msgid "Your %s was successfully uploaded. Size: %sB."
-msgstr ""
+msgstr "%s شما با موفقیت آپلود شد. اندازه: %sB."
 
 #: htdocs/luci-static/resources/view/homeproxy/server.js:630
 msgid "ZeroSSL"
-msgstr ""
+msgstr "ZeroSSL"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1090
 #: htdocs/luci-static/resources/view/homeproxy/server.js:772
 msgid "certificate"
-msgstr ""
+msgstr "گواهی"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:716
 msgid "connect UDP connections"
-msgstr ""
+msgstr "اتصال UDP را وصل کنید"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1050
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1058
 #: htdocs/luci-static/resources/view/homeproxy/server.js:572
 #: htdocs/luci-static/resources/view/homeproxy/server.js:580
 msgid "default"
-msgstr ""
+msgstr "پیش‌فرض"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js:53
 msgid "failed"
-msgstr ""
+msgstr "ناموفق"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:776
 #: htdocs/luci-static/resources/view/homeproxy/server.js:402
 msgid "gRPC"
-msgstr ""
+msgstr "gRPC"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:818
 msgid "gRPC permit without stream"
-msgstr ""
+msgstr "مجوز gRPC بدون جریان"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:813
 #: htdocs/luci-static/resources/view/homeproxy/server.js:430
 msgid "gRPC service name"
-msgstr ""
+msgstr "نام سرویس gRPC"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:311
 msgid "gVisor"
-msgstr ""
+msgstr "gVisor"
 
 #: htdocs/luci-static/resources/homeproxy.js:306
 #: htdocs/luci-static/resources/homeproxy.js:326
@@ -3129,84 +3187,85 @@ msgstr ""
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1131
 #: htdocs/luci-static/resources/view/homeproxy/server.js:235
 msgid "non-empty value"
-msgstr ""
+msgstr "مقدار غیر خالی"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:631
 #: htdocs/luci-static/resources/view/homeproxy/node.js:887
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1390
 msgid "none"
-msgstr ""
+msgstr "هیچ"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:888
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1391
 msgid "packet addr (v2ray-core v5+)"
-msgstr ""
+msgstr "آدرس بسته (v2ray-core v5+)"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js:50
 msgid "passed"
-msgstr ""
+msgstr "موفق"
 
 #: htdocs/luci-static/resources/view/homeproxy/server.js:791
 msgid "private key"
-msgstr ""
+msgstr "کلید خصوصی"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:631
 msgid "quic-go / uquic chrome"
-msgstr ""
+msgstr "quic-go / uquic chrome"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js:285
 msgid "sing-box client"
-msgstr ""
+msgstr "کلاینت sing-box"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js:288
 msgid "sing-box server"
-msgstr ""
+msgstr "سرور sing-box"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1113
 msgid "uTLS fingerprint"
-msgstr ""
+msgstr "اثرانگشت uTLS"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1114
 msgid ""
 "uTLS is a fork of \"crypto/tls\", which provides ClientHello fingerprinting "
 "resistance."
 msgstr ""
+"uTLS یک fork از \"crypto/tls\" است که مقاومت در برابر اثرانگشت ClientHello را فراهم می‌کند."
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js:59
 msgid "unchecked"
-msgstr ""
+msgstr "بررسی‌نشده"
 
 #: htdocs/luci-static/resources/homeproxy.js:237
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1302
 msgid "unique UCI identifier"
-msgstr ""
+msgstr "شناسه‌ی منحصربه‌فرد UCI"
 
 #: htdocs/luci-static/resources/homeproxy.js:317
 msgid "unique value"
-msgstr ""
+msgstr "مقدار منحصربه‌فرد"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:500
 #: htdocs/luci-static/resources/view/homeproxy/node.js:645
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1178
 msgid "v1"
-msgstr ""
+msgstr "v1"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:501
 #: htdocs/luci-static/resources/view/homeproxy/node.js:646
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1179
 msgid "v2"
-msgstr ""
+msgstr "v2"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:647
 msgid "v3"
-msgstr ""
+msgstr "v3"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:207
 #: htdocs/luci-static/resources/view/homeproxy/client.js:211
 #: htdocs/luci-static/resources/view/homeproxy/client.js:241
 #: htdocs/luci-static/resources/view/homeproxy/client.js:245
 msgid "valid DNS server address"
-msgstr ""
+msgstr "آدرس معتبر سرور DNS"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:518
 #: htdocs/luci-static/resources/view/homeproxy/client.js:521
@@ -3215,430 +3274,550 @@ msgstr ""
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1356
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1359
 msgid "valid URL"
-msgstr ""
+msgstr "URL معتبر"
 
 #: htdocs/luci-static/resources/homeproxy.js:271
 msgid "valid base64 key with %d characters"
-msgstr ""
+msgstr "کلید base64 معتبر با %d کاراکتر"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1507
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1539
 msgid "valid hostname"
-msgstr ""
+msgstr "نام میزبان معتبر"
 
 #: htdocs/luci-static/resources/homeproxy.js:297
 msgid "valid port range (port1:port2)"
-msgstr ""
+msgstr "محدوده‌ی درگاه معتبر (port1:port2)"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:274
 msgid "valid port value"
-msgstr ""
+msgstr "مقدار معتبر درگاه"
 
 #: htdocs/luci-static/resources/homeproxy.js:328
 msgid "valid uuid"
-msgstr ""
+msgstr "UUID معتبر"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Russia (Proxy Banned)"
-msgstr ""
+msgstr "روسیه (سایت‌های مسدودشده)"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "China (bypass mainland)"
-msgstr ""
+msgstr "چین (دور زدن سرزمین اصلی)"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Iran (bypass domestic)"
-msgstr ""
+msgstr "ایران (دور زدن داخلی)"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Proxy Rules"
-msgstr ""
+msgstr "قوانین پروکسی"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Region DNS"
-msgstr ""
+msgstr "DNS منطقه‌ای"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Russia DNS server"
-msgstr ""
+msgstr "سرور DNS روسیه"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Direct DNS server for Russian domains. Plain UDP only."
-msgstr ""
+msgstr "سرور DNS مستقیم برای دامنه‌های روسی. فقط UDP ساده."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Yandex DNS (77.88.8.8)"
-msgstr ""
+msgstr "Yandex DNS (77.88.8.8)"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "SkyDNS (193.58.251.251)"
-msgstr ""
+msgstr "SkyDNS (193.58.251.251)"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Comss.one (83.220.169.155)"
-msgstr ""
+msgstr "Comss.one (83.220.169.155)"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Secure DNS server"
-msgstr ""
+msgstr "سرور DNS امن"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Encrypted DNS server for banned domains, routed via proxy. Supports DoH and DoT."
-msgstr ""
+msgstr "سرور DNS رمزنگاری‌شده برای دامنه‌های مسدود، مسیریابی از طریق پروکسی. پشتیبانی از DoH و DoT."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Cloudflare DoH"
-msgstr ""
+msgstr "Cloudflare DoH"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Quad9 DoH"
-msgstr ""
+msgstr "Quad9 DoH"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "AdGuard DoH"
-msgstr ""
+msgstr "AdGuard DoH"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Google DoH"
-msgstr ""
+msgstr "Google DoH"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Cloudflare DoT"
-msgstr ""
+msgstr "Cloudflare DoT"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Quad9 DoT"
-msgstr ""
+msgstr "Quad9 DoT"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Google DoT"
-msgstr ""
+msgstr "Google DoT"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Main node is required in Russia (Proxy Banned) mode"
-msgstr ""
+msgstr "در حالت «روسیه (سایت‌های مسدودشده)» انتخاب گره اصلی الزامی است"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "RU Proxy Rules"
-msgstr ""
+msgstr "قوانین پروکسی روسیه"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Default route is Direct, added rules have automatic priority:<br>1. Smaller lists (YouTube, Discord etc.)<br>2. Russia Inside<br>3. Re-filter"
-msgstr ""
+msgstr "مسیر پیش‌فرض مستقیم است، قوانین اضافه‌شده اولویت خودکار دارند:<br>1. لیست‌های کوچک (YouTube، Discord و غیره)<br>2. Russia Inside<br>3. Re-filter"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Re-filter (Russia blocklist: 60000+ banned domains + 25000+ IPs)"
-msgstr ""
+msgstr "Re-filter (لیست مسدودی روسیه: ۶۰۰۰۰+ دامنه + ۲۵۰۰۰+ IP)"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "itdoginfo/allow-domains - Russia Inside (1000+ entries)"
-msgstr ""
+msgstr "itdoginfo/allow-domains - Russia Inside (۱۰۰۰+ ورودی)"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "YouTube"
-msgstr ""
+msgstr "YouTube"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Twitter/X"
-msgstr ""
+msgstr "Twitter/X"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "TikTok"
-msgstr ""
+msgstr "TikTok"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Telegram"
-msgstr ""
+msgstr "Telegram"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Roblox"
-msgstr ""
+msgstr "Roblox"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Adult content"
-msgstr ""
+msgstr "محتوای بزرگسالان"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "OVH (France cloud hosting)"
-msgstr ""
+msgstr "OVH (هاستینگ ابری فرانسه)"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "International news sites"
-msgstr ""
+msgstr "سایت‌های خبری بین‌المللی"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Meta (Facebook, Instagram)"
-msgstr ""
+msgstr "Meta (Facebook، Instagram)"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "HODCA"
-msgstr ""
+msgstr "HODCA"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Hetzner (Germany cloud hosting)"
-msgstr ""
+msgstr "Hetzner (هاستینگ ابری آلمان)"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "HDRezka"
-msgstr ""
+msgstr "HDRezka"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Google AI services"
-msgstr ""
+msgstr "سرویس‌های هوش مصنوعی Google"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Google Play"
-msgstr ""
+msgstr "Google Play"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "GeoBlock services"
-msgstr ""
+msgstr "سرویس‌های GeoBlock"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Anime streaming"
-msgstr ""
+msgstr "پخش آنیمه"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Cloudflare CDN"
-msgstr ""
+msgstr "Cloudflare CDN"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "CloudFront CDN"
-msgstr ""
+msgstr "CloudFront CDN"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Discord"
-msgstr ""
+msgstr "Discord"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "DigitalOcean cloud hosting"
-msgstr ""
+msgstr "DigitalOcean (هاستینگ ابری)"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Same as main node"
-msgstr ""
+msgstr "مشابه گره اصلی"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Advanced custom rules"
-msgstr ""
+msgstr "قوانین سفارشی پیشرفته"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Show Routing Nodes and Routing Rules tabs for additional custom rules."
-msgstr ""
+msgstr "نمایش تب‌های «گره‌های مسیریابی» و «قوانین مسیریابی» برای تنظیمات سفارشی بیشتر."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Proxy calls"
-msgstr ""
+msgstr "پروکسی تماس‌ها"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Route VoIP call ports (WhatsApp, Telegram, FaceTime, etc.) through the proxy."
-msgstr ""
+msgstr "پورت‌های تماس VoIP (WhatsApp، Telegram، FaceTime و غیره) را از طریق پروکسی مسیریابی کنید."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Do not proxify torrents"
-msgstr ""
+msgstr "تورنت‌ها را پروکسی نکن"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
 msgid "Force torrent traffic (BitTorrent protocol + common ports) to bypass the proxy."
-msgstr ""
+msgstr "ترافیک تورنت (پروتکل BitTorrent و پورت‌های رایج) را از پروکسی عبور نده."
 
 
-#: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "ByeDPI"
-msgstr ""
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "HomeProxy Diagnostics"
+msgstr "تشخیص HomeProxy"
 
-#: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Enable ByeDPI"
-msgstr ""
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Run All Tests"
+msgstr "اجرای همه تست‌ها"
 
-#: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "A free way to unblock throttled sites (e.g. YouTube) without a VPN subscription. Works by confusing your ISP's traffic analysis — your traffic is NOT encrypted or hidden, your ISP can still see which sites you visit. Results depend on your ISP and may require trying different strategies in the ByeDPI tab. ByeDPI will be installed automatically on first enable."
-msgstr ""
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Runs Core, Config, and Network checks simultaneously."
+msgstr "بررسی هسته، پیکربندی و شبکه را همزمان اجرا می‌کند."
 
-#: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "ByeDPI (local DPI bypass)"
-msgstr ""
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Core & System"
+msgstr "هسته و سیستم"
 
-#: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "UDP over TCP"
-msgstr ""
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Checking core…"
+msgstr "بررسی هسته…"
 
-#: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Wrap UDP traffic in TCP when routing to ciadpi."
-msgstr ""
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "RPC error"
+msgstr "خطای RPC"
 
-#: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Strategy preset"
-msgstr ""
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "none detected"
+msgstr "شناسایی نشد"
 
-#: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Grouped by technique. Based on <a href=\"https://github.com/hufrea/byedpi\" target=\"_blank\">hufrea/byedpi</a> and community testing. See also <a href=\"https://github.com/fatyzzz/Byedpi-Setup\" target=\"_blank\">fatyzzz/Byedpi-Setup</a>."
-msgstr ""
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Hiddify-core"
+msgstr "Hiddify-core"
 
-#: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "— select a preset —"
-msgstr ""
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "installed"
+msgstr "نصب شده"
 
-#: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Disorder — reorders TCP segments"
-msgstr ""
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "not found"
+msgstr "یافت نشد"
 
-#: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Fake TTL"
-msgstr ""
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Active binary"
+msgstr "باینری فعال"
 
-#: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Fake MD5"
-msgstr ""
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Running"
+msgstr "در حال اجرا"
 
-#: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "TLS Record Split"
-msgstr ""
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "yes"
+msgstr "بله"
 
-#: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "OOB"
-msgstr ""
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "no"
+msgstr "خیر"
 
-#: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Split"
-msgstr ""
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Listening ports"
+msgstr "پورت‌های در حال گوش دادن"
 
-#: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "HTTP Modification"
-msgstr ""
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Restarting… (may take ~5 s)"
+msgstr "در حال راه‌اندازی مجدد… (ممکن است ~۵ ثانیه طول بکشد)"
 
-#: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Auto-mode"
-msgstr ""
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Service restarted"
+msgstr "سرویس مجدداً راه‌اندازی شد"
 
-#: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Fake SNI / TLS Modification"
-msgstr ""
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Restart failed"
+msgstr "راه‌اندازی مجدد ناموفق بود"
 
-#: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Aggressive"
-msgstr ""
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Check"
+msgstr "بررسی"
 
-#: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Full Combo"
-msgstr ""
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Restart Service"
+msgstr "راه‌اندازی مجدد سرویس"
 
-#: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Command options"
-msgstr ""
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Configuration"
+msgstr "پیکربندی"
 
-#: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Arguments passed to ciadpi after <code>-i 127.0.0.1 -p &lt;port&gt;</code>. Select a preset above or enter custom options. See ciadpi <code>--help</code> for full flag reference."
-msgstr ""
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Checking config…"
+msgstr "بررسی پیکربندی…"
 
-#: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Test current strategy"
-msgstr ""
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Valid"
+msgstr "معتبر"
 
-#: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Starts ciadpi with the current options on a temporary port and tests it. With curl installed: makes a real HTTP request through ciadpi to verify DPI bypass. Without curl: only confirms arguments are valid and ciadpi starts."
-msgstr ""
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Size"
+msgstr "اندازه"
 
-#: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Testing..."
-msgstr ""
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Inbounds"
+msgstr "ورودی‌ها"
 
-#: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "✓ HTTP request succeeded through ciadpi"
-msgstr ""
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Outbounds"
+msgstr "خروجی‌ها"
 
-#: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "✓ ciadpi started (install curl for full test)"
-msgstr ""
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Rules"
+msgstr "قوانین"
 
-#: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Test failed"
-msgstr ""
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "DNS servers"
+msgstr "سرورهای DNS"
 
-#: htdocs/luci-static/resources/view/homeproxy/client.js
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Check output"
+msgstr "خروجی بررسی"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "DNS Tests"
+msgstr "تست DNS"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Testing DNS…"
+msgstr "در حال تست DNS…"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "DNS test only applies to Russia routing mode."
+msgstr "تست DNS فقط در حالت مسیریابی روسیه اعمال می‌شود."
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Russia DNS"
+msgstr "DNS روسیه"
+
+msgid "DNS (direct)"
+msgstr "DNS (مستقیم)"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Server"
+msgstr "سرور"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Status"
+msgstr "وضعیت"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Responding"
+msgstr "پاسخ می‌دهد"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "No response — check server address"
+msgstr "بدون پاسخ — آدرس سرور را بررسی کنید"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "nslookup yandex.ru"
+msgstr "nslookup yandex.ru"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Secure DNS"
+msgstr "DNS امن"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Bootstrap"
+msgstr "راه‌اندازی اولیه"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "resolves via Russia DNS"
+msgstr "از طریق DNS روسیه حل می‌شود"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "failed to resolve — Russia DNS must work first"
+msgstr "حل نشد — DNS روسیه باید ابتدا کار کند"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "nslookup"
+msgstr "nslookup"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
 msgid "Test"
-msgstr ""
+msgstr "تست"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Network Intercept"
+msgstr "رهگیری شبکه"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Reading nftables…"
+msgstr "در حال خواندن nftables…"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "HomeProxy chains"
+msgstr "زنجیره‌های HomeProxy"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "found"
+msgstr "یافت شد"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "not found — firewall rules may be missing"
+msgstr "یافت نشد — قوانین فایروال ممکن است وجود نداشته باشند"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Matched lines in fw4"
+msgstr "خطوط مطابق در fw4"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "UCI firewall settings"
+msgstr "تنظیمات فایروال UCI"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Diagnostics Report"
+msgstr "گزارش تشخیص"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Click Generate to collect diagnostics…"
+msgstr "برای جمع‌آوری اطلاعات تشخیصی روی «ایجاد» کلیک کنید…"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Collecting diagnostics — this may take a few seconds…"
+msgstr "در حال جمع‌آوری اطلاعات تشخیصی — ممکن است چند ثانیه طول بکشد…"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Generate"
+msgstr "ایجاد"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Copy"
+msgstr "کپی"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Sensitive values (passwords, keys, UUIDs) are redacted."
+msgstr "مقادیر حساس (رمزها، کلیدها، UUID‌ها) پنهان شده‌اند."
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Testing…"
+msgstr "در حال تست…"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "(empty)"
+msgstr "(خالی)"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Resolved"
+msgstr "حل شد"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "No answer — check server address"
+msgstr "بدون پاسخ — آدرس سرور را بررسی کنید"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Resolved via proxy"
+msgstr "از طریق پروکسی حل شد"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "No answer — check proxy and proxy list"
+msgstr "بدون پاسخ — پروکسی و لیست پروکسی را بررسی کنید"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Bootstrap"
+msgstr "بوت‌استرپ"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "OK"
+msgstr "موفق"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "FAIL"
+msgstr "خطا"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Version"
+msgstr "نسخه"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "sing-box"
+msgstr "sing-box"
+
+msgid "hiddify-core with sing-box syntax compatibility. Supports Hiddify App protocols and advanced features. Best compatibility with Hiddify Manager protocols. Does not support AmneziaWG."
+msgstr "hiddify-core با سازگاری نحو sing-box. از پروتکل‌های Hiddify App و قابلیت‌های پیشرفته پشتیبانی می‌کند. بهترین سازگاری با پروتکل‌های Hiddify Manager. از AmneziaWG پشتیبانی نمی‌کند."
+
+msgid "Extended sing-box with additional protocols including AmneziaWG and TrustTunnel support. Created by shtorm-7."
+msgstr "sing-box گسترش‌یافته با پروتکل‌های اضافی شامل پشتیبانی از AmneziaWG و TrustTunnel. ساخته شده توسط shtorm-7."
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Download"
+msgstr "دانلود"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Test all strategies"
-msgstr ""
+msgid "How often each node is tested (seconds). Lower = faster failover, higher = less overhead."
+msgstr "هر چند ثانیه یک‌بار هر نود آزمایش می‌شود. کمتر = تغییر سریع‌تر، بیشتر = سربار کمتر."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Runs all 43 presets one by one and shows which ones work. Requires curl (install on Status page). ~5-7 min total."
-msgstr ""
+msgid "Automatically picks the fastest node by periodically measuring latency. Traffic is always sent through the lowest-latency node in the pool."
+msgstr "با اندازه‌گیری دوره‌ای تأخیر، سریع‌ترین نود را به‌طور خودکار انتخاب می‌کند. ترافیک همیشه از طریق نود با کمترین تأخیر در مجموعه ارسال می‌شود."
+
+msgid "Minimum latency gap (ms) required to switch to a faster node — prevents flapping between nodes with close latency values."
+msgstr "حداقل اختلاف تأخیر (میلی‌ثانیه) برای تغییر به نود سریع‌تر — از جابجایی مکرر بین نودهایی با تأخیر نزدیک جلوگیری می‌کند."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Test all 43 strategies sequentially?\n\nEach test takes ~5-10 seconds (~5-7 min total).\nLAN clients are not affected during testing.\n\nRequires curl. Install it on the Status page first."
-msgstr ""
+msgid "In this mode: only blocked domains are routed through this node — all other traffic goes direct."
+msgstr "در این حالت: فقط دامنه‌های مسدودشده از این نود عبور می‌کنند — سایر ترافیک مستقیم است."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Preparing..."
-msgstr ""
+msgid "Resolves Russian domains directly, without going through the proxy."
+msgstr "دامنه‌های روسی را مستقیماً و بدون پروکسی حل می‌کند."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Done"
-msgstr ""
+msgid "Resolves blocked domains via proxy — your ISP cannot see which sites you look up. Uses encrypted DNS (DoH/DoT = DNS over HTTPS/TLS)."
+msgstr "دامنه‌های مسدودشده را از طریق پروکسی حل می‌کند — ISP نمی‌تواند ببیند چه سایت‌هایی جستجو می‌کنید. از DNS رمزگذاری‌شده استفاده می‌کند (DoH/DoT = DNS over HTTPS/TLS)."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "passed"
-msgstr ""
-
-#: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "click Apply next to any working strategy"
-msgstr ""
-
-#: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "Block QUIC (UDP port 443)"
-msgstr ""
-
-#: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "This nftables rule drops all outgoing UDP port 443 packets to external addresses, forcing browsers and apps to fall back to TCP/TLS where ByeDPI can apply DPI bypass. Side effects: may break services that require QUIC, and affects all LAN clients. Enable if your strategy works but some sites still do not load."
-msgstr ""
-
-#: htdocs/luci-static/resources/view/homeproxy/status.js
-msgid "Installed"
-msgstr ""
-
-#: htdocs/luci-static/resources/view/homeproxy/status.js
-msgid "running"
-msgstr ""
-
-#: htdocs/luci-static/resources/view/homeproxy/status.js
-msgid "stopped"
-msgstr ""
-
-#: htdocs/luci-static/resources/view/homeproxy/status.js
-msgid "Reinstall"
-msgstr ""
-
-#: htdocs/luci-static/resources/view/homeproxy/status.js
-msgid "ByeDPI strategy tester"
-msgstr ""
-
-#: htdocs/luci-static/resources/view/homeproxy/status.js
-msgid "Enables real HTTP-based ByeDPI strategy testing. Required for the \"Test all strategies\" feature in Client → ByeDPI tab."
-msgstr ""
-
-#: htdocs/luci-static/resources/view/homeproxy/status.js
-msgid "Local SOCKS5 DPI bypass proxy by <a href=\"https://github.com/hufrea/byedpi\" target=\"_blank\">hufrea</a>. Packages by <a href=\"https://github.com/1andrevich/ByeDPI-OpenWrt\" target=\"_blank\">1andrevich/ByeDPI-OpenWrt</a>. Configure in the Client → ByeDPI tab."
-msgstr ""
-
-#: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "No package manager found. Install ciadpi manually from the Status page."
-msgstr ""
-
-#: htdocs/luci-static/resources/view/homeproxy/client.js
-msgid "ByeDPI (ciadpi) is not installed. Install it now?"
-msgstr ""
-
-#: htdocs/luci-static/resources/view/homeproxy/status.js
-msgid "Cannot remove: ByeDPI is selected as Main Node. Change Main Node first."
-msgstr ""
+msgid "Default route is Direct. Added rules are proxied, with automatic priority:<br>1. Smaller lists (YouTube, Discord etc.)<br>2. <b>Russia Inside</b> (1000+ domains) — Russian services that must stay accessible (allows-list by itdoginfo)<br>3. <b>Re-filter</b> (60000+ domains + 25000+ IPs) — community blocklist of domains and IPs banned in Russia (Roskomnadzor)"
+msgstr "مسیر پیش‌فرض مستقیم است. قوانین اضافه‌شده از پروکسی عبور می‌کنند با اولویت خودکار:<br>1. لیست‌های کوچک (YouTube، Discord و غیره)<br>2. <b>Russia Inside</b> (۱۰۰۰+ دامنه) — سرویس‌های روسی که باید در دسترس بمانند (لیست مجاز itdoginfo)<br>3. <b>Re-filter</b> (۶۰۰۰۰+ دامنه + ۲۵۰۰۰+ IP) — لیست سیاه دامنه‌ها و IP‌های مسدودشده در روسیه (Roskomnadzor)"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:2725
 msgid "DNS not ready — wait a few seconds after Apply and retry"
-msgstr ""
+msgstr "DNS آماده نیست — چند ثانیه پس از «اعمال» صبر کنید و دوباره تلاش کنید"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:2907
 msgid "Resolving test hosts…"
-msgstr ""
+msgstr "در حال یافتن نشانی میزبان‌های آزمایش…"

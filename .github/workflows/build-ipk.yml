@@ -21,6 +21,7 @@ on:
       - reopened
     paths:
       - 'htdocs/**'
+      - 'po/**'
       - 'root/**'
       - 'Makefile'
       - '.github/**'
@@ -109,12 +110,14 @@ jobs:
           pushd .github
           fakeroot bash build-ipk.sh apk "${{ github.event_name }}"
           fakeroot bash build-ipk.sh ipk "${{ github.event_name }}"
-          echo "APK_ASSET_NAME=$(ls luci-app-homeproxy-hiddify_*_all.apk)" >> $GITHUB_ENV
-          echo "IPK_ASSET_NAME=$(ls luci-app-homeproxy-hiddify_*_all.ipk)" >> $GITHUB_ENV
+          echo "APK_ASSET_NAME=$(ls luci-app-re-homeproxy_*_all.apk)" >> $GITHUB_ENV
+          echo "IPK_ASSET_NAME=$(ls luci-app-re-homeproxy_*_all.ipk)" >> $GITHUB_ENV
           echo "I18N_APK_ASSET_NAME=$(ls luci-i18n-homeproxy-ru_*_all.apk)" >> $GITHUB_ENV
           echo "I18N_IPK_ASSET_NAME=$(ls luci-i18n-homeproxy-ru_*_all.ipk)" >> $GITHUB_ENV
           echo "I18N_ZH_APK_ASSET_NAME=$(ls luci-i18n-homeproxy-zh-cn_*_all.apk)" >> $GITHUB_ENV
           echo "I18N_ZH_IPK_ASSET_NAME=$(ls luci-i18n-homeproxy-zh-cn_*_all.ipk)" >> $GITHUB_ENV
+          echo "I18N_FA_APK_ASSET_NAME=$(ls luci-i18n-homeproxy-fa_*_all.apk)" >> $GITHUB_ENV
+          echo "I18N_FA_IPK_ASSET_NAME=$(ls luci-i18n-homeproxy-fa_*_all.ipk)" >> $GITHUB_ENV
           popd
 
       - name: Build legacy IPK (OpenWRT 23.05)
@@ -167,6 +170,20 @@ jobs:
         with:
           name: ${{ env.I18N_ZH_IPK_ASSET_NAME }}
           path: .github/${{ env.I18N_ZH_IPK_ASSET_NAME }}
+
+      - name: Publishing i18n fa APK to GitHub Artifacts
+        uses: actions/upload-artifact@v7
+        if: github.event_name != 'release'
+        with:
+          name: ${{ env.I18N_FA_APK_ASSET_NAME }}
+          path: .github/${{ env.I18N_FA_APK_ASSET_NAME }}
+
+      - name: Publishing i18n fa IPK to GitHub Artifacts
+        uses: actions/upload-artifact@v7
+        if: github.event_name != 'release'
+        with:
+          name: ${{ env.I18N_FA_IPK_ASSET_NAME }}
+          path: .github/${{ env.I18N_FA_IPK_ASSET_NAME }}
 
       - name: Publishing signing public key to GitHub Artifacts
         uses: actions/upload-artifact@v7

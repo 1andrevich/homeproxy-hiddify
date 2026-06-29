@@ -98,7 +98,7 @@ default_prerm' > "$TEMP_DIR/pre-deinstall"
 	apk mkpkg \
 		--info "name:$PKG_NAME" \
 		--info "version:$PKG_VERSION" \
-		--info "description:The modern ImmortalWrt hiddify-core based proxy platform" \
+		--info "description:Re:HomeProxy - modern multi-core proxy platform. Fork of ImmortalWrt HomeProxy" \
 		--info "arch:noarch" \
 		--info "origin:$PKG_NAME" \
 		--info "url:https://github.com/1andrevich/homeproxy-hiddify" \
@@ -107,6 +107,10 @@ default_prerm' > "$TEMP_DIR/pre-deinstall"
 		--script "post-upgrade:$TEMP_DIR/post-upgrade" \
 		--script "pre-deinstall:$TEMP_DIR/pre-deinstall" \
 		--info "depends:libc firewall4 ucode-mod-digest" \
+		--info "provides:luci-app-homeproxy" \
+		--info "provides:luci-app-homeproxy-hiddify" \
+		--info "replaces:luci-app-homeproxy" \
+		--info "replaces:luci-app-homeproxy-hiddify" \
 		${APK_SIGN_KEY:+--sign-key "$APK_SIGN_KEY"} \
 		--files "$TEMP_PKG_DIR" \
 		--output "$TEMP_DIR/${PKG_NAME}_${PKG_VERSION}.apk"
@@ -150,10 +154,18 @@ PYEOF
 		IPK_DEPS="libc, firewall4, kmod-nft-tproxy, ucode-mod-digest"
 	fi
 
+	# Rename handling (ipk): do NOT Provides the old names. opkg treats an installed
+	# package that is also Provided as *satisfying* the dependency and then never
+	# fires Conflicts — so old + new would coexist. Dropping Provides and keeping
+	# Conflicts+Replaces makes opkg cleanly replace the old pkg. (Nothing depends on
+	# the old names: the i18n packages depend on $PKG_NAME.) The apk path uses the
+	# Alpine rename idiom instead: provides + replaces (see the apk mkpkg call above).
 	cat > "$TEMP_PKG_DIR/CONTROL/control" <<-EOF
 		Package: $PKG_NAME
 		Version: $PKG_VERSION
 		Depends: $IPK_DEPS
+		Conflicts: luci-app-homeproxy luci-app-homeproxy-hiddify
+		Replaces: luci-app-homeproxy luci-app-homeproxy-hiddify
 		Source: https://github.com/1andrevich/homeproxy-hiddify
 		SourceName: $PKG_NAME
 		Section: luci
@@ -161,7 +173,7 @@ PYEOF
 		Maintainer: 1andrevich <1andrevich.recede274@passmail.net>
 		Architecture: all
 		Installed-Size: TO-BE-FILLED-BY-IPKG-BUILD
-		Description:  The modern ImmortalWrt hiddify-core based proxy platform
+		Description:  Re:HomeProxy - modern multi-core proxy platform. Fork of ImmortalWrt HomeProxy
 	EOF
 	chmod 0644 "$TEMP_PKG_DIR/CONTROL/control"
 
@@ -218,7 +230,7 @@ if [ "$PKG_MGR" == "apk" ]; then
 	apk mkpkg \
 		--info "name:$I18N_PKG_NAME" \
 		--info "version:$PKG_VERSION" \
-		--info "description:Russian translation for luci-app-homeproxy-hiddify" \
+		--info "description:Russian translation for luci-app-re-homeproxy" \
 		--info "arch:noarch" \
 		--info "origin:$I18N_PKG_NAME" \
 		--info "url:https://github.com/1andrevich/homeproxy-hiddify" \
@@ -241,7 +253,7 @@ else
 		Maintainer: 1andrevich <1andrevich.recede274@passmail.net>
 		Architecture: all
 		Installed-Size: TO-BE-FILLED-BY-IPKG-BUILD
-		Description:  Russian translation for luci-app-homeproxy-hiddify
+		Description:  Russian translation for luci-app-re-homeproxy
 	EOF
 	chmod 0644 "$I18N_TEMP_PKG_DIR/CONTROL/control"
 
@@ -275,7 +287,7 @@ if [ "$PKG_MGR" == "apk" ]; then
 	apk mkpkg \
 		--info "name:$I18N_ZH_PKG_NAME" \
 		--info "version:$PKG_VERSION" \
-		--info "description:Chinese Simplified translation for luci-app-homeproxy-hiddify" \
+		--info "description:Chinese Simplified translation for luci-app-re-homeproxy" \
 		--info "arch:noarch" \
 		--info "origin:$I18N_ZH_PKG_NAME" \
 		--info "url:https://github.com/1andrevich/homeproxy-hiddify" \
@@ -298,7 +310,7 @@ else
 		Maintainer: 1andrevich <1andrevich.recede274@passmail.net>
 		Architecture: all
 		Installed-Size: TO-BE-FILLED-BY-IPKG-BUILD
-		Description:  Chinese Simplified translation for luci-app-homeproxy-hiddify
+		Description:  Chinese Simplified translation for luci-app-re-homeproxy
 	EOF
 	chmod 0644 "$I18N_ZH_TEMP_PKG_DIR/CONTROL/control"
 
@@ -312,3 +324,60 @@ else
 fi
 
 rm -rf "$I18N_ZH_TEMP_DIR"
+
+# Build i18n package for Farsi (Persian)
+I18N_FA_PKG_NAME="luci-i18n-homeproxy-fa"
+I18N_FA_TEMP_DIR="$(mktemp -d -p $BASE_DIR)"
+I18N_FA_TEMP_PKG_DIR="$I18N_FA_TEMP_DIR/$I18N_FA_PKG_NAME"
+mkdir -p "$I18N_FA_TEMP_PKG_DIR/usr/lib/lua/luci/i18n/"
+if [ "$PKG_MGR" == "apk" ]; then
+	mkdir -p "$I18N_FA_TEMP_PKG_DIR/lib/apk/packages/"
+else
+	mkdir -p "$I18N_FA_TEMP_PKG_DIR/CONTROL/"
+fi
+
+po2lmo "$PKG_DIR/po/fa_IR/homeproxy.po" "$I18N_FA_TEMP_PKG_DIR/usr/lib/lua/luci/i18n/homeproxy.fa.lmo"
+
+if [ "$PKG_MGR" == "apk" ]; then
+	find "$I18N_FA_TEMP_PKG_DIR" -type f,l -printf '/%P\n' | sort > "$I18N_FA_TEMP_PKG_DIR/lib/apk/packages/$I18N_FA_PKG_NAME.list"
+
+	apk mkpkg \
+		--info "name:$I18N_FA_PKG_NAME" \
+		--info "version:$PKG_VERSION" \
+		--info "description:Farsi (Persian) translation for luci-app-re-homeproxy" \
+		--info "arch:noarch" \
+		--info "origin:$I18N_FA_PKG_NAME" \
+		--info "url:https://github.com/1andrevich/homeproxy-hiddify" \
+		--info "maintainer:1andrevich <1andrevich.recede274@passmail.net>" \
+		--info "depends:$PKG_NAME" \
+		${APK_SIGN_KEY:+--sign-key "$APK_SIGN_KEY"} \
+		--files "$I18N_FA_TEMP_PKG_DIR" \
+		--output "$I18N_FA_TEMP_DIR/${I18N_FA_PKG_NAME}_${PKG_VERSION}.apk"
+
+	mv "$I18N_FA_TEMP_DIR/${I18N_FA_PKG_NAME}_${PKG_VERSION}.apk" "$BASE_DIR/${I18N_FA_PKG_NAME}_${PKG_VERSION}_all.apk"
+else
+	cat > "$I18N_FA_TEMP_PKG_DIR/CONTROL/control" <<-EOF
+		Package: $I18N_FA_PKG_NAME
+		Version: $PKG_VERSION
+		Depends: $PKG_NAME
+		Source: https://github.com/1andrevich/homeproxy-hiddify
+		SourceName: $I18N_FA_PKG_NAME
+		Section: luci
+		SourceDateEpoch: $PKG_SOURCE_DATE_EPOCH
+		Maintainer: 1andrevich <1andrevich.recede274@passmail.net>
+		Architecture: all
+		Installed-Size: TO-BE-FILLED-BY-IPKG-BUILD
+		Description:  Farsi (Persian) translation for luci-app-re-homeproxy
+	EOF
+	chmod 0644 "$I18N_FA_TEMP_PKG_DIR/CONTROL/control"
+
+	ipkg-build -m "" "$I18N_FA_TEMP_PKG_DIR" "$I18N_FA_TEMP_DIR"
+
+	if [ "$LEGACY" == "legacy" ]; then
+		mv "$I18N_FA_TEMP_DIR/${I18N_FA_PKG_NAME}_${PKG_VERSION}_all.ipk" "$BASE_DIR/${I18N_FA_PKG_NAME}_${PKG_VERSION}_all-legacy.ipk"
+	else
+		mv "$I18N_FA_TEMP_DIR/${I18N_FA_PKG_NAME}_${PKG_VERSION}_all.ipk" "$BASE_DIR/${I18N_FA_PKG_NAME}_${PKG_VERSION}_all.ipk"
+	fi
+fi
+
+rm -rf "$I18N_FA_TEMP_DIR"

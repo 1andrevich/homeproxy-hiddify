@@ -9,7 +9,8 @@ START=99
 STOP=10
 
 CONF="homeproxy"
-PROG="/usr/bin/hiddify-core"
+PROG_HIDDIFY="/usr/bin/hiddify-core"
+PROG_SINGBOX="/usr/bin/sing-box"
 
 HP_DIR="/etc/homeproxy"
 RUN_DIR="/var/run/homeproxy"
@@ -28,15 +29,57 @@ log() {
 }
 
 start_service() {
-	[ -x "$PROG" ] || { log "Error: $PROG not found or not executable. Install hiddify-core first."; return 1; }
+	mkdir -p "$RUN_DIR"
+
+	# Self-heal a missing/empty config: /etc/config/homeproxy is a conffile, so a manual
+	# delete (or a wiped overlay) leaves the service with nothing and it won't regenerate.
+	# Restore defaults from the packaged backup. Only when there are no homeproxy sections,
+	# so a populated (even if odd) user config is never overwritten.
+	if ! grep -q "config homeproxy" "/etc/config/$CONF" 2>/dev/null; then
+		if [ -f "/usr/share/homeproxy/homeproxy.default" ]; then
+			cp "/usr/share/homeproxy/homeproxy.default" "/etc/config/$CONF"
+			log "config /etc/config/$CONF was missing/empty — restored defaults."
+		fi
+	fi
 
 	config_load "$CONF"
 
+	local preferred_core
+	config_get preferred_core "config" "preferred_core" "auto"
+
+	# Try the preferred core first; fall back to whichever is installed
+	case "$preferred_core" in
+	hiddify)
+		if [ -x "$PROG_HIDDIFY" ]; then
+			PROG="$PROG_HIDDIFY"; RUN_CMD="srun"; CORE_TYPE="hiddify"
+		fi
+		;;
+	singbox)
+		if [ -x "$PROG_SINGBOX" ]; then
+			PROG="$PROG_SINGBOX"; RUN_CMD="run"; CORE_TYPE="singbox"
+		fi
+		;;
+	esac
+
+	if [ -z "$PROG" ]; then
+		if [ -x "$PROG_HIDDIFY" ]; then
+			PROG="$PROG_HIDDIFY"; RUN_CMD="srun"; CORE_TYPE="hiddify"
+		elif [ -x "$PROG_SINGBOX" ]; then
+			PROG="$PROG_SINGBOX"; RUN_CMD="run"; CORE_TYPE="singbox"
+		else
+			log "Error: No supported core found. Install hiddify-core or sing-box first."
+			return 1
+		fi
+	fi
+
 	local routing_mode proxy_mode
-	config_get routing_mode "config" "routing_mode" "bypass_mainland_china"
+	config_get routing_mode "config" "routing_mode" "proxy_banned_ru"
 	config_get proxy_mode "config" "proxy_mode" "redirect_tproxy"
 
-	mkdir -p "$RUN_DIR"
+	# Write core info for LuCI
+	local core_version
+	core_version="$("$PROG" version 2>/dev/null | head -1 | awk '{print $3}')"
+	printf '{"core_type":"%s","version":"%s"}\n' "$CORE_TYPE" "$core_version" > "$RUN_DIR/core.info"
 
 	# Generate or copy client config
 	if [ "$routing_mode" = "custom_json" ]; then
@@ -62,22 +105,13 @@ start_service() {
 	mkdir -p "$DNSMASQ_DIR"
 	echo -e "conf-dir=$DNSMASQ_DIR" > "$DNSMASQ_DIR/../dnsmasq-homeproxy.conf"
 	case "$routing_mode" in
-	"bypass_mainland_china"|"custom"|"custom_json"|"global")
+	"bypass_cn"|"bypass_ir"|"custom"|"custom_json"|"global"|"proxy_banned_ru")
+		# All modes do DNS inside sing-box; dnsmasq just redirects to its inbound.
 		cat <<-EOF >> "$DNSMASQ_DIR/redirect-dns.conf"
 			no-poll
 			no-resolv
 			server=127.0.0.1#$dns_port
 		EOF
-		;;
-	"gfwlist")
-		local gfw_nftset_v6
-		[ "$ipv6_support" -eq "0" ] || gfw_nftset_v6=",6#inet#fw4#homeproxy_gfw_list_v6"
-		sed -r -e "s/(.*)/server=\/\1\/127.0.0.1#$dns_port\nnftset=\/\1\\/4#inet#fw4#homeproxy_gfw_list_v4$gfw_nftset_v6/g" \
-			"$HP_DIR/resources/gfw_list.txt" > "$DNSMASQ_DIR/gfw_list.conf"
-		;;
-	"proxy_mainland_china")
-		sed -r -e "s/(.*)/server=\/\1\/127.0.0.1#$dns_port/g" \
-			"$HP_DIR/resources/china_list.txt" > "$DNSMASQ_DIR/china_list.conf"
 		;;
 	esac
 	/etc/init.d/dnsmasq restart >"/dev/null" 2>&1
@@ -99,7 +133,7 @@ start_service() {
 	procd_open_instance "hiddify-c"
 
 	procd_set_param command "$PROG"
-	procd_append_param command srun --config "$RUN_DIR/hiddify-c.json"
+	procd_append_param command $RUN_CMD --config "$RUN_DIR/hiddify-c.json"
 
 	# QUIC-GO GSO is broken on kernel 6.6 currently
 	uname -r | grep -Eq "^6\.6" && procd_set_param env "QUIC_GO_DISABLE_GSO"="true"
@@ -120,11 +154,109 @@ start_service() {
 	echo > "$RUN_DIR/hiddify-c.log"
 
 	# Setup firewall
+	# Strip CR: a CRLF-tainted template (e.g. transferred from Windows) would otherwise
+	# emit CRLF into the nft file, which nft rejects wholesale — silently dropping every
+	# homeproxy chain since fw4 loads all-or-nothing.
 	ucode "$HP_DIR/scripts/firewall_pre.uc"
-	utpl -S "$HP_DIR/scripts/firewall_post.ut" > "$RUN_DIR/fw4_post.nft"
+	utpl -S "$HP_DIR/scripts/firewall_post.ut" | tr -d '\r' > "$RUN_DIR/fw4_post.nft"
 	fw4 reload >"/dev/null" 2>&1
 
-	log "hiddify-core started."
+	# ByeDPI
+	local byedpi_enabled byedpi_cmd_opts byedpi_block_quic byedpi_gid
+	config_get_bool byedpi_enabled "config" "byedpi_enabled" "0"
+	if [ "$byedpi_enabled" = "1" ] && [ -x "/usr/bin/ciadpi" ]; then
+		config_get byedpi_cmd_opts "config" "byedpi_cmd_opts" "--disorder 1"
+		config_get byedpi_gid "infra" "byedpi_gid" "8181"
+
+		/etc/init.d/ciadpi stop 2>/dev/null; /etc/init.d/ciadpi disable 2>/dev/null; true
+
+		# ByeDPI runs as root (needed for TCP_MD5SIG and other desync) but under a dedicated
+		# group, so its egress can be excluded from the proxy redirect by socket group (skgid).
+		# ciadpi has no fwmark option, and without this exclusion its outbound connections
+		# loop back through sing-box (conntrack table full / packet flood).
+		if ! grep -q "^byedpi:" /etc/group; then
+			echo "byedpi:x:${byedpi_gid}:" >> /etc/group
+		fi
+
+		procd_open_instance "byedpi"
+		procd_set_param command /usr/bin/ciadpi -i 127.0.0.1 -p 5335
+		# Quote-aware split so an argument value containing spaces survives intact —
+		# e.g. an inline hostlist  -H:"host1 host2 host3"  must stay a single argument,
+		# not be torn into separate tokens by plain word-splitting. eval re-parses the
+		# quoting; the string is the admin's own root-owned UCI option, so this is
+		# argument parsing, not a trust boundary. The leading -- protects against an
+		# option-like first token.
+		eval "set -- $byedpi_cmd_opts"
+		for _arg in "$@"; do
+			procd_append_param command "$_arg"
+		done
+		procd_set_param group "byedpi"
+		procd_set_param respawn
+		procd_close_instance
+
+		config_get_bool byedpi_block_quic "config" "byedpi_block_quic" "0"
+		if [ "$byedpi_block_quic" = "1" ]; then
+			nft 'add chain inet fw4 homeproxy_quic { type filter hook prerouting priority -150; policy accept; }' 2>/dev/null || true
+			nft 'add rule inet fw4 homeproxy_quic ip daddr { 127.0.0.0/8, 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16 } return' 2>/dev/null || true
+			nft 'add rule inet fw4 homeproxy_quic udp dport 443 drop' 2>/dev/null || true
+		fi
+	fi
+
+	# Zapret (nfqws2): HomeProxy runs its OWN nfqws2 on a dedicated NFQUEUE. Which flows
+	# reach the queue is decided upstream by sing-box (zapret-out routing_mark) + nft
+	# (firewall_post.ut), so nfqws2 runs WITHOUT hostlists — it desyncs whatever it's fed.
+	# The zapret2 package only supplies the binary + lua; its own service/firewall stays
+	# disabled so it can't fight us for the queue or install conflicting nft rules.
+	local zapret_enabled zapret_cmd_opts zapret_qnum zapret_default_opts
+	config_get_bool zapret_enabled "config" "zapret_enabled" "0"
+	if [ "$zapret_enabled" = "1" ] && [ -x "/opt/zapret2/nfq2/nfqws2" ]; then
+		config_get zapret_qnum "config" "zapret_qnum" "200"
+		# Default strategy = zapret2's shipped recipe minus hostlists, TCP http+tls only.
+		# The strategy is the single source of truth: if it has a --filter-udp profile,
+		# firewall_post.ut queues QUIC to it automatically; if not, QUIC is left alone.
+		zapret_default_opts="--filter-tcp=80 --filter-l7=http --payload=http_req --lua-desync=fake:blob=fake_default_http:tcp_md5 --lua-desync=multisplit:pos=method+2 --new --filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=fake:blob=fake_default_tls:tcp_md5:tcp_seq=-10000 --lua-desync=multidisorder:pos=1,midsld"
+		config_get zapret_cmd_opts "config" "zapret_cmd_opts" "$zapret_default_opts"
+
+		/etc/init.d/zapret2 stop 2>/dev/null; /etc/init.d/zapret2 disable 2>/dev/null; true
+
+		procd_open_instance "zapret"
+		# Fixed args: drop privileges to daemon, tag reinjected fakes with DESYNC_MARK
+		# 0x40000000 (firewall_post.ut lets that mark escape the redirect and not be
+		# re-queued), and load the lua desync library (nfqws2 reads the shipped .gz directly).
+		procd_set_param command /opt/zapret2/nfq2/nfqws2 \
+			--qnum="$zapret_qnum" \
+			--user=daemon \
+			--fwmark=0x40000000 \
+			--lua-init=@/opt/zapret2/lua/zapret-lib.lua \
+			--lua-init=@/opt/zapret2/lua/zapret-antidpi.lua \
+			--lua-init=@/opt/zapret2/lua/zapret-auto.lua
+		# Strategy opts: quote-aware split so a value with spaces survives intact. The string
+		# is the admin's own root-owned UCI option (argument parsing, not a trust boundary);
+		# leading -- guards an option-like first token. Same rationale as ByeDPI above.
+		eval "set -- $zapret_cmd_opts"
+		for _arg in "$@"; do
+			procd_append_param command "$_arg"
+		done
+		procd_set_param respawn
+		procd_close_instance
+	fi
+
+	# Subscription auto-update cron. This install half was dropped in the init rewrite
+	# (commit 4f3511f) while the stop_service cleanup below was kept, leaving the UI
+	# "Auto update" checkbox wired to nothing. Restored verbatim from upstream: when
+	# enabled, run update_crond.sh daily at the chosen hour (refreshes subscriptions and,
+	# in bypass_mainland_china mode, the China resources). The #${CONF}_autosetup marker
+	# lets stop_service remove only our line without touching user cron jobs.
+	local auto_update auto_update_time
+	config_get_bool auto_update "subscription" "auto_update" "0"
+	if [ "$auto_update" = "1" ]; then
+		config_get auto_update_time "subscription" "auto_update_time" "2"
+		sed -i "/#${CONF}_autosetup/d" "/etc/crontabs/root" 2>"/dev/null"
+		echo -e "0 $auto_update_time * * * $HP_DIR/scripts/update_crond.sh #${CONF}_autosetup" >> "/etc/crontabs/root"
+		/etc/init.d/cron restart >"/dev/null" 2>&1
+	fi
+
+	log "$(basename $PROG) started."
 }
 
 stop_service() {
@@ -151,13 +283,12 @@ stop_service() {
 		 "homeproxy_mangle_prerouting" "homeproxy_mangle_output" \
 		 "homeproxy_mangle_tproxy" "homeproxy_mangle_tproxy_port" \
 		 "homeproxy_mangle_tproxy_lanac" "homeproxy_mangle_mark" \
-		 "homeproxy_mangle_tun" "homeproxy_mangle_tun_mark"; do
+		 "homeproxy_mangle_tun" "homeproxy_mangle_tun_mark" \
+		 "homeproxy_quic"; do
 		nft flush chain inet fw4 "$i"
 		nft delete chain inet fw4 "$i"
 	done 2>"/dev/null"
 	for i in "homeproxy_local_addr_v4" "homeproxy_local_addr_v6" \
-		 "homeproxy_gfw_list_v4" "homeproxy_gfw_list_v6" \
-		 "homeproxy_mainland_addr_v4" "homeproxy_mainland_addr_v6" \
 		 "homeproxy_wan_proxy_addr_v4" "homeproxy_wan_proxy_addr_v6" \
 		 "homeproxy_wan_direct_addr_v4" "homeproxy_wan_direct_addr_v6" \
 		 "homeproxy_routing_port"; do

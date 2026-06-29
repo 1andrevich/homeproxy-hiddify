@@ -149,6 +149,14 @@ msgstr "从订阅获取节点时，默认允许不安全连接。"
 msgid "Allowed payload size is in the request."
 msgstr "请求中允许的载荷大小。"
 
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Active Node"
+msgstr "活动节点"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "No active node"
+msgstr "无活动节点"
+
 #: htdocs/luci-static/resources/view/homeproxy/status.js:95
 msgid "Already at the latest version."
 msgstr "已是最新版本。"
@@ -338,6 +346,27 @@ msgstr "检查更新"
 #: htdocs/luci-static/resources/view/homeproxy/client.js:217
 msgid "China DNS server"
 msgstr "国内 DNS 服务器"
+
+msgid "Iran DNS server"
+msgstr "伊朗 DNS 服务器"
+
+msgid "The Domain Name Server for resolving Iran Domestic domains only. Your Internet Provider sees these queries in plain text."
+msgstr "仅用于解析伊朗国内域名的 DNS 服务器。您的互联网服务商可以明文看到这些查询。"
+
+msgid "China"
+msgstr "中国"
+
+msgid "Iran"
+msgstr "伊朗"
+
+msgid ""
+"Default route is through the proxy. %s domains and IPs (geosite + geoip) "
+"automatically go Direct. Rules added here are per-service overrides applied "
+"before that baseline — e.g. force a specific service Direct, or send it "
+"through a separate node."
+msgstr ""
+"默认路由经由代理。%s 的域名和 IP（geosite + geoip）自动直连。此处添加的规则为按"
+"服务的覆盖规则，先于该基线生效——例如强制某个服务直连，或经由单独的节点。"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js:244
 msgid "China IPv4 list version"
@@ -950,6 +979,10 @@ msgstr "生成"
 msgid "GitHub token"
 msgstr "GitHub 令牌"
 
+#: htdocs/luci-static/resources/view/homeproxy/status.js:261
+msgid "Used to check for ByeDPI and Zapret updates. Without a token, GitHub limits anonymous requests to 60/hour. Create at github.com → Settings → Developer settings → Personal access tokens (no scopes needed)."
+msgstr "用于检查 ByeDPI 和 Zapret 的更新。没有令牌时，GitHub 将匿名请求限制为每小时 60 次。创建方式：github.com → Settings → Developer settings → Personal access tokens（无需任何权限）。"
+
 #: htdocs/luci-static/resources/view/homeproxy/client.js:256
 msgid "Global"
 msgstr "全局"
@@ -1190,6 +1223,29 @@ msgstr "导入"
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1313
 msgid "Import share links"
 msgstr "导入分享链接"
+
+msgid "Support Amnezia (vpn://), Hysteria, Mieru, NaïveProxy (naive://), Shadowsocks (ss://), SSH, Trojan, v2rayN (VMess), WireGuard, and VLESS (vless://) online configuration delivery standard."
+msgstr "支持 Amnezia (vpn://)、Hysteria、Mieru、NaïveProxy (naive://)、Shadowsocks (ss://)、SSH、Trojan、v2rayN (VMess)、WireGuard 和 VLESS (vless://)。"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Import .conf file"
+msgstr "导入 .conf 文件"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Import .conf"
+msgstr "导入 .conf"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Select a WireGuard or AmneziaWG .conf file."
+msgstr "选择 WireGuard 或 AmneziaWG 的 .conf 配置文件。"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "No valid WireGuard/AmneziaWG config found."
+msgstr "未找到有效的 WireGuard/AmneziaWG 配置。"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Successfully imported node: %s"
+msgstr "成功导入节点：%s"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:336
 #: htdocs/luci-static/resources/view/homeproxy/server.js:860
@@ -1771,6 +1827,18 @@ msgstr "插件"
 msgid "Plugin opts"
 msgstr "插件参数"
 
+#: htdocs/luci-static/resources/view/homeproxy/node.js:1126
+msgid "ShadowTLS transport"
+msgstr "ShadowTLS 传输"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js:1127
+msgid "Wrap this Shadowsocks connection in ShadowTLS for TLS camouflage."
+msgstr "将此 Shadowsocks 连接包裹在 ShadowTLS 中以进行 TLS 伪装。"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js:1132
+msgid "ShadowTLS password"
+msgstr "ShadowTLS 密码"
+
 #: htdocs/luci-static/resources/view/homeproxy/client.js:848
 #: htdocs/luci-static/resources/view/homeproxy/client.js:962
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1286
@@ -1811,6 +1879,10 @@ msgstr "优先 IPv4"
 #: htdocs/luci-static/resources/homeproxy.js:19
 msgid "Prefer IPv6"
 msgstr "优先 IPv6"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Preferred core"
+msgstr "首选内核"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:678
 #: htdocs/luci-static/resources/view/homeproxy/node.js:903
@@ -2070,6 +2142,106 @@ msgstr "解析策略"
 #: htdocs/luci-static/resources/view/homeproxy/status.js:241
 msgid "Resources management"
 msgstr "资源管理"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Core management"
+msgstr "核心管理"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Package manager"
+msgstr "包管理器"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Architecture"
+msgstr "架构"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Free /tmp"
+msgstr "可用 /tmp"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Free overlay"
+msgstr "可用 overlay"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "none detected"
+msgstr "未检测到"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Not installed"
+msgstr "未安装"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Latest"
+msgstr "最新版"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Checking..."
+msgstr "检查中..."
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Checking requirements..."
+msgstr "检查系统要求..."
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Downloading..."
+msgstr "下载中..."
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Installing package..."
+msgstr "安装软件包..."
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Installing kernel modules..."
+msgstr "安装内核模块..."
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Download failed"
+msgstr "下载失败"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Install"
+msgstr "安装"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Update"
+msgstr "更新"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Remove"
+msgstr "移除"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "No supported package manager detected"
+msgstr "未检测到支持的包管理器"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Installing..."
+msgstr "安装中..."
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Installed successfully"
+msgstr "安装成功"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Installation failed"
+msgstr "安装失败"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Unknown"
+msgstr "未知"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Removing..."
+msgstr "移除中..."
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Removed successfully"
+msgstr "移除成功"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Removal failed"
+msgstr "移除失败"
 
 #: htdocs/luci-static/resources/view/homeproxy/server.js:880
 msgid "Reuse address"
@@ -2626,6 +2798,9 @@ msgstr "可接受的最低 TLS 版本。"
 msgid "The modern ImmortalWrt proxy platform for ARM64/AMD64."
 msgstr "为 ARM64/AMD64 设计的现代 ImmortalWrt 代理平台。"
 
+msgid "The modern multi-core proxy platform. Fork of ImmortalWrt."
+msgstr "现代多核代理平台。ImmortalWrt 分支。"
+
 #: htdocs/luci-static/resources/view/homeproxy/client.js:454
 #: htdocs/luci-static/resources/view/homeproxy/server.js:875
 msgid "The network interface to bind to."
@@ -2814,6 +2989,10 @@ msgstr "UDP 超时"
 #: htdocs/luci-static/resources/view/homeproxy/client.js:421
 msgid "URLTest"
 msgstr "URLTest"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Separate URLTest"
+msgstr "独立 URLTest"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:131
 #: htdocs/luci-static/resources/view/homeproxy/client.js:160
@@ -3172,3 +3351,528 @@ msgstr "节点"
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "No data"
 msgstr "无数据"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Russia (Proxy Banned)"
+msgstr "俄罗斯（代理封锁站点）"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "China (bypass mainland)"
+msgstr "中国（绕过大陆）"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Iran (bypass domestic)"
+msgstr "伊朗（绕过国内）"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Proxy Rules"
+msgstr "代理规则"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Region DNS"
+msgstr "区域 DNS"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Russia DNS server"
+msgstr "俄罗斯 DNS 服务器"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Direct DNS server for Russian domains. Plain UDP only."
+msgstr "用于俄罗斯域名的直连 DNS 服务器，仅支持 UDP。"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Yandex DNS (77.88.8.8)"
+msgstr "Yandex DNS (77.88.8.8)"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "SkyDNS (193.58.251.251)"
+msgstr "SkyDNS (193.58.251.251)"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Comss.one (83.220.169.155)"
+msgstr "Comss.one (83.220.169.155)"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Secure DNS server"
+msgstr "安全 DNS 服务器"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Encrypted DNS server for banned domains, routed via proxy. Supports DoH and DoT."
+msgstr "用于封锁域名的加密 DNS，通过代理路由。支持 DoH 和 DoT。"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Cloudflare DoH"
+msgstr "Cloudflare DoH"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Quad9 DoH"
+msgstr "Quad9 DoH"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "AdGuard DoH"
+msgstr "AdGuard DoH"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Google DoH"
+msgstr "Google DoH"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Cloudflare DoT"
+msgstr "Cloudflare DoT"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Quad9 DoT"
+msgstr "Quad9 DoT"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Google DoT"
+msgstr "Google DoT"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Main node is required in Russia (Proxy Banned) mode"
+msgstr "在「俄罗斯（代理封锁站点）」模式下必须设置主节点"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "RU Proxy Rules"
+msgstr "俄罗斯代理规则"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Default route is Direct, added rules have automatic priority:<br>1. Smaller lists (YouTube, Discord etc.)<br>2. Russia Inside<br>3. Re-filter"
+msgstr "默认路由为直连，添加的规则自动排列优先级：<br>1. 小型列表（YouTube、Discord 等）<br>2. Russia Inside<br>3. Re-filter"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Re-filter (Russia blocklist: 60000+ banned domains + 25000+ IPs)"
+msgstr "Re-filter（俄罗斯封锁列表：60000+ 域名 + 25000+ IP）"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "itdoginfo/allow-domains - Russia Inside (1000+ entries)"
+msgstr "itdoginfo/allow-domains - Russia Inside（1000+ 条目）"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "YouTube"
+msgstr "YouTube"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Twitter/X"
+msgstr "Twitter/X"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "TikTok"
+msgstr "TikTok"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Telegram"
+msgstr "Telegram"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Roblox"
+msgstr "Roblox"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Adult content"
+msgstr "成人内容"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "OVH (France cloud hosting)"
+msgstr "OVH（法国云托管）"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "International news sites"
+msgstr "国际新闻网站"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Meta (Facebook, Instagram)"
+msgstr "Meta（Facebook、Instagram）"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "HODCA"
+msgstr "HODCA"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Hetzner (Germany cloud hosting)"
+msgstr "Hetzner（德国云托管）"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "HDRezka"
+msgstr "HDRezka"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Google AI services"
+msgstr "Google AI 服务"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Google Play"
+msgstr "Google Play"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "GeoBlock services"
+msgstr "GeoBlock 服务"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Anime streaming"
+msgstr "动漫流媒体"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Cloudflare CDN"
+msgstr "Cloudflare CDN"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "CloudFront CDN"
+msgstr "CloudFront CDN"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Discord"
+msgstr "Discord"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "DigitalOcean cloud hosting"
+msgstr "DigitalOcean（云托管）"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Same as main node"
+msgstr "与主节点相同"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Advanced custom rules"
+msgstr "高级自定义规则"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Show Routing Nodes and Routing Rules tabs for additional custom rules."
+msgstr "显示「路由节点」和「路由规则」选项卡以进行额外的自定义设置。"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Proxy calls"
+msgstr "代理通话"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Route VoIP call ports (WhatsApp, Telegram, FaceTime, etc.) through the proxy."
+msgstr "将 VoIP 通话端口（WhatsApp、Telegram、FaceTime 等）通过代理路由。"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Do not proxify torrents"
+msgstr "不代理 BT 下载"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Force torrent traffic (BitTorrent protocol + common ports) to bypass the proxy."
+msgstr "强制 BitTorrent 协议及常用端口的流量绕过代理。"
+
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "HomeProxy Diagnostics"
+msgstr "HomeProxy 诊断"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Run All Tests"
+msgstr "运行全部测试"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Runs Core, Config, and Network checks simultaneously."
+msgstr "同时运行核心、配置和网络检测。"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Core & System"
+msgstr "核心与系统"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Checking core…"
+msgstr "正在检查核心…"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "RPC error"
+msgstr "RPC 错误"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "none detected"
+msgstr "未检测到"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Hiddify-core"
+msgstr "Hiddify-core"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "installed"
+msgstr "已安装"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "not found"
+msgstr "未找到"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Active binary"
+msgstr "活动二进制"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Running"
+msgstr "运行中"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "yes"
+msgstr "是"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "no"
+msgstr "否"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Listening ports"
+msgstr "监听端口"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Restarting… (may take ~5 s)"
+msgstr "重启中…（可能需要约 5 秒）"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Service restarted"
+msgstr "服务已重启"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Restart failed"
+msgstr "重启失败"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Check"
+msgstr "检查"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Restart Service"
+msgstr "重启服务"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Configuration"
+msgstr "配置"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Checking config…"
+msgstr "正在检查配置…"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Valid"
+msgstr "有效"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Size"
+msgstr "大小"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Inbounds"
+msgstr "入站"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Outbounds"
+msgstr "出站"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Rules"
+msgstr "规则"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "DNS servers"
+msgstr "DNS 服务器"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Check output"
+msgstr "检查输出"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "DNS Tests"
+msgstr "DNS 测试"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Testing DNS…"
+msgstr "正在测试 DNS…"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "DNS test only applies to Russia routing mode."
+msgstr "DNS 测试仅适用于俄罗斯路由模式。"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Russia DNS"
+msgstr "俄罗斯 DNS"
+
+msgid "DNS (direct)"
+msgstr "DNS（直连）"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Server"
+msgstr "服务器"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Status"
+msgstr "状态"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Responding"
+msgstr "响应正常"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "No response — check server address"
+msgstr "无响应——请检查服务器地址"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "nslookup yandex.ru"
+msgstr "nslookup yandex.ru"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Secure DNS"
+msgstr "安全 DNS"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Bootstrap"
+msgstr "初始解析"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "resolves via Russia DNS"
+msgstr "通过俄罗斯 DNS 解析成功"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "failed to resolve — Russia DNS must work first"
+msgstr "解析失败——俄罗斯 DNS 需先正常工作"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "nslookup"
+msgstr "nslookup"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Test"
+msgstr "测试"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Network Intercept"
+msgstr "网络拦截"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Reading nftables…"
+msgstr "正在读取 nftables…"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "HomeProxy chains"
+msgstr "HomeProxy 链"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "found"
+msgstr "已找到"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "not found — firewall rules may be missing"
+msgstr "未找到——防火墙规则可能缺失"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Matched lines in fw4"
+msgstr "fw4 中匹配的行"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "UCI firewall settings"
+msgstr "UCI 防火墙设置"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Diagnostics Report"
+msgstr "诊断报告"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Click Generate to collect diagnostics…"
+msgstr "点击「生成」以收集诊断信息…"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Collecting diagnostics — this may take a few seconds…"
+msgstr "正在收集诊断信息，可能需要几秒钟…"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Generate"
+msgstr "生成"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Copy"
+msgstr "复制"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Sensitive values (passwords, keys, UUIDs) are redacted."
+msgstr "敏感信息（密码、密钥、UUID）已隐藏。"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Testing…"
+msgstr "测试中…"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "(empty)"
+msgstr "（空）"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Resolved"
+msgstr "已解析"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "No answer — check server address"
+msgstr "无响应——请检查服务器地址"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Resolved via proxy"
+msgstr "已通过代理解析"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "No answer — check proxy and proxy list"
+msgstr "无响应——请检查代理及代理域名列表"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Bootstrap"
+msgstr "引导服务器"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "OK"
+msgstr "正常"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "FAIL"
+msgstr "失败"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Version"
+msgstr "版本"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "sing-box"
+msgstr "sing-box"
+
+msgid "hiddify-core with sing-box syntax compatibility. Supports Hiddify App protocols and advanced features. Best compatibility with Hiddify Manager protocols. Does not support AmneziaWG."
+msgstr "具有 sing-box 语法兼容性的 hiddify-core。支持 Hiddify App 协议和高级功能。与 Hiddify Manager 协议兼容性最佳。不支持 AmneziaWG。"
+
+msgid "Extended sing-box with additional protocols including AmneziaWG and TrustTunnel support. Created by shtorm-7."
+msgstr "扩展版 sing-box，支持 AmneziaWG 和 TrustTunnel 等额外协议。由 shtorm-7 创建。"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Download"
+msgstr "下载"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "How often each node is tested (seconds). Lower = faster failover, higher = less overhead."
+msgstr "每个节点的测试频率（秒）。越低 = 切换越快，越高 = 负载越小。"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Automatically picks the fastest node by periodically measuring latency. Traffic is always sent through the lowest-latency node in the pool."
+msgstr "通过定期测量延迟自动选择最快节点。流量始终通过池中延迟最低的节点发送。"
+
+msgid "Minimum latency gap (ms) required to switch to a faster node — prevents flapping between nodes with close latency values."
+msgstr "切换到更快节点所需的最小延迟差（毫秒）——防止在延迟接近的节点间频繁切换。"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "In this mode: only blocked domains are routed through this node — all other traffic goes direct."
+msgstr "在此模式下：仅被封锁的域名通过此节点路由——其他所有流量直连。"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Resolves Russian domains directly, without going through the proxy."
+msgstr "直接解析俄罗斯域名，不经过代理。"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Resolves blocked domains via proxy — your ISP cannot see which sites you look up. Uses encrypted DNS (DoH/DoT = DNS over HTTPS/TLS)."
+msgstr "通过代理解析被封锁的域名——运营商无法看到您查询的站点。使用加密 DNS（DoH/DoT = DNS over HTTPS/TLS）。"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Default route is Direct. Added rules are proxied, with automatic priority:<br>1. Smaller lists (YouTube, Discord etc.)<br>2. <b>Russia Inside</b> — Russian services that must stay accessible (allows-list by itdoginfo)<br>3. <b>Re-filter</b> — community blocklist of domains and IPs banned in Russia (Roskomnadzor)"
+msgstr "默认路由为直连。已添加的规则走代理，优先级自动排列：<br>1. 小列表（YouTube、Discord 等）<br>2. <b>Russia Inside</b> — 必须保持可访问的俄罗斯服务（itdoginfo 白名单）<br>3. <b>Re-filter</b> — 俄罗斯被封锁域名和 IP 的社区黑名单（Roskomnadzor）"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js:2725
+msgid "DNS not ready — wait a few seconds after Apply and retry"
+msgstr "DNS 尚未就绪——点击“应用”后请稍候几秒再重试"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js:2907
+msgid "Resolving test hosts…"
+msgstr "正在解析测试主机…"

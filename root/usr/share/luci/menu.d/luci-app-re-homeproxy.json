@@ -1,12 +1,12 @@
 {
 	"admin/services/homeproxy": {
-		"title": "HomeProxy-Hiddify",
+		"title": "Re:HomeProxy",
 		"order": 10,
 		"action": {
 			"type": "firstchild"
 		},
 		"depends": {
-			"acl": [ "luci-app-homeproxy-hiddify" ],
+			"acl": [ "luci-app-re-homeproxy" ],
 			"uci": { "homeproxy": true }
 		}
 	},
@@ -28,18 +28,26 @@
 	},
 	"admin/services/homeproxy/server": {
 		"title": "Server Settings",
-		"order": 20,
+		"order": 30,
 		"action": {
 			"type": "view",
 			"path": "homeproxy/server"
 		}
 	},
 	"admin/services/homeproxy/status": {
-		"title": "Service Status",
-		"order": 30,
+		"title": "Core & Tools",
+		"order": 20,
 		"action": {
 			"type": "view",
 			"path": "homeproxy/status"
+		}
+	},
+	"admin/services/homeproxy/diagnostics": {
+		"title": "Diagnostics",
+		"order": 40,
+		"action": {
+			"type": "view",
+			"path": "homeproxy/diagnostics"
 		}
 	}
 }

@@ -149,6 +149,17 @@ msgstr "Разрешить небезопасное соединение по у
 msgid "Allowed payload size is in the request."
 msgstr "Допустимый размер полезной нагрузки указан в запросе."
 
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Active Node"
+msgstr "Активный узел"
+
+msgid "Active UDP Node"
+msgstr "Активный UDP-узел"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "No active node"
+msgstr "Нет активного узла"
+
 #: htdocs/luci-static/resources/view/homeproxy/status.js:95
 msgid "Already at the latest version."
 msgstr "Уже установлена последняя версия."
@@ -311,7 +322,7 @@ msgstr "Обходить трафик CN"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:253
 msgid "Bypass mainland China"
-msgstr "Обходить материковый Китай"
+msgstr "Китай - Direct"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:344
 msgid "Bypass mainland China traffic via firewall rules by default."
@@ -349,6 +360,29 @@ msgstr "Проверить обновление"
 #: htdocs/luci-static/resources/view/homeproxy/client.js:217
 msgid "China DNS server"
 msgstr "DNS-сервер для Китая"
+
+msgid "Iran DNS server"
+msgstr "DNS-сервер для Ирана"
+
+msgid "The Domain Name Server for resolving Iran Domestic domains only. Your Internet Provider sees these queries in plain text."
+msgstr "DNS-сервер только для резолвинга внутренних иранских доменов. Ваш интернет-провайдер видит эти запросы в открытом виде."
+
+msgid "China"
+msgstr "Китай"
+
+msgid "Iran"
+msgstr "Иран"
+
+msgid ""
+"Default route is through the proxy. %s domains and IPs (geosite + geoip) "
+"automatically go Direct. Rules added here are per-service overrides applied "
+"before that baseline — e.g. force a specific service Direct, or send it "
+"through a separate node."
+msgstr ""
+"Маршрут по умолчанию — через прокси. Домены и IP региона %s (geosite + geoip) "
+"автоматически идут напрямую. Добавленные здесь правила — пер-сервисные "
+"исключения, применяемые до этого базового правила: например, отправить "
+"конкретный сервис напрямую или через отдельный узел."
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js:244
 msgid "China IPv4 list version"
@@ -945,11 +979,15 @@ msgstr "Версия списка GFW"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:252
 msgid "GFWList"
-msgstr "GFWList"
+msgstr "Китай - GFWList"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1446
 msgid "Gaming mode IPv4 IP-s"
 msgstr "IPv4-адреса игрового режима"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "In gaming mode, only TCP traffic from the selected device is proxied."
+msgstr "В игровом режиме для выбранного устройства проксируется только TCP-трафик."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1448
 msgid "Gaming mode IPv6 IP-s"
@@ -969,6 +1007,10 @@ msgstr "Сгенерировать"
 msgid "GitHub token"
 msgstr "GitHub-токен"
 
+#: htdocs/luci-static/resources/view/homeproxy/status.js:261
+msgid "Used to check for ByeDPI and Zapret updates. Without a token, GitHub limits anonymous requests to 60/hour. Create at github.com → Settings → Developer settings → Personal access tokens (no scopes needed)."
+msgstr "Используется для проверки обновлений ByeDPI и Zapret. Без токена GitHub ограничивает анонимные запросы до 60/час. Создать: github.com → Settings → Developer settings → Personal access tokens (права не нужны)."
+
 #: htdocs/luci-static/resources/view/homeproxy/client.js:256
 msgid "Global"
 msgstr "Глобальный"
@@ -980,6 +1022,10 @@ msgstr "Глобальное дополнение"
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1453
 msgid "Global proxy IPv4 IP-s"
 msgstr "IPv4-адреса глобального прокси"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "In global proxy mode, all traffic from the selected device goes through the proxy."
+msgstr "В режиме глобального прокси весь трафик с выбранного устройства идёт через прокси."
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1456
 msgid "Global proxy IPv6 IP-s"
@@ -1215,7 +1261,30 @@ msgstr "Импорт"
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1311
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1313
 msgid "Import share links"
-msgstr "Импортировать ссылки для совместного использования"
+msgstr "Импортировать ссылку-конфигурацию для подключения"
+
+msgid "Support Amnezia (vpn://), Hysteria, Mieru, NaïveProxy (naive://), Shadowsocks (ss://), SSH, Trojan, v2rayN (VMess), WireGuard, and VLESS (vless://) online configuration delivery standard."
+msgstr "Поддерживает Amnezia (vpn://), Hysteria, Mieru, NaïveProxy (naive://), Shadowsocks (ss://), SSH, Trojan, v2rayN (VMess), WireGuard и VLESS (vless://)."
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Import .conf file"
+msgstr "Импорт WG (.conf) файла"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Import .conf"
+msgstr "Импорт .conf"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Select a WireGuard or AmneziaWG .conf file."
+msgstr "Выберите файл конфигурации WireGuard или AmneziaWG."
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "No valid WireGuard/AmneziaWG config found."
+msgstr "Не найдена корректная конфигурация WireGuard/AmneziaWG."
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Successfully imported node: %s"
+msgstr "Узел успешно импортирован: %s"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:336
 #: htdocs/luci-static/resources/view/homeproxy/server.js:860
@@ -1706,7 +1775,7 @@ msgstr "Обрабатывать трафик только с указанных
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:254
 msgid "Only proxy mainland China"
-msgstr "Проксировать только материковый Китай"
+msgstr "Китай - Proxy"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:580
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1060
@@ -1806,6 +1875,18 @@ msgstr "Плагин"
 msgid "Plugin opts"
 msgstr "Параметры плагина"
 
+#: htdocs/luci-static/resources/view/homeproxy/node.js:1126
+msgid "ShadowTLS transport"
+msgstr "Транспорт ShadowTLS"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js:1127
+msgid "Wrap this Shadowsocks connection in ShadowTLS for TLS camouflage."
+msgstr "Обернуть это Shadowsocks-соединение в ShadowTLS для маскировки TLS."
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js:1132
+msgid "ShadowTLS password"
+msgstr "Пароль ShadowTLS"
+
 #: htdocs/luci-static/resources/view/homeproxy/client.js:848
 #: htdocs/luci-static/resources/view/homeproxy/client.js:962
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1286
@@ -1846,6 +1927,10 @@ msgstr "Предпочитать IPv4"
 #: htdocs/luci-static/resources/homeproxy.js:19
 msgid "Prefer IPv6"
 msgstr "Предпочитать IPv6"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Preferred core"
+msgstr "Предпочтительное ядро"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:678
 #: htdocs/luci-static/resources/view/homeproxy/node.js:903
@@ -1951,8 +2036,8 @@ msgid "Proxy all except listed"
 msgstr "Проксировать всё кроме указанных"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1421
-msgid "Proxy filter mode"
-msgstr "Режим фильтрации прокси"
+msgid "Proxy mode for devices"
+msgstr "Режим проксирования устройств"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1423
 msgid "Proxy listed only"
@@ -2108,6 +2193,106 @@ msgstr "Стратегия резолвинга"
 msgid "Resources management"
 msgstr "Управление ресурсами"
 
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Core management"
+msgstr "Управление ядром"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Package manager"
+msgstr "Менеджер пакетов"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Architecture"
+msgstr "Архитектура"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Free /tmp"
+msgstr "Свободно /tmp"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Free overlay"
+msgstr "Свободно overlay"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "none detected"
+msgstr "не обнаружен"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Not installed"
+msgstr "Не установлено"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Latest"
+msgstr "Последняя"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Checking..."
+msgstr "Проверяем..."
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Checking requirements..."
+msgstr "Проверяем требования..."
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Downloading..."
+msgstr "Загрузка..."
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Installing package..."
+msgstr "Установка пакета..."
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Installing kernel modules..."
+msgstr "Установка модулей ядра..."
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Download failed"
+msgstr "Ошибка загрузки"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Install"
+msgstr "Установить"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Update"
+msgstr "Обновить"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Remove"
+msgstr "Удалить"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "No supported package manager detected"
+msgstr "Менеджер пакетов не обнаружен"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Installing..."
+msgstr "Установка..."
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Installed successfully"
+msgstr "Установлено успешно"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Installation failed"
+msgstr "Ошибка установки"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Unknown"
+msgstr "Неизвестно"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Removing..."
+msgstr "Удаление..."
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Removed successfully"
+msgstr "Удалено успешно"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Removal failed"
+msgstr "Ошибка удаления"
+
 #: htdocs/luci-static/resources/view/homeproxy/server.js:880
 msgid "Reuse address"
 msgstr "Повторно использовать адрес"
@@ -2138,11 +2323,11 @@ msgstr "Параметры маршрута"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:396
 msgid "Routing Nodes"
-msgstr "Узлы маршрутизации"
+msgstr "Правила узлов"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:567
 msgid "Routing Rules"
-msgstr "Правила маршрутизации"
+msgstr "Расширенные правила"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:120
 msgid "Routing Settings"
@@ -2679,6 +2864,9 @@ msgstr "Минимальная допустимая версия TLS."
 msgid "The modern ImmortalWrt proxy platform for ARM64/AMD64."
 msgstr "Современная прокси-платформа ImmortalWrt для ARM64/AMD64."
 
+msgid "The modern multi-core proxy platform. Fork of ImmortalWrt."
+msgstr "Современная многоядерная прокси-платформа. Форк ImmortalWrt."
+
 #: htdocs/luci-static/resources/view/homeproxy/client.js:454
 #: htdocs/luci-static/resources/view/homeproxy/server.js:875
 msgid "The network interface to bind to."
@@ -2871,6 +3059,10 @@ msgstr "Таймаут UDP"
 #: htdocs/luci-static/resources/view/homeproxy/client.js:421
 msgid "URLTest"
 msgstr "URLTest"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Separate URLTest"
+msgstr "Отдельный URLTest"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:131
 #: htdocs/luci-static/resources/view/homeproxy/client.js:160
@@ -3151,34 +3343,34 @@ msgstr "не проверено"
 #: htdocs/luci-static/resources/homeproxy.js:237
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1302
 msgid "unique UCI identifier"
-msgstr ""
+msgstr "уникальный идентификатор UCI"
 
 #: htdocs/luci-static/resources/homeproxy.js:317
 msgid "unique value"
-msgstr ""
+msgstr "уникальное значение"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:500
 #: htdocs/luci-static/resources/view/homeproxy/node.js:645
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1178
 msgid "v1"
-msgstr ""
+msgstr "v1"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:501
 #: htdocs/luci-static/resources/view/homeproxy/node.js:646
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1179
 msgid "v2"
-msgstr ""
+msgstr "v2"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:647
 msgid "v3"
-msgstr ""
+msgstr "v3"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:207
 #: htdocs/luci-static/resources/view/homeproxy/client.js:211
 #: htdocs/luci-static/resources/view/homeproxy/client.js:241
 #: htdocs/luci-static/resources/view/homeproxy/client.js:245
 msgid "valid DNS server address"
-msgstr ""
+msgstr "корректный адрес DNS-сервера"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:518
 #: htdocs/luci-static/resources/view/homeproxy/client.js:521
@@ -3187,28 +3379,28 @@ msgstr ""
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1356
 #: htdocs/luci-static/resources/view/homeproxy/node.js:1359
 msgid "valid URL"
-msgstr ""
+msgstr "корректный URL"
 
 #: htdocs/luci-static/resources/homeproxy.js:271
 msgid "valid base64 key with %d characters"
-msgstr ""
+msgstr "корректный ключ base64 из %d символов"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1507
 #: htdocs/luci-static/resources/view/homeproxy/client.js:1539
 msgid "valid hostname"
-msgstr ""
+msgstr "корректное имя хоста"
 
 #: htdocs/luci-static/resources/homeproxy.js:297
 msgid "valid port range (port1:port2)"
-msgstr ""
+msgstr "корректный диапазон портов (порт1:порт2)"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:274
 msgid "valid port value"
-msgstr ""
+msgstr "корректное значение порта"
 
 #: htdocs/luci-static/resources/homeproxy.js:328
 msgid "valid uuid"
-msgstr ""
+msgstr "корректный uuid"
 
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js
@@ -3217,7 +3409,7 @@ msgstr "Привязанный интерфейс"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "Direct IP"
-msgstr "Прямой IP"
+msgstr "IP провайдера"
 
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "Proxy IP"
@@ -3230,3 +3422,1001 @@ msgstr "Узел"
 #: htdocs/luci-static/resources/view/homeproxy/status.js
 msgid "No data"
 msgstr "Нет данных"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Russia (Proxy Banned)"
+msgstr "Россия (Обход Блокировок)"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "China (bypass mainland)"
+msgstr "Китай (обход материкового)"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Iran (bypass domestic)"
+msgstr "Иран (обход внутреннего)"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Proxy Rules"
+msgstr "Правила прокси"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Region DNS"
+msgstr "Региональный DNS"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Russia DNS server"
+msgstr "DNS-сервер России"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Direct DNS server for Russian domains. Plain UDP only."
+msgstr "DNS-сервер для российских доменов (прямое подключение). Только UDP."
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Yandex DNS (77.88.8.8)"
+msgstr "Яндекс DNS (77.88.8.8)"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "SkyDNS (193.58.251.251)"
+msgstr "SkyDNS (193.58.251.251)"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Comss.one (83.220.169.155)"
+msgstr "Comss.one (83.220.169.155)"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Cloudflare DNS UDP (1.1.1.1)"
+msgstr "Cloudflare DNS UDP (1.1.1.1)"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Google DNS UDP (8.8.8.8)"
+msgstr "Google DNS UDP (8.8.8.8)"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Secure DNS server"
+msgstr "Защищённый DNS-сервер"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Encrypted DNS server for banned domains, routed via proxy. Supports DoH and DoT."
+msgstr "Зашифрованный DNS для заблокированных доменов, маршрутизируется через прокси. Поддерживает DoH и DoT."
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Cloudflare DoH"
+msgstr "Cloudflare DoH"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Quad9 DoH"
+msgstr "Quad9 DoH"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "AdGuard DoH"
+msgstr "AdGuard DoH"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Google DoH"
+msgstr "Google DoH"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Cloudflare DoT"
+msgstr "Cloudflare DoT"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Quad9 DoT"
+msgstr "Quad9 DoT"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Google DoT"
+msgstr "Google DoT"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Main node is required in Russia (Proxy Banned) mode"
+msgstr "В режиме «Россия (Обход Блокировок)» необходимо выбрать основной узел"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "RU Proxy Rules"
+msgstr "Правила прокси (РФ)"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Default route is Direct, added rules have automatic priority:<br>1. Smaller lists (YouTube, Discord etc.)<br>2. Russia Inside<br>3. Re-filter"
+msgstr "Маршрут по умолчанию — прямой, приоритет добавленных правил автоматический:<br>1. Малые списки (YouTube, Discord и др.)<br>2. Russia Inside<br>3. Re-filter"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Re-filter (Russia blocklist: 60000+ banned domains + 25000+ IPs)"
+msgstr "Re-filter (Российский список блокировок: 60000+ доменов + 25000+ IP)"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "itdoginfo/allow-domains - Russia Inside (1000+ entries)"
+msgstr "itdoginfo/allow-domains - Russia Inside (1000+ записей)"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "YouTube"
+msgstr "YouTube"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Twitter/X"
+msgstr "Twitter/X"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "TikTok"
+msgstr "TikTok"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Telegram"
+msgstr "Telegram"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Roblox"
+msgstr "Roblox"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Adult content"
+msgstr "Контент для взрослых"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "OVH (France cloud hosting)"
+msgstr "OVH (французский облачный хостинг)"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "International news sites"
+msgstr "Международные новостные сайты"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Meta (Facebook, Instagram)"
+msgstr "Meta (Facebook, Instagram)"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "HODCA"
+msgstr "HODCA"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Hetzner (Germany cloud hosting)"
+msgstr "Hetzner (немецкий облачный хостинг)"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "HDRezka"
+msgstr "HDRezka"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Google AI services"
+msgstr "Сервисы Google AI"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Google Play"
+msgstr "Google Play"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "GeoBlock services"
+msgstr "GeoBlock-сервисы"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Anime streaming"
+msgstr "Аниме-стриминг"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Cloudflare CDN"
+msgstr "Cloudflare CDN"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "CloudFront CDN"
+msgstr "CloudFront CDN"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Discord"
+msgstr "Discord"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "DigitalOcean cloud hosting"
+msgstr "DigitalOcean (облачный хостинг)"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Same as main node"
+msgstr "Как основной узел"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Advanced custom rules"
+msgstr "Расширенные правила"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Show Routing Nodes and Routing Rules tabs for additional custom rules."
+msgstr "Показать вкладки «Правила узлов» и «Расширенные правила» для дополнительных настроек."
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Proxy calls"
+msgstr "Проксировать звонки"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Route VoIP call ports (WhatsApp, Telegram, FaceTime, etc.) through the proxy."
+msgstr "Использовать правило для проксирования звонков в WhatsApp, Telegram, FaceTime и т.д."
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Do not proxify torrents"
+msgstr "Не проксировать торренты"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Force torrent traffic (BitTorrent protocol + common ports) to bypass the proxy."
+msgstr "Направить торрент-трафик (протокол BitTorrent и стандартные порты) в обход прокси."
+
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "HomeProxy Diagnostics"
+msgstr "Диагностика HomeProxy"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Run All Tests"
+msgstr "Запустить все тесты"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Runs Core, Config, and Network checks simultaneously."
+msgstr "Запускает проверку ядра, конфигурации и сети одновременно."
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Core & System"
+msgstr "Ядро и система"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Checking core…"
+msgstr "Проверка ядра…"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "RPC error"
+msgstr "Ошибка RPC"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "none detected"
+msgstr "не обнаружено"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Hiddify-core"
+msgstr "Hiddify-core"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "installed"
+msgstr "установлено"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "not found"
+msgstr "не найдено"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Active binary"
+msgstr "Активный бинарник"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Running"
+msgstr "Запущено"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "yes"
+msgstr "да"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "no"
+msgstr "нет"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Listening ports"
+msgstr "Прослушиваемые порты"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Restarting… (may take ~5 s)"
+msgstr "Перезапуск… (может занять ~5 с)"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Service restarted"
+msgstr "Служба перезапущена"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Restart failed"
+msgstr "Ошибка перезапуска"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Check"
+msgstr "Проверить"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Restart Service"
+msgstr "Перезапустить службу"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Configuration"
+msgstr "Конфигурация"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Checking config…"
+msgstr "Проверка конфигурации…"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Valid"
+msgstr "Корректна"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Size"
+msgstr "Размер"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Inbounds"
+msgstr "Входящие"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Outbounds"
+msgstr "Исходящие"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Rules"
+msgstr "Правила"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "DNS servers"
+msgstr "DNS-серверы"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Check output"
+msgstr "Вывод проверки"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "DNS Tests"
+msgstr "Тест DNS"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Testing DNS…"
+msgstr "Тестирование DNS…"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "DNS test only applies to Russia routing mode."
+msgstr "Тест DNS применяется только в режиме маршрутизации «Россия»."
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Russia DNS"
+msgstr "Российский DNS"
+
+msgid "DNS (direct)"
+msgstr "DNS (прямой)"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Server"
+msgstr "Сервер"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Status"
+msgstr "Статус"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Responding"
+msgstr "Отвечает"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "No response — check server address"
+msgstr "Нет ответа — проверьте адрес сервера"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "nslookup yandex.ru"
+msgstr "nslookup yandex.ru"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Secure DNS"
+msgstr "Защищённый DNS"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Bootstrap"
+msgstr "Начальное разрешение"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "resolves via Russia DNS"
+msgstr "разрешается через российский DNS"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "failed to resolve — Russia DNS must work first"
+msgstr "не удалось разрешить — сначала должен работать российский DNS"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "nslookup"
+msgstr "nslookup"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Test"
+msgstr "Проверить"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Network Intercept"
+msgstr "Перехват трафика"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Reading nftables…"
+msgstr "Чтение nftables…"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "HomeProxy chains"
+msgstr "Цепочки HomeProxy"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "found"
+msgstr "найдено"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "not found — firewall rules may be missing"
+msgstr "не найдено — возможно, отсутствуют правила брандмауэра"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Matched lines in fw4"
+msgstr "Совпавшие строки в fw4"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "UCI firewall settings"
+msgstr "Настройки брандмауэра UCI"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Diagnostics Report"
+msgstr "Отчёт диагностики"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Re:HomeProxy Diagnostics"
+msgstr "Диагностика Re:HomeProxy"
+
+#: root/usr/share/luci/menu.d/luci-app-re-homeproxy.json
+msgid "Core & Tools"
+msgstr "Ядро и службы"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Connectivity"
+msgstr "Проверка соединения"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Testing…"
+msgstr "Проверка…"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Active URLTest node"
+msgstr "Активная нода URLTest"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Runs Core, Config, Network, and Connectivity checks simultaneously."
+msgstr "Запускает проверки ядра, конфигурации, сети и подключения одновременно."
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Community"
+msgstr "Сообщество"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "TLS Modification"
+msgstr "Изменение TLS"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Stop"
+msgstr "Остановить"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Stopping…"
+msgstr "Остановка…"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Stopped"
+msgstr "Остановлено"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "work on all sites"
+msgstr "работают на всех сайтах"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "partial"
+msgstr "частично"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "click Apply next to a strategy (prefer all-green)"
+msgstr "нажмите «Применить» рядом со стратегией (лучше all-green)"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Test all strategies?"
+msgstr "Проверить все стратегии?"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Each is probed against 4 sites (~12 min total). You can Stop it at any point."
+msgstr "Каждая проверяется на 4 сайтах (всего ~12 мин). Можно остановить в любой момент."
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "LAN clients are not affected during testing."
+msgstr "На клиентов локальной сети проверка не влияет."
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Probes each preset against 4 sites (YouTube video CDN, Telegram, Discord, Speedtest). ● = TLS handshake got through, ○ = blocked; hover a dot for the site and result. Tests a fixed preset list. You can Stop it anytime. ~12 min total."
+msgstr "Проверяет каждую стратегию на 4 сайтах (видео-CDN YouTube, Telegram, Discord, Speedtest). ● = TLS-рукопожатие успешно, ○ = заблокировано; наведите на точку, чтобы увидеть сайт и результат. Тест проверяет предустановленный набор стратегий. Можно остановить в любой момент. Всего ~12 мин."
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Click Generate to collect diagnostics…"
+msgstr "Нажмите «Сформировать» для сбора диагностики…"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Collecting diagnostics — this may take a few seconds…"
+msgstr "Сбор диагностики — это может занять несколько секунд…"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Generate"
+msgstr "Сформировать"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Copy"
+msgstr "Копировать"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Sensitive values (passwords, keys, UUIDs) are redacted."
+msgstr "Чувствительные данные (пароли, ключи, UUID) скрыты."
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Testing…"
+msgstr "Тестирование…"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "(empty)"
+msgstr "(пусто)"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Resolved"
+msgstr "Разрешено"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "No answer — check server address"
+msgstr "Нет ответа — проверьте адрес сервера"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Resolved via proxy"
+msgstr "Разрешено через прокси"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "No answer — check proxy and proxy list"
+msgstr "Нет ответа — проверьте прокси и список проксируемых доменов"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Bootstrap"
+msgstr "Бутстрап"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "OK"
+msgstr "ОК"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "FAIL"
+msgstr "Ошибка"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Version"
+msgstr "Версия"
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "sing-box"
+msgstr "sing-box"
+
+msgid "hiddify-core with sing-box syntax compatibility. Supports Hiddify App protocols and advanced features. Best compatibility with Hiddify Manager protocols. Does not support AmneziaWG."
+msgstr "hiddify-core с совместимостью синтаксиса sing-box. Поддерживает протоколы Hiddify App и расширенные функции. Наилучшая совместимость с протоколами Hiddify Manager. Не поддерживает AmneziaWG."
+
+msgid "Extended sing-box with additional protocols including AmneziaWG and TrustTunnel support. Created by shtorm-7."
+msgstr "Расширенный sing-box с поддержкой дополнительных протоколов, включая AmneziaWG и TrustTunnel. Создан shtorm-7."
+
+#: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
+msgid "Download"
+msgstr "Скачать"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "How often each node is tested (seconds). Lower = faster failover, higher = less overhead."
+msgstr "Время в секундах: меньше = узлы тестируются чаще, больше = реже тесты - меньше нагрузки."
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Automatically picks the fastest node by periodically measuring latency. Traffic is always sent through the lowest-latency node in the pool.<br>If you have connection problems and a node stays orange/grey for a long time, try removing it from the URLTest pool."
+msgstr "Автоматически выбирает самый быстрый узел, периодически измеряя задержку. Трафик всегда идёт через узел с наименьшей задержкой в пуле.<br>Если вы испытываете проблемы с подключением, а узел остаётся оранжевым/серым продолжительное время — попробуйте удалить его из списка URLTest."
+
+msgid "Minimum latency gap (ms) required to switch to a faster node — prevents flapping between nodes with close latency values."
+msgstr "Минимальная разница задержек (мс) для переключения на более быстрый узел — предотвращает постоянное переключение между узлами с близкой задержкой."
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "In this mode: only blocked domains are routed through this node — all other traffic goes direct."
+msgstr "В этом режиме: через этот узел проходят только заблокированные домены — весь остальной трафик идёт напрямую."
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Resolves Russian domains directly, without going through the proxy."
+msgstr "Разрешает российские домены напрямую, без прокси."
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Resolves blocked domains via proxy — your ISP cannot see which sites you look up. Uses encrypted DNS (DoH/DoT = DNS over HTTPS/TLS)."
+msgstr "Разрешает заблокированные домены через прокси — провайдер не видит, какие сайты вы запрашиваете. Использует зашифрованный DNS (DoH/DoT = DNS поверх HTTPS/TLS)."
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Default route is Direct. Added rules are proxied, with automatic priority:<br>1. Smaller lists (YouTube, Discord etc.)<br>2. <b>Russia Inside</b> (1000+ domains, itdoginfo) — the in-Russia must-have set (YouTube, Discord, Telegram, Meta…) routed through the proxy<br>3. <b>Re-filter</b> (60000+ domains + 25000+ IPs) — community blocklist of domains and IPs banned in Russia (Roskomnadzor)"
+msgstr "Маршрут по умолчанию — прямой. Добавленные правила проксируются с автоматическим приоритетом:<br>1. Небольшие списки (YouTube, Discord и т.д.)<br>2. <b>Russia Inside</b> (1000+ доменов, itdoginfo) — общий набор небольших списков (YouTube, Discord, Telegram, Meta…)<br>3. <b>Re-filter</b> (60000+ доменов + 25000+ IP) — список заблокированных в России доменов и IP (Роскомнадзор, от сообщества)"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "ByeDPI"
+msgstr "ByeDPI"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Enable ByeDPI"
+msgstr "Включить ByeDPI"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "A free way to unblock throttled sites (e.g. YouTube) without a VPN subscription. Works by confusing your ISP's traffic analysis — your traffic is NOT encrypted or hidden, your ISP can still see which sites you visit. Results depend on your ISP and may require trying different strategies in the ByeDPI tab. ByeDPI will be installed automatically on first enable."
+msgstr "Бесплатный способ разблокировать замедлённые сайты (например, YouTube) без VPN-подписки. Работает, сбивая систему анализа трафика провайдера — трафик НЕ шифруется и НЕ скрывается, провайдер по-прежнему видит, какие сайты вы посещаете. Результат зависит от провайдера и может потребовать подбора стратегии во вкладке ByeDPI. При первом включении ByeDPI установится автоматически."
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "ByeDPI (local DPI bypass)"
+msgstr "ByeDPI (локальный обход DPI)"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "UDP over TCP"
+msgstr "UDP через TCP"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Wrap UDP traffic in TCP when routing to ciadpi."
+msgstr "Оборачивать UDP-трафик в TCP при отправке в ciadpi."
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Strategy preset"
+msgstr "Предустановленная стратегия"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Grouped by technique. Based on <a href=\"https://github.com/hufrea/byedpi\" target=\"_blank\">hufrea/byedpi</a> and community testing. See also <a href=\"https://github.com/fatyzzz/Byedpi-Setup\" target=\"_blank\">fatyzzz/Byedpi-Setup</a>."
+msgstr "Сгруппированы по технике. По материалам <a href=\"https://github.com/hufrea/byedpi\" target=\"_blank\">hufrea/byedpi</a> и тестам сообщества. Также: <a href=\"https://github.com/fatyzzz/Byedpi-Setup\" target=\"_blank\">fatyzzz/Byedpi-Setup</a>."
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "— select a preset —"
+msgstr "— выберите предустановку —"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Disorder — reorders TCP segments"
+msgstr "Disorder — переупорядочивает TCP-сегменты"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Fake TTL"
+msgstr "Fake TTL"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Fake MD5"
+msgstr "Fake MD5"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "TLS Record Split"
+msgstr "Разбивка TLS-записи"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "OOB"
+msgstr "OOB (внеканальные данные)"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Split"
+msgstr "Split (разбивка запроса)"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "HTTP Modification"
+msgstr "Модификация HTTP"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Auto-mode"
+msgstr "Автоматический режим"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Fake SNI / TLS Modification"
+msgstr "Fake SNI / модификация TLS"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Aggressive"
+msgstr "Агрессивные комбинации"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Full Combo"
+msgstr "Полная комбинация"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Command options"
+msgstr "Параметры командной строки"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Arguments passed to ciadpi after <code>-i 127.0.0.1 -p &lt;port&gt;</code>. Select a preset above or enter custom options. See ciadpi <code>--help</code> for full flag reference."
+msgstr "Аргументы для ciadpi после <code>-i 127.0.0.1 -p &lt;порт&gt;</code>. Выберите предустановку выше или введите свои параметры. Справка: ciadpi <code>--help</code>."
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Test current strategy"
+msgstr "Проверить текущую стратегию"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Starts ciadpi with the current options on a temporary port and tests it. With curl installed: makes a real HTTP request through ciadpi to verify DPI bypass. Without curl: only confirms arguments are valid and ciadpi starts."
+msgstr "Запускает ciadpi с текущими параметрами на временном порту. При наличии curl: выполняет реальный HTTP-запрос через ciadpi для проверки обхода DPI. Без curl: только проверяет корректность аргументов и факт запуска."
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Testing..."
+msgstr "Проверка..."
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "✓ HTTP request succeeded through ciadpi"
+msgstr "✓ HTTP-запрос через ciadpi прошёл успешно"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "✓ ciadpi started (install curl for full test)"
+msgstr "✓ ciadpi запущен (установите curl для полной проверки)"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Test failed"
+msgstr "Проверка не пройдена"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Test"
+msgstr "Проверить"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Test all strategies"
+msgstr "Проверить все стратегии"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Runs all 43 presets one by one and shows which ones work. Requires curl (install on Status page). ~5-7 min total."
+msgstr "Проверяет все 43 предустановки по очереди и показывает, какие работают. Требует curl (установить на странице Статус). Суммарно ~5-7 минут."
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Test all 43 strategies sequentially?\n\nEach test takes ~5-10 seconds (~5-7 min total).\nLAN clients are not affected during testing.\n\nRequires curl. Install it on the Status page first."
+msgstr "Проверить все 43 стратегии по очереди?\n\nКаждая проверка занимает ~5-10 секунд (~5-7 мин суммарно).\nПользователи локальной сети не затронуты.\n\nТребует curl. Установите его на странице Статус."
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Preparing..."
+msgstr "Подготовка..."
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Done"
+msgstr "Готово"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "passed"
+msgstr "успешно"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "click Apply next to any working strategy"
+msgstr "нажмите «Применить» рядом с рабочей стратегией"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "Block QUIC (UDP port 443)"
+msgstr "Блокировать QUIC (UDP порт 443)"
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "This nftables rule drops all outgoing UDP port 443 packets to external addresses, forcing browsers and apps to fall back to TCP/TLS where ByeDPI can apply DPI bypass. Side effects: may break services that require QUIC, and affects all LAN clients. Enable if your strategy works but some sites still do not load."
+msgstr "Правило nftables блокирует все исходящие UDP-пакеты на порт 443 для внешних адресов, вынуждая браузеры и приложения переходить на TCP/TLS, где ByeDPI применяет обход DPI. Побочные эффекты: могут не работать сервисы, требующие QUIC; затрагивает всех клиентов локальной сети. Включите, если стратегия настроена, но часть сайтов всё равно не работает."
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Installed"
+msgstr "Установлен"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "running"
+msgstr "работает"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "stopped"
+msgstr "остановлен"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Reinstall"
+msgstr "Переустановить"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "ByeDPI strategy tester"
+msgstr "Тестирование стратегий ByeDPI"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Enables real HTTP-based ByeDPI strategy testing. Required for the \"Test all strategies\" feature in Client → ByeDPI tab."
+msgstr "Включает полноценное HTTP-тестирование стратегий ByeDPI. Необходим для функции «Проверить все стратегии» во вкладке Клиент → ByeDPI."
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Local SOCKS5 DPI bypass proxy by <a href=\"https://github.com/hufrea/byedpi\" target=\"_blank\">hufrea</a>. Packages by <a href=\"https://github.com/1andrevich/ByeDPI-OpenWrt\" target=\"_blank\">1andrevich/ByeDPI-OpenWrt</a>. Configure in the Client → ByeDPI tab."
+msgstr "Локальный SOCKS5-прокси для обхода DPI от <a href=\"https://github.com/hufrea/byedpi\" target=\"_blank\">hufrea</a>. Пакеты: <a href=\"https://github.com/1andrevich/ByeDPI-OpenWrt\" target=\"_blank\">1andrevich/ByeDPI-OpenWrt</a>. Настройки: вкладка Клиент → ByeDPI."
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "No package manager found. Install ciadpi manually from the Status page."
+msgstr "Менеджер пакетов не найден. Установите ciadpi вручную на странице Статус."
+
+#: htdocs/luci-static/resources/view/homeproxy/client.js
+msgid "ByeDPI (ciadpi) is not installed. Install it now?"
+msgstr "ByeDPI (ciadpi) не установлен. Установить сейчас?"
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "Cannot remove: ByeDPI is selected as Main Node. Change Main Node first."
+msgstr "Нельзя удалить: ByeDPI выбран в качестве основного узла. Сначала смените основной узел."
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Download host"
+msgstr "Хост загрузки"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Split download: host (Host header / :authority) for the download direction. Leave empty to reuse the upload host."
+msgstr "Раздельная загрузка: хост (заголовок Host / :authority) для направления загрузки. Оставьте пустым, чтобы использовать хост отдачи."
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Download path"
+msgstr "Путь загрузки"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Split download: path for the download direction. Leave empty to reuse the upload path."
+msgstr "Раздельная загрузка: путь для направления загрузки. Оставьте пустым, чтобы использовать путь отдачи."
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Download server"
+msgstr "Сервер загрузки"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Optional separate server address for the download direction. Empty reuses the main server (works on hiddify-core; set explicitly for sing-box)."
+msgstr "Необязательный отдельный адрес сервера для направления загрузки. Пусто — используется основной сервер (работает на hiddify-core; для sing-box задайте явно)."
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Download port"
+msgstr "Порт загрузки"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Download TLS server name"
+msgstr "Имя сервера TLS для загрузки"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "TLS SNI for the download direction (often a different CDN/edge host than the upload)."
+msgstr "TLS SNI для направления загрузки (часто отличается от отдачи — другой CDN/пограничный хост)."
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Download ALPN"
+msgstr "ALPN загрузки"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Download allow insecure"
+msgstr "Разрешить небезопасный TLS для загрузки"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Allow insecure TLS for the download direction. Use only for testing."
+msgstr "Разрешить небезопасный TLS для направления загрузки. Только для тестирования."
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Padding bytes"
+msgstr "Байты заполнения"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Random padding length range, e.g. 100-1000. Leave empty for the core default."
+msgstr "Диапазон длины случайного заполнения, напр. 100-1000. Пусто — значение по умолчанию ядра."
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Max bytes per POST"
+msgstr "Макс. байт на POST"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "packet-up mode: max body size of each upload POST, e.g. 1000000-1000000."
+msgstr "Режим packet-up: макс. размер тела каждого POST отдачи, напр. 1000000-1000000."
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "Min POST interval (ms)"
+msgstr "Мин. интервал POST (мс)"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js
+msgid "packet-up mode: minimum interval between upload POSTs in ms, e.g. 30-30."
+msgstr "Режим packet-up: минимальный интервал между POST отдачи в мс, напр. 30-30."
+
+#: htdocs/luci-static/resources/view/homeproxy/status.js
+msgid "timeout"
+msgstr "таймаут"
+
+# --- Zapret strategy UI (added manually; re-verify on next xgettext rescan) ---
+
+msgid "Default (fake + multidisorder)"
+msgstr "По умолчанию (fake + multidisorder)"
+
+msgid "Fake only"
+msgstr "Только fake"
+
+msgid "Recommended"
+msgstr "Рекомендуемые"
+
+msgid "Full-test pool"
+msgstr "Полный набор для проверки"
+
+msgid "Fills the strategy below. Use the tester to find one that works on your ISP. Based on <a href=\"https://github.com/bol-van/zapret2\" target=\"_blank\">bol-van/zapret2</a> (nfqws2/blockcheck2) and <a href=\"https://github.com/flowseal/zapret-discord-youtube\" target=\"_blank\">flowseal/zapret-discord-youtube</a> (MIT). Packages by <a href=\"https://github.com/1andrevich/zapret2-openwrt\" target=\"_blank\">1andrevich/zapret2-openwrt</a>."
+msgstr "Заполняет поле стратегии ниже. Используйте тест, чтобы найти рабочую для вашего провайдера. На основе <a href=\"https://github.com/bol-van/zapret2\" target=\"_blank\">bol-van/zapret2</a> (nfqws2/blockcheck2) и <a href=\"https://github.com/flowseal/zapret-discord-youtube\" target=\"_blank\">flowseal/zapret-discord-youtube</a> (MIT). Пакеты: <a href=\"https://github.com/1andrevich/zapret2-openwrt\" target=\"_blank\">1andrevich/zapret2-openwrt</a>."
+
+msgid "Desync strategy"
+msgstr "Стратегия рассинхронизации (desync)"
+
+msgid "nfqws2 options applied to every flow routed to Zapret. No hostlists — the routing rules already select what is sent here. Pick a preset above or edit freely. The <code>--qnum</code>/<code>--user</code>/<code>--fwmark</code>/<code>--lua-init</code> arguments are added automatically."
+msgstr "Опции nfqws2, применяемые к каждому потоку, направленному в Zapret. Без хост-листов — что сюда попадает, уже выбирают правила маршрутизации. Выберите предустановку выше или измените вручную. Аргументы <code>--qnum</code>/<code>--user</code>/<code>--fwmark</code>/<code>--lua-init</code> добавляются автоматически."
+
+msgid "Runs the current strategy on a temporary NFQUEUE scoped to 4 test sites — <b>YouTube</b>, <b>Telegram</b>, <b>Discord</b>, <b>Speedtest.net</b> — and checks whether each TLS handshake completes. Does not touch your live connection. A site that fails here means the strategy breaks it."
+msgstr "Запускает текущую стратегию на временной очереди NFQUEUE для 4 тестовых сайтов — <b>YouTube</b>, <b>Telegram</b>, <b>Discord</b>, <b>Speedtest.net</b> — и проверяет, проходит ли TLS-рукопожатие. Ваше соединение не затрагивается. Если сайт здесь не проходит, стратегия его ломает."
+
+msgid "Full strategy test"
+msgstr "Полная проверка стратегий"
+
+msgid "Tries every strategy in the list one by one on a temporary NFQUEUE — your live connection is untouched — and shows which pass. Stay on this page while it runs; leaving stops it. Press <b>Apply</b> on any passing strategy to select it, then Save &amp; Apply."
+msgstr "Проверяет каждую стратегию из списка по очереди на временной очереди NFQUEUE — ваше соединение не затрагивается — и показывает, какие проходят. Оставайтесь на этой странице во время проверки; уход со страницы прерывает её. Нажмите <b>Применить</b> у любой работающей стратегии, чтобы выбрать её, затем «Сохранить и применить»."
+
+msgid "Run full test"
+msgstr "Запустить полную проверку"
+
+msgid "Applied: %s — now Save & Apply"
+msgstr "Применено: %s — теперь «Сохранить и применить»"
+
+msgid "Testing %d/%d: %s"
+msgstr "Проверка %d/%d: %s"
+
+msgid "rpc error"
+msgstr "ошибка RPC"
+
+msgid "%d/%d passed"
+msgstr "%d/%d пройдено"
+
+msgid "Discord calls via Zapret"
+msgstr "Звонки Discord через Zapret"
+
+msgid "Route Discord's voice UDP ports (19294–19344, 50000–50100) through Zapret. Discord voice has no domain to match, so it can only be selected by port. Leave off if your VPN already handles calls."
+msgstr "Направлять голосовые UDP-порты Discord (19294–19344, 50000–50100) через Zapret. У голоса Discord нет домена для сопоставления, поэтому его можно выбрать только по порту. Оставьте выключенным, если звонки и так работают через VPN."
+
+msgid "Enable Zapret"
+msgstr "Включить Zapret"
+
+msgid "An alternative to ByeDPI: another free way to unblock throttled or blocked sites (YouTube, Discord…) without a VPN subscription. Practical difference from ByeDPI: Zapret can work with the QUIC protocol. Finding a working strategy is individual and depends on your ISP's restrictions. Installed automatically on first enable."
+msgstr "Альтернатива ByeDPI: ещё один бесплатный способ разблокировать замедлённые или заблокированные сайты (YouTube, Discord…) без VPN-подписки. Практическое отличие от ByeDPI: Zapret умеет работать с протоколом QUIC. Подбор рабочей стратегии индивидуален и зависит от ограничений провайдера. Устанавливается автоматически при первом включении."
+
+msgid "No package manager found. Install zapret2 manually from the Status page."
+msgstr "Менеджер пакетов не найден. Установите zapret2 вручную со страницы «Статус»."
+
+msgid "Install Zapret"
+msgstr "Установить Zapret"
+
+msgid "Zapret (zapret2/nfqws2) is not installed. Install it now?"
+msgstr "Zapret (zapret2/nfqws2) не установлен. Установить сейчас?"
+
+# --- Zapret strategy UI (added manually; re-verify on next xgettext rescan) ---
+
+msgid "— custom / select a preset —"
+msgstr "— произвольная / выберите предустановку —"
+
+# --- ByeDPI strings (filling pre-existing gaps; survive xgettext rescan) ---
+
+msgid "Install ByeDPI"
+msgstr "Установить ByeDPI"
+
+msgid "ByeDPI running"
+msgstr "ByeDPI работает"
+
+msgid "Wrap UDP traffic in TCP when routing to ByeDPI."
+msgstr "Оборачивать UDP-трафик в TCP при маршрутизации через ByeDPI."
+
+msgid "Arguments passed to ByeDPI. Select a preset above or enter custom options. See <code>ciadpi --help</code> for full flag reference."
+msgstr "Аргументы, передаваемые ByeDPI. Выберите предустановку выше или введите свои опции. См. <code>ciadpi --help</code> для полного списка флагов."
+
+msgid "Starts ByeDPI with the current options on a temporary port and probes 4 sites — <b>YouTube</b> and <b>Telegram</b> (far servers), <b>Discord</b> and <b>Speedtest.net</b> (near Cloudflare/Ookla edges). A strategy that passes the far ones but fails the near ones is destination-sensitive (typical of fixed <code>--fake --ttl</code>). Requires curl; without it, only confirms ByeDPI starts."
+msgstr "Запускает ByeDPI с текущими опциями на временном порту и проверяет 4 сайта — <b>YouTube</b> и <b>Telegram</b> (дальние серверы), <b>Discord</b> и <b>Speedtest.net</b> (ближние узлы Cloudflare/Ookla). Стратегия, которая проходит дальние, но не проходит ближние, чувствительна к назначению (типично для фиксированных <code>--fake --ttl</code>). Требуется curl; без него подтверждается только запуск ByeDPI."
+
+msgid "✓ ByeDPI started (install curl for full test)"
+msgstr "✓ ByeDPI запущен (установите curl для полной проверки)"
+
+# --- Zapret diagnostics (Network Intercept card) ---
+
+msgid "Zapret (nfqws2)"
+msgstr "Zapret (nfqws2)"
+
+msgid "enabled, but nfqws2 not running"
+msgstr "включён, но nfqws2 не запущен"
+
+msgid "Zapret NFQUEUE counters (mark 110 → queue)"
+msgstr "Счётчики NFQUEUE Zapret (метка 110 → очередь)"
+
+# --- Zapret NFQUEUE kmod guard ---
+msgid "Zapret is installed, but the NFQUEUE kernel module (kmod-nft-queue) is missing. Enabling it now could break the firewall. Reinstall Zapret or install kmod-nft-queue first."
+msgstr "Zapret установлен, но отсутствует модуль ядра NFQUEUE (kmod-nft-queue). Включение сейчас может сломать firewall. Сначала переустановите Zapret или установите kmod-nft-queue."
+
+# --- Zapret 2 management card (Status page) + diagnostics ---
+msgid "Zapret 2 running"
+msgstr "Zapret 2 работает"
+
+msgid "Packet-level (NFQUEUE) DPI bypass by <a href=\"https://github.com/bol-van/zapret2\" target=\"_blank\">bol-van</a> (nfqws2). Packages by <a href=\"https://github.com/1andrevich/zapret2-openwrt\" target=\"_blank\">1andrevich/zapret2-openwrt</a>. Configure in the Node Settings → Zapret tab."
+msgstr "Обход DPI на уровне пакетов (NFQUEUE) от <a href=\"https://github.com/bol-van/zapret2\" target=\"_blank\">bol-van</a> (nfqws2). Пакеты: <a href=\"https://github.com/1andrevich/zapret2-openwrt\" target=\"_blank\">1andrevich/zapret2-openwrt</a>. Настройки: вкладка Настройки узлов → Zapret."
+
+msgid "Installed, but kmod-nft-queue is missing — Zapret cannot intercept traffic without it."
+msgstr "Установлено, но отсутствует kmod-nft-queue — без него Zapret не сможет перехватывать трафик."
+
+msgid "Warning: kmod-nft-queue is not installed — Zapret cannot intercept traffic without it."
+msgstr "Внимание: kmod-nft-queue не установлен — без него Zapret не сможет перехватывать трафик."
+
+# Section heading grouping ByeDPI + Zapret — kept verbatim (brand-like coinage, like the old "ByeDPI" heading)
+msgid "AntiDPI"
+msgstr "AntiDPI"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js:2725
+msgid "DNS not ready — wait a few seconds after Apply and retry"
+msgstr "DNS ещё не готов — подождите несколько секунд после нажатия «Применить» и повторите"
+
+#: htdocs/luci-static/resources/view/homeproxy/node.js:2907
+msgid "Resolving test hosts…"
+msgstr "Определяю адреса тестовых узлов…"
