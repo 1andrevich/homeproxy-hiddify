@@ -3678,7 +3678,7 @@ msgstr "не найдено"
 
 #: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
 msgid "Active binary"
-msgstr "Активный бинарник"
+msgstr "Активный исполняемый файл"
 
 #: htdocs/luci-static/resources/view/homeproxy/diagnostics.js
 msgid "Running"
