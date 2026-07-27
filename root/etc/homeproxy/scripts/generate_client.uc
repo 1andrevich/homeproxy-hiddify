@@ -396,6 +396,24 @@ function xhttp_padding(v) {
 	return (isEmpty(v) || v === '0' || v === '0-0') ? '100-1000' : v;
 }
 
+/* uTLS rewrites the ClientHello of a TCP TLS record stream, so it cannot be carried over
+ * QUIC — sing-box builds a UTLSClientConfig whose STDConfig() is a hard error, and every
+ * QUIC dial path (sing-quic Dial/DialEarly/CreateTransport) goes through STDConfig(). The
+ * result is "unsupported usage for uTLS" on every connection through the node; when such a
+ * node is the one a rule-set downloads through, the *initial* fetch failure is fatal and
+ * the whole service crash-loops. Same for naive, which rejects uTLS outright at config
+ * build time ("uTLS is not supported on naive outbound").
+ *
+ * The LuCI form already hides the fingerprint for hysteria/hysteria2/tuic, but that only
+ * governs what the form writes — subscription importers write UCI directly, so the check
+ * has to live here, where every import path converges.
+ *
+ * ShadowTLS is deliberately NOT included: it implements WithSessionIDGenerator and so
+ * never reaches STDConfig(), making uTLS both valid and useful there. */
+function utls_unsupported(node) {
+	return (node.type in ['hysteria', 'hysteria2', 'tuic', 'naive']) || node.transport === 'quic';
+}
+
 function generate_outbound(node) {
 	if (type(node) !== 'object' || isEmpty(node))
 		return null;
@@ -509,8 +527,9 @@ function generate_outbound(node) {
 			 * is a FATAL that crash-loops the whole service; hiddify-core defaults it
 			 * silently). So when reality is on we always emit utls, defaulting the
 			 * fingerprint to 'edge' if the node (e.g. a sub-imported reality node)
-			 * didn't carry one. */
-			utls: (!isEmpty(node.tls_utls) || node.tls_reality === '1') ? {
+			 * didn't carry one — including on a transport that cannot use it, since
+			 * dropping it there would trade a dial-time error for a startup FATAL. */
+			utls: ((!isEmpty(node.tls_utls) && !utls_unsupported(node)) || node.tls_reality === '1') ? {
 				enabled: true,
 				fingerprint: !isEmpty(node.tls_utls) ? node.tls_utls : 'edge'
 			} : null,
@@ -1194,11 +1213,13 @@ if (!isEmpty(main_node)) {
 		const main_urltest_nodes = filter(uci.get(uciconfig, ucimain, 'main_urltest_nodes') || [], (k) => uci.get_all(uciconfig, k) != null);
 		const main_urltest_interval = uci.get(uciconfig, ucimain, 'main_urltest_interval');
 		const main_urltest_tolerance = uci.get(uciconfig, ucimain, 'main_urltest_tolerance');
+		const main_urltest_url = uci.get(uciconfig, ucimain, 'main_urltest_url');
 
 		push(config.outbounds, {
 			type: 'urltest',
 			tag: 'main-out',
 			outbounds: map(main_urltest_nodes, (k) => `cfg-${k}-out`),
+			url: main_urltest_url || null,
 			interval: strToTime(main_urltest_interval),
 			tolerance: strToInt(main_urltest_tolerance),
 			idle_timeout: (strToInt(main_urltest_interval) > 1800) ? `${main_urltest_interval * 2}s` : null,
@@ -1246,11 +1267,13 @@ if (!isEmpty(main_node)) {
 		const main_udp_urltest_nodes = filter(uci.get(uciconfig, ucimain, 'main_udp_urltest_nodes') || [], (k) => uci.get_all(uciconfig, k) != null);
 		const main_udp_urltest_interval = uci.get(uciconfig, ucimain, 'main_udp_urltest_interval');
 		const main_udp_urltest_tolerance = uci.get(uciconfig, ucimain, 'main_udp_urltest_tolerance');
+		const main_udp_urltest_url = uci.get(uciconfig, ucimain, 'main_udp_urltest_url');
 
 		push(config.outbounds, {
 			type: 'urltest',
 			tag: 'main-udp-out',
 			outbounds: map(main_udp_urltest_nodes, (k) => `cfg-${k}-out`),
+			url: main_udp_urltest_url || null,
 			interval: strToTime(main_udp_urltest_interval),
 			tolerance: strToInt(main_udp_urltest_tolerance),
 			idle_timeout: (strToInt(main_udp_urltest_interval) > 1800) ? `${main_udp_urltest_interval * 2}s` : null,

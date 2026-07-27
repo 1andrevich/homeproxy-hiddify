@@ -1228,8 +1228,16 @@ function main() {
 		} else {
 			const cached = node_cache[cfg.grouphash][cfg['.name']];
 			const user_fields = ['bind_interface'];
+			/* `v in cached` tests KEY presence, and the parsers emit absent fields as
+			 * explicit null keys — so a null must take the delete branch, not the set
+			 * branch. uci.set() with a null value is not a no-op and not a delete: it
+			 * fails (libuci asserts on a NULL value) and leaves the OLD value in place,
+			 * which silently pins any field that goes set -> null forever. Nodes are
+			 * keyed by md5(label), so a node re-served under the same label with fewer
+			 * fields (e.g. reality -> hysteria2, dropping the uTLS fingerprint) would
+			 * keep the stale value and emit an invalid config. */
 			map(keys(cfg), (v) => {
-				if (v in cached)
+				if (v in cached && cached[v] !== null)
 					uci.set(uciconfig, cfg['.name'], v, cached[v]);
 				else if (!(v in user_fields))
 					uci.delete(uciconfig, cfg['.name'], v);
@@ -1249,7 +1257,12 @@ function main() {
 
 			const nameHash = md5(node.label);
 			uci.set(uciconfig, nameHash, 'node');
-			map(keys(node), (v) => uci.set(uciconfig, nameHash, v, node[v]));
+			/* Skip nulls: uci.set() rejects a null value (see the update path above), so
+			 * passing one only sets uci error state without writing anything. */
+			map(keys(node), (v) => {
+				if (node[v] !== null)
+					uci.set(uciconfig, nameHash, v, node[v]);
+			});
 
 			added++;
 			log(sprintf('Adding node: %s.', node.label));
